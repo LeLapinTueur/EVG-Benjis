@@ -498,6 +498,34 @@
       .form-row { grid-template-columns: 1fr; }
     }
 
+    /* --- Réservations & justificatifs --- */
+    .tag.booked-tag { background: #e8f5ee; color: #16794b; }
+    .tag.ref-tag { background: #eef2ff; color: #3730a3; }
+    .activity.is-booked { box-shadow: inset 4px 0 0 #16794b; }
+    .book-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .book-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+      border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; background: #fff; }
+    .book-toggle input { accent-color: #16794b; margin: 0; }
+    .booking-progress { margin: -4px 0 18px; }
+    .booking-progress .bp-text { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+    .booking-progress .bp-bar { height: 8px; background: #e5e8ee; border-radius: 99px; overflow: hidden; }
+    .booking-progress .bp-bar span { display: block; height: 100%; background: #16794b; border-radius: 99px; transition: width .3s; }
+    .fz-drop { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 14px; text-align: center; background: #f9fafb; margin-bottom: 10px; }
+    .fz-drop.over { border-color: var(--yellow); background: #fffbeb; }
+    .fz-drop .d, .fz-d { font-size: 12px; color: var(--muted); }
+    .fz-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .fz-row .ic { font-size: 22px; width: 30px; text-align: center; }
+    .fz-row .nm { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+    .fz-row .mt { font-size: 12px; color: var(--muted); font-weight: 500; display: block; }
+    .fz-group { margin: 14px 0 2px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .fz-view { text-align: center; }
+    .fz-view a.btn { text-decoration: none; }
+    .fz-view img { max-width: 100%; max-height: 62vh; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+    .fz-view pre { text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; background: #f9fafb; border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px; max-height: 55vh; overflow: auto; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+    .fz-msg { min-height: 18px; font-size: 13px; font-weight: 700; margin: 6px 0; }
+    .fz-msg.err { color: var(--red); } .fz-msg.ok { color: var(--green); }
+    body.readonly .admin-only { display: none !important; }
     /* --- Destinations --- */
     .tab-add { background: transparent; border-style: dashed; box-shadow: none; color: var(--muted); }
     .tab-add:hover { background: #fff; color: var(--ink); }
@@ -536,6 +564,7 @@
       <nav class="tabs" id="cityTabs" aria-label="Choisir une destination"></nav>
       <div class="toolbar">
         <button class="btn btn-yellow" id="btnAddGlobal">➕ Ajouter un élément</button>
+        <button class="btn hidden" id="btnAllFiles" title="Confirmations, billets et QR codes de tout le week-end">📎 Justificatifs</button>
         <button class="btn" id="btnEditDest" title="Renommer, déplacer ou supprimer cette destination">✏️ Cette destination</button>
         <button class="btn" id="btnApiConfig" title="Configurer l'extraction automatique par lien via API">⚡ Auto-lien (API)</button>
       </div>
@@ -569,6 +598,7 @@
     <!-- Résumé dynamique -->
     <div class="summary" id="summaryCards"></div>
     <p class="notice" id="cityNotice"></p>
+    <div class="booking-progress" id="bookingProgress"></div>
 
     <!-- Contenu dynamique de la ville active -->
     <div id="cityContent"></div>
@@ -742,6 +772,19 @@
           </label>
         </div>
 
+        <div class="form-row">
+          <div class="field" style="flex:0 0 auto;">
+            <label class="checkbox-row" style="margin-top:22px;">
+              <input type="checkbox" id="fieldBooked">
+              ✅ Réservation validée
+            </label>
+          </div>
+          <div class="field">
+            <label for="fieldBookingRef">N° de réservation / référence (optionnel)</label>
+            <input type="text" id="fieldBookingRef" maxlength="80" placeholder="Ex : ABC123, confirmation #4521">
+          </div>
+        </div>
+
         <!-- Import rapide par URL -->
         <div class="field" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;">
           <label for="fieldImportUrl">🔗 Remplissage auto depuis un lien web (optionnel)</label>
@@ -801,6 +844,15 @@
           <button type="submit" class="btn btn-primary" id="destSubmit">Créer</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modale Justificatifs -->
+  <div class="modal-backdrop hidden" id="filesModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="filesTitle">
+      <h3 id="filesTitle">📎 Justificatifs</h3>
+      <div id="filesBody"></div>
+      <div class="modal-footer"><button type="button" class="btn" id="btnCloseFiles">Fermer</button></div>
     </div>
   </div>
 
@@ -1415,6 +1467,11 @@
       document.getElementById('participantsCount').value = participants;
       document.getElementById('includeOptions').checked = includeOptions;
       document.getElementById('cityNotice').textContent = city.notice;
+      const bookable = city.items.filter(i => isItemIncluded(i, includeOptions));
+      const bookedCount = bookable.filter(i => i.booked).length;
+      document.getElementById('bookingProgress').innerHTML = bookable.length
+        ? `<div class="bp-text">✅ <b>${bookedCount} / ${bookable.length}</b> réservé(s) pour cette destination</div><div class="bp-bar"><span style="width:${Math.round(bookedCount / bookable.length * 100)}%"></span></div>`
+        : '';
 
       // Calculs budgétaires (actifs vs désactivés)
       let totalPerPerson = 0;
@@ -1563,12 +1620,16 @@
       if (item.isOption) {
         tags.push('<span class="tag option">OPTION</span>');
       }
+      if (item.booked) {
+        tags.push('<span class="tag booked-tag">✅ RÉSERVÉ</span>');
+        if (item.bookingRef) tags.push(`<span class="tag ref-tag">🎫 ${escapeHtml(item.bookingRef)}</span>`);
+      }
       if (item.priceType === 'total_group' && unitCost !== null) {
         tags.push(`<span class="tag group-price">Forfait groupe : ${formatEuro(item.price)}</span>`);
       }
 
       return `
-        <article class="activity ${isExcluded ? 'excluded' : ''}">
+        <article class="activity ${isExcluded ? 'excluded' : ''} ${item.booked ? 'is-booked' : ''}">
           <div class="${emojiClass}">${escapeHtml(item.emoji || '📌')}</div>
           <div>
             <div class="topline">
@@ -1587,6 +1648,13 @@
                 <span class="switch-track"></span>
                 <span>${!isManuallyDisabled ? 'Inclus' : 'Désactivé'}</span>
               </label>
+              <div class="book-actions">
+                <label class="book-toggle admin-only" title="À cocher quand la réservation est confirmée">
+                  <input type="checkbox" ${item.booked ? 'checked' : ''} onchange="toggleBooked('${item.id}', this.checked)">
+                  <span>Réservé</span>
+                </label>
+                ${filesButtonHtml(item)}
+              </div>
               <div class="card-btns">
                 <button class="btn btn-sm" onclick="openEditModal('${item.id}')">✏️ Modifier</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">🗑️</button>
@@ -1596,6 +1664,14 @@
         </article>
       `;
     }
+
+    window.toggleBooked = function(id, isChecked) {
+      const item = state.cities[activeCity].items.find(i => i.id === id);
+      if (!item || !hubConn.isAdmin) return;
+      item.booked = isChecked;
+      saveState();
+      render();
+    };
 
     window.toggleItemEnabled = function(id, isChecked) {
       const item = state.cities[activeCity].items.find(i => i.id === id);
@@ -1698,6 +1774,8 @@
       document.getElementById('fieldLinkText').value = '';
       document.getElementById('fieldEnabled').checked = true;
       document.getElementById('fieldIsOption').checked = false;
+      document.getElementById('fieldBooked').checked = false;
+      document.getElementById('fieldBookingRef').value = '';
       document.getElementById('fieldImportUrl').value = '';
       document.getElementById('importStatus').innerHTML = 'Collez un lien puis cliquez sur <b>Analyser</b> pour pré-remplir la fiche.';
       syncTransportModeUI(defaultCategory === 'transport' ? 'Train' : '');
@@ -1721,6 +1799,8 @@
       document.getElementById('fieldLinkText').value = item.linkText || '';
       document.getElementById('fieldEnabled').checked = item.enabled !== false;
       document.getElementById('fieldIsOption').checked = !!item.isOption;
+      document.getElementById('fieldBooked').checked = !!item.booked;
+      document.getElementById('fieldBookingRef').value = item.bookingRef || '';
       document.getElementById('fieldImportUrl').value = item.link || '';
       document.getElementById('importStatus').innerHTML = 'Collez un lien puis cliquez sur <b>Analyser</b> pour pré-remplir la fiche.';
       syncTransportModeUI(item.transportMode || '');
@@ -1730,8 +1810,10 @@
     window.deleteItem = function(id) {
       const item = state.cities[activeCity].items.find(i => i.id === id);
       if (!item) return;
-      if (confirm(`Supprimer « ${item.title} » ?`)) {
+      const nFiles = (filesIndex[refOf(activeCity, id)] || []).length;
+      if (confirm(`Supprimer « ${item.title} » ?` + (nFiles ? `\n${nFiles} justificatif(s) seront aussi supprimés.` : ''))) {
         state.cities[activeCity].items = state.cities[activeCity].items.filter(i => i.id !== id);
+        if (filesAvailable && nFiles) hubConn.files.removeRefs(refOf(activeCity, id)).then(loadFiles).catch(() => {});
         saveState();
         render();
       }
@@ -1764,13 +1846,15 @@
         link: document.getElementById('fieldLink').value.trim(),
         linkText: document.getElementById('fieldLinkText').value.trim(),
         enabled: document.getElementById('fieldEnabled').checked,
-        isOption: document.getElementById('fieldIsOption').checked
+        isOption: document.getElementById('fieldIsOption').checked,
+        booked: document.getElementById('fieldBooked').checked,
+        bookingRef: document.getElementById('fieldBookingRef').value.trim()
       };
 
       const list = state.cities[activeCity].items;
       if (editId) {
         const idx = list.findIndex(i => i.id === editId);
-        if (idx !== -1) list[idx] = newItemData;
+        if (idx !== -1) list[idx] = Object.assign({}, list[idx], newItemData);
       } else {
         list.push(newItemData);
       }
@@ -1781,6 +1865,179 @@
     });
 
     // Événements globaux
+
+    // --- Justificatifs (confirmations, QR codes, PDF…) ---
+    let filesIndex = Object.create(null);   // 'destination/élément' -> [{id, name, mime, size, created_at}]
+    let filesAvailable = false;
+    let filesCtx = { ref: null };           // ref = null : vue « tous les justificatifs »
+    let viewUrl = null;
+    const filesModal = document.getElementById('filesModal');
+    const filesBody = document.getElementById('filesBody');
+    const refOf = (cityId, itemId) => cityId + '/' + itemId;
+    const fmtSize = (n) => n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + ' Ko' : (n / 1024 / 1024).toFixed(1).replace('.', ',') + ' Mo';
+    const fileIcon = (m) => m.startsWith('image/') ? '🖼️' : (m === 'application/pdf' ? '📄' : (m === 'message/rfc822' ? '✉️' : '📝'));
+
+    function filesButtonHtml(item) {
+      if (!filesAvailable) return '';
+      const n = (filesIndex[refOf(activeCity, item.id)] || []).length;
+      if (!n && !hubConn.isAdmin) return '';
+      return `<button class="btn btn-sm" onclick="openFilesModal('${item.id}')">📎 Justificatifs${n ? ' (' + n + ')' : ''}</button>`;
+    }
+
+    async function loadFiles() {
+      let rows;
+      try { rows = await hubConn.files.list(); }
+      catch (e) { filesAvailable = false; document.getElementById('btnAllFiles').classList.add('hidden'); return; }   // SQL pas encore mis à jour
+      const idx = Object.create(null);
+      rows.forEach(r => (idx[r.ref] = idx[r.ref] || []).push(r));
+      const changed = !filesAvailable || JSON.stringify(Object.values(idx).flat().map(f => f.id).sort()) !== JSON.stringify(Object.values(filesIndex).flat().map(f => f.id).sort());
+      filesAvailable = true; filesIndex = idx;
+      document.getElementById('btnAllFiles').classList.toggle('hidden', !hubConn.isAdmin && !rows.length);
+      if (changed) { render(); if (!filesModal.classList.contains('hidden') && !viewUrl) renderFilesModal(); }
+    }
+
+    function fileRowHtml(f) {
+      return `<div class="fz-row"><div class="ic">${fileIcon(f.mime)}</div>
+        <div class="nm">${escapeHtml(f.name)}<span class="mt">${fmtSize(f.size)} · ${new Date(f.created_at).toLocaleDateString('fr-FR')}</span></div>
+        <button class="btn btn-sm" data-act="open" data-id="${f.id}">Ouvrir</button>
+        <button class="btn btn-sm btn-danger admin-only" data-act="del" data-id="${f.id}" title="Supprimer">🗑️</button></div>`;
+    }
+
+    function renderFilesModal() {
+      closeViewer(true);
+      const admin = hubConn.isAdmin;
+      let html = '';
+      if (filesCtx.ref) {
+        const [cid, iid] = filesCtx.ref.split('/');
+        const item = (state.cities[cid] || { items: [] }).items.find(i => i.id === iid);
+        document.getElementById('filesTitle').textContent = '📎 Justificatifs';
+        html += `<p class="fz-d" style="margin:-8px 0 12px;">${escapeHtml(item ? item.title : '')} · ${escapeHtml((state.cities[cid] || {}).name || '')}</p>`;
+        if (admin) {
+          html += `<div class="fz-drop" id="fzDrop">
+              <label class="btn btn-primary btn-sm" style="cursor:pointer;">📷 Ajouter un fichier ou une photo
+                <input type="file" id="fzInput" multiple accept="image/*,application/pdf,.pdf,.txt,.eml" hidden></label>
+              <div class="d" style="margin-top:6px;">ou glissez-déposez ici, ou collez une capture d'écran (Ctrl+V)<br>Images, PDF, texte, e-mail .eml — 3,5 Mo max par fichier</div>
+            </div>
+            <details style="margin-bottom:8px;"><summary class="fz-d" style="cursor:pointer;font-weight:700;">✉️ Coller le texte d'un e-mail de confirmation</summary>
+              <div class="field" style="margin-top:8px;"><input type="text" id="fzTextName" maxlength="60" placeholder="Nom (ex. Confirmation hôtel)"></div>
+              <div class="field"><textarea id="fzText" placeholder="Collez ici le contenu de l'e-mail…" style="min-height:110px;"></textarea></div>
+              <button type="button" class="btn btn-sm btn-primary" id="fzTextSave">Enregistrer le texte</button>
+            </details>
+            <div class="fz-msg" id="fzMsg"></div>`;
+        }
+        const list = filesIndex[filesCtx.ref] || [];
+        html += list.length ? list.map(fileRowHtml).join('') : '<p class="fz-d">Aucun justificatif pour le moment.</p>';
+      } else {
+        document.getElementById('filesTitle').textContent = '📎 Tous les justificatifs';
+        const known = new Set();
+        state.cityOrder.forEach(cid => {
+          const c = state.cities[cid];
+          c.items.forEach(it => {
+            const r = refOf(cid, it.id), list = filesIndex[r];
+            if (!list) return;
+            known.add(r);
+            html += `<div class="fz-group">${escapeHtml(c.emoji || '')} ${escapeHtml(c.name)} — ${escapeHtml(it.title)}${it.booked ? ' ✅' : ''}</div>` + list.map(fileRowHtml).join('');
+          });
+        });
+        Object.keys(filesIndex).filter(r => !known.has(r)).forEach(r => {
+          html += `<div class="fz-group">Autres</div>` + filesIndex[r].map(fileRowHtml).join('');
+        });
+        if (!html) html = '<p class="fz-d">Aucun justificatif pour le moment. Ajoutez-en depuis la carte d\'une activité (bouton « 📎 Justificatifs »).</p>';
+      }
+      filesBody.innerHTML = html;
+      const inp = document.getElementById('fzInput');
+      if (inp) inp.addEventListener('change', () => { uploadFiles([...inp.files]); inp.value = ''; });
+      const drop = document.getElementById('fzDrop');
+      if (drop) {
+        ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+        ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+        drop.addEventListener('drop', e => uploadFiles([...e.dataTransfer.files]));
+      }
+      const ts = document.getElementById('fzTextSave');
+      if (ts) ts.addEventListener('click', () => {
+        const text = document.getElementById('fzText').value.trim();
+        if (!text) return setFzMsg('Collez d\'abord le texte de l\'e-mail.', 'err');
+        const name = (document.getElementById('fzTextName').value.trim() || 'Confirmation') + '.txt';
+        uploadFiles([new File([text], name, { type: 'text/plain' })]);
+      });
+    }
+
+    function setFzMsg(t, cls) { const m = document.getElementById('fzMsg'); if (m) { m.textContent = t || ''; m.className = 'fz-msg ' + (cls || ''); } }
+
+    async function uploadFiles(list) {
+      if (!hubConn.isAdmin || !filesCtx.ref || !list.length) return;
+      const ref = filesCtx.ref;
+      let done = 0;
+      for (const file of list) {
+        try {
+          setFzMsg('⏳ Envoi de « ' + file.name + ' »…');
+          const f = await Hub.prepareFile(file);
+          await hubConn.files.add(ref, f);
+          done++;
+        } catch (e) { await loadFiles(); renderFilesModal(); setFzMsg('⚠️ ' + e.message, 'err'); return; }
+      }
+      await loadFiles();
+      renderFilesModal();
+      setFzMsg('✅ ' + done + ' fichier(s) enregistré(s).', 'ok');
+    }
+
+    function closeViewer(silent) {
+      if (viewUrl) { URL.revokeObjectURL(viewUrl); viewUrl = null; }
+    }
+
+    async function openViewer(id) {
+      const meta = Object.values(filesIndex).flat().find(f => f.id === id);
+      filesBody.innerHTML = '<p class="fz-d">Chargement…</p>';
+      try {
+        const r = await hubConn.files.get(id);
+        if (!r) throw new Error('Fichier introuvable.');
+        const blob = Hub.b64ToBlob(r.b64, r.mime);
+        viewUrl = URL.createObjectURL(blob);
+        let content = '';
+        if (r.mime.startsWith('image/')) content = `<img src="${viewUrl}" alt="${escapeHtml(r.name)}">`;
+        else if (r.mime === 'application/pdf') content = '<p class="fz-d">Les PDF s\'ouvrent dans un nouvel onglet.</p>';
+        else content = '<pre id="fzPre"></pre>';
+        filesBody.innerHTML = `<div class="fz-view"><div style="margin-bottom:10px;"><button class="btn btn-sm" data-act="back">← Retour</button></div>
+          <div style="font-weight:800;margin-bottom:10px;overflow-wrap:anywhere;">${escapeHtml(r.name)}</div>${content}
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <a class="btn btn-sm btn-primary" href="${viewUrl}" target="_blank" rel="noopener">Ouvrir en grand</a>
+            <a class="btn btn-sm" href="${viewUrl}" download="${escapeHtml(r.name)}">Télécharger</a></div></div>`;
+        const pre = document.getElementById('fzPre');
+        if (pre) pre.textContent = await blob.text();
+      } catch (e) {
+        filesBody.innerHTML = `<p class="fz-msg err">⚠️ ${escapeHtml(e.message)}</p><button class="btn btn-sm" data-act="back">← Retour</button>`;
+      }
+    }
+
+    filesBody.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-act]');
+      if (!b) return;
+      if (b.dataset.act === 'open') openViewer(b.dataset.id);
+      else if (b.dataset.act === 'back') renderFilesModal();
+      else if (b.dataset.act === 'del' && hubConn.isAdmin && confirm('Supprimer ce justificatif ?')) {
+        try { await hubConn.files.remove(b.dataset.id); await loadFiles(); renderFilesModal(); }
+        catch (err) { alert(err.message); }
+      }
+    });
+    filesModal.addEventListener('paste', (e) => {
+      if (!hubConn.isAdmin || !filesCtx.ref) return;
+      const fl = [...(e.clipboardData ? e.clipboardData.files : [])];
+      if (fl.length) { e.preventDefault(); uploadFiles(fl); }
+    });
+    const closeFiles = () => { closeViewer(); filesModal.classList.add('hidden'); };
+    document.getElementById('btnCloseFiles').addEventListener('click', closeFiles);
+    filesModal.addEventListener('click', (e) => { if (e.target === filesModal) closeFiles(); });
+    window.openFilesModal = function(itemId) {
+      filesCtx = { ref: refOf(activeCity, itemId) };
+      renderFilesModal();
+      filesModal.classList.remove('hidden');
+    };
+    document.getElementById('btnAllFiles').addEventListener('click', () => {
+      filesCtx = { ref: null };
+      renderFilesModal();
+      filesModal.classList.remove('hidden');
+    });
+
     // --- Destinations : création, modification, ordre, suppression ---
     const destModal = document.getElementById('destModal');
     let destEditId = null;   // null = création
@@ -1836,7 +2093,7 @@
         const id = uniqueCityId(name);
         let items = [];
         if (document.getElementById('destStart').value === 'copy') {
-          items = JSON.parse(JSON.stringify(state.cities[activeCity].items)).map((it, i) => Object.assign(it, { id: id + '-c' + (i + 1) }));
+          items = JSON.parse(JSON.stringify(state.cities[activeCity].items)).map((it, i) => Object.assign(it, { id: id + '-c' + (i + 1), booked: false, bookingRef: '' }));
         }
         state.cities[id] = { name, emoji, notice: DEFAULT_NOTICE, items };
         state.cityOrder.push(id);
@@ -1863,8 +2120,10 @@
     document.getElementById('destDelete').addEventListener('click', () => {
       if (state.cityOrder.length <= 1) return alert('Il faut garder au moins une destination.');
       const c = state.cities[destEditId];
-      if (!confirm('Supprimer « ' + c.name + ' » et ses ' + c.items.length + ' élément(s) ? Cette action est définitive.')) return;
+      const nF = Object.keys(filesIndex).filter(r => r.startsWith(destEditId + '/')).reduce((n, r) => n + filesIndex[r].length, 0);
+      if (!confirm('Supprimer « ' + c.name + ' » et ses ' + c.items.length + ' élément(s)' + (nF ? ' ainsi que ses ' + nF + ' justificatif(s)' : '') + ' ? Cette action est définitive.')) return;
       const i = state.cityOrder.indexOf(destEditId);
+      if (filesAvailable) hubConn.files.removeRefs(destEditId + '/').then(loadFiles).catch(() => {});
       delete state.cities[destEditId];
       state.cityOrder.splice(i, 1);
       activeCity = state.cityOrder[Math.min(i, state.cityOrder.length - 1)];
@@ -2078,7 +2337,11 @@
       if (!hasData && hubConn.isAdmin) saveState();   // 1re utilisation : enregistre le planning par défaut
       render();
       document.body.classList.remove('booting');
-      if (!hubConn.isAdmin) hubConn.poll((d) => { state = normalizeState(d); render(); });
+      loadFiles();
+      if (!hubConn.isAdmin) {
+        hubConn.poll((d) => { state = normalizeState(d); render(); });
+        setInterval(() => { if (!document.hidden) loadFiles(); }, 30000);
+      }
     })();
   </script>
 </body>
