@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101a2d">
   <meta name="robots" content="noindex, nofollow">
-  <title>EVG — Bruxelles ou Charleroi</title>
+  <title>EVG</title>
   <style>
     :root {
       --ink: #172238;
@@ -498,10 +498,15 @@
       .form-row { grid-template-columns: 1fr; }
     }
 
+    /* --- Destinations --- */
+    .tab-add { background: transparent; border-style: dashed; box-shadow: none; color: var(--muted); }
+    .tab-add:hover { background: #fff; color: var(--ink); }
     /* --- Hub : rôles & chargement --- */
     body.booting > *:not(.hubbar):not(script) { visibility: hidden; }
     body.readonly #btnEditHeader,
     body.readonly #btnAddGlobal,
+    body.readonly #btnEditDest,
+    body.readonly .tab-add,
     body.readonly #btnApiConfig,
     body.readonly #btnEditRdvQuick,
     body.readonly .card-btns,
@@ -528,12 +533,10 @@
 
   <main>
     <div class="topbar">
-      <nav class="tabs" aria-label="Choisir une destination">
-        <button class="tab active" data-city="bruxelles">🇧🇪 Bruxelles</button>
-        <button class="tab" data-city="charleroi">🇧🇪 Charleroi</button>
-      </nav>
+      <nav class="tabs" id="cityTabs" aria-label="Choisir une destination"></nav>
       <div class="toolbar">
         <button class="btn btn-yellow" id="btnAddGlobal">➕ Ajouter un élément</button>
+        <button class="btn" id="btnEditDest" title="Renommer, déplacer ou supprimer cette destination">✏️ Cette destination</button>
         <button class="btn" id="btnApiConfig" title="Configurer l'extraction automatique par lien via API">⚡ Auto-lien (API)</button>
       </div>
     </div>
@@ -759,6 +762,48 @@
     </div>
   </div>
 
+  <!-- Modale Destination (création / modification) -->
+  <div class="modal-backdrop hidden" id="destModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="destModalTitle">
+      <h3 id="destModalTitle">Nouvelle destination</h3>
+      <form id="destForm" class="form-grid">
+        <div class="form-row">
+          <div class="field" style="flex:0 0 90px;">
+            <label for="destEmoji">Icône</label>
+            <input type="text" id="destEmoji" maxlength="4" placeholder="📍" style="text-align:center;">
+          </div>
+          <div class="field">
+            <label for="destName">Nom de la destination</label>
+            <input type="text" id="destName" maxlength="40" required placeholder="Ex : Amsterdam, Lille, Barcelone…">
+          </div>
+        </div>
+        <div class="field" id="destStartBox">
+          <label for="destStart">Point de départ</label>
+          <select id="destStart">
+            <option value="empty">Vide (je remplis moi-même)</option>
+            <option value="copy">Copier les éléments de la destination actuelle</option>
+          </select>
+        </div>
+        <div class="field hidden" id="destNoticeBox">
+          <label for="destNotice">Texte d'introduction (affiché sous les onglets)</label>
+          <textarea id="destNotice" maxlength="400"></textarea>
+        </div>
+        <div class="field hidden" id="destManageBox">
+          <label>Ordre et suppression</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" id="destMoveLeft">← Avancer</button>
+            <button type="button" class="btn btn-sm" id="destMoveRight">Reculer →</button>
+            <button type="button" class="btn btn-sm btn-danger" id="destDelete" style="margin-left:auto;">🗑️ Supprimer cette destination</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btnCancelDest">Fermer</button>
+          <button type="submit" class="btn btn-primary" id="destSubmit">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script id="initial-data" type="application/json">
   {
     "eyebrow": "Le week-end du futur marié",
@@ -772,9 +817,11 @@
     },
     "participants": 12,
     "includeOptions": true,
+    "cityOrder": ["bruxelles", "charleroi"],
     "cities": {
       "bruxelles": {
         "name": "Bruxelles",
+        "emoji": "🇧🇪",
         "notice": "Activez ou désactivez chaque carte avec son interrupteur pour simuler différentes journées et budgets. Vous pouvez cumuler plusieurs étapes de transport (ex. Voiture + Train + Métro).",
         "items": [
           {
@@ -995,6 +1042,7 @@
       },
       "charleroi": {
         "name": "Charleroi",
+        "emoji": "🇧🇪",
         "notice": "Activez ou désactivez chaque carte avec son interrupteur pour simuler différentes journées et budgets. Vous pouvez cumuler plusieurs modes de transport (ex. Voiture + Train + Avion).",
         "items": [
           {
@@ -1219,17 +1267,34 @@
     }
 
     // Fusionne les données de la base avec les valeurs par défaut du fichier
+    const DEFAULT_NOTICE = 'Activez ou désactivez chaque carte avec son interrupteur pour simuler différentes journées et budgets.';
+    const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
     function normalizeState(raw) {
       const def = getDefaultState();
       const st = Object.assign({}, def, raw || {});
-      st.cities = st.cities || def.cities;
-      Object.values(st.cities).forEach(c => (c.items || []).forEach(it => { if (it.enabled === undefined) it.enabled = true; }));
+      st.cities = (st.cities && typeof st.cities === 'object') ? st.cities : def.cities;
+      Object.keys(st.cities).forEach(id => {
+        const c = st.cities[id];
+        if (!c || typeof c !== 'object') { delete st.cities[id]; return; }
+        if (!c.name) c.name = id;
+        if (c.emoji === undefined) c.emoji = (id === 'bruxelles' || id === 'charleroi') ? '🇧🇪' : '📍';
+        if (c.notice === undefined) c.notice = DEFAULT_NOTICE;
+        if (!Array.isArray(c.items)) c.items = [];
+        c.items.forEach(it => { if (it.enabled === undefined) it.enabled = true; });
+      });
+      if (!Object.keys(st.cities).length) st.cities = def.cities;
+      // Ordre des destinations (la base ne conserve pas l'ordre des clés)
+      const saved = (raw && Array.isArray(raw.cityOrder)) ? raw.cityOrder : ['bruxelles', 'charleroi'];
+      const order = [];
+      saved.concat(Object.keys(st.cities)).forEach(id => { if (hasOwn(st.cities, id) && !order.includes(id)) order.push(id); });
+      st.cityOrder = order;
       st.apiConfig = localApiConfig();
       return st;
     }
 
     let state = normalizeState({});
-    let activeCity = 'bruxelles';
+    let activeCity = null;
     let hubConn = null;
 
     function saveState() {
@@ -1295,7 +1360,28 @@
       return true;
     }
 
+    function renderTabs() {
+      const nav = document.getElementById('cityTabs');
+      nav.innerHTML = '';
+      state.cityOrder.forEach(id => {
+        const c = state.cities[id];
+        const b = document.createElement('button');
+        b.className = 'tab' + (id === activeCity ? ' active' : '');
+        b.textContent = (c.emoji ? c.emoji + ' ' : '') + c.name;
+        b.addEventListener('click', () => { activeCity = id; render(); });
+        nav.appendChild(b);
+      });
+      const add = document.createElement('button');
+      add.className = 'tab tab-add';
+      add.id = 'btnAddDest';
+      add.textContent = '＋ Destination';
+      add.addEventListener('click', () => openDestModal(null));
+      nav.appendChild(add);
+    }
+
     function render() {
+      if (!activeCity || !hasOwn(state.cities, activeCity)) activeCity = state.cityOrder[0];
+      renderTabs();
       const city = state.cities[activeCity];
       const participants = Math.max(1, parseInt(state.participants, 10) || 1);
       const includeOptions = !!state.includeOptions;
@@ -1303,7 +1389,8 @@
 
       // Mise à jour en-tête & titre navigateur
       const mainTitle = state.title || 'EVG';
-      document.title = `${mainTitle} — Bruxelles ou Charleroi`;
+      const cityNames = state.cityOrder.map(id => state.cities[id].name);
+      document.title = `${mainTitle} — ${cityNames.length > 3 ? cityNames.length + ' destinations' : cityNames.join(' ou ')}`;
       document.getElementById('heroEyebrow').textContent = state.eyebrow || '';
       document.getElementById('heroTitle').textContent = mainTitle;
       document.getElementById('heroSubtitle').textContent = state.subtitle || '';
@@ -1694,12 +1781,96 @@
     });
 
     // Événements globaux
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        activeCity = tab.dataset.city;
-        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
-        render();
-      });
+    // --- Destinations : création, modification, ordre, suppression ---
+    const destModal = document.getElementById('destModal');
+    let destEditId = null;   // null = création
+
+    function slugify(t) {
+      return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'destination';
+    }
+    function uniqueCityId(name) {
+      const base = slugify(name);
+      let id = base, n = 2;
+      while (hasOwn(state.cities, id)) id = base + '-' + (n++);
+      return id;
+    }
+
+    function openDestModal(id) {
+      destEditId = id;
+      const editing = id !== null;
+      document.getElementById('destModalTitle').textContent = editing ? 'Modifier la destination' : 'Nouvelle destination';
+      document.getElementById('destSubmit').textContent = editing ? 'Enregistrer' : 'Créer';
+      document.getElementById('destStartBox').classList.toggle('hidden', editing);
+      document.getElementById('destNoticeBox').classList.toggle('hidden', !editing);
+      document.getElementById('destManageBox').classList.toggle('hidden', !editing);
+      const c = editing ? state.cities[id] : null;
+      document.getElementById('destName').value = c ? c.name : '';
+      document.getElementById('destEmoji').value = c ? (c.emoji || '') : '📍';
+      document.getElementById('destNotice').value = c ? (c.notice || '') : '';
+      const copyOpt = document.querySelector('#destStart option[value="copy"]');
+      copyOpt.textContent = 'Copier les éléments de « ' + state.cities[activeCity].name + ' »';
+      document.getElementById('destStart').value = 'empty';
+      if (editing) refreshMoveButtons();
+      destModal.classList.remove('hidden');
+      document.getElementById('destName').focus();
+    }
+    function closeDestModal() { destModal.classList.add('hidden'); }
+    function refreshMoveButtons() {
+      const i = state.cityOrder.indexOf(destEditId);
+      document.getElementById('destMoveLeft').disabled = i <= 0;
+      document.getElementById('destMoveRight').disabled = i === state.cityOrder.length - 1;
+      document.getElementById('destDelete').disabled = state.cityOrder.length <= 1;
+    }
+
+    document.getElementById('btnEditDest').addEventListener('click', () => openDestModal(activeCity));
+    document.getElementById('btnCancelDest').addEventListener('click', closeDestModal);
+    destModal.addEventListener('click', (e) => { if (e.target === destModal) closeDestModal(); });
+
+    document.getElementById('destForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('destName').value.trim();
+      if (!name) return;
+      const emoji = document.getElementById('destEmoji').value.trim();
+      if (destEditId === null) {
+        const id = uniqueCityId(name);
+        let items = [];
+        if (document.getElementById('destStart').value === 'copy') {
+          items = JSON.parse(JSON.stringify(state.cities[activeCity].items)).map((it, i) => Object.assign(it, { id: id + '-c' + (i + 1) }));
+        }
+        state.cities[id] = { name, emoji, notice: DEFAULT_NOTICE, items };
+        state.cityOrder.push(id);
+        activeCity = id;
+      } else {
+        const c = state.cities[destEditId];
+        c.name = name; c.emoji = emoji;
+        c.notice = document.getElementById('destNotice').value.trim();
+      }
+      saveState();
+      closeDestModal();
+      render();
+    });
+
+    function moveDest(delta) {
+      const i = state.cityOrder.indexOf(destEditId), j = i + delta;
+      if (i < 0 || j < 0 || j >= state.cityOrder.length) return;
+      [state.cityOrder[i], state.cityOrder[j]] = [state.cityOrder[j], state.cityOrder[i]];
+      saveState(); render(); refreshMoveButtons();
+    }
+    document.getElementById('destMoveLeft').addEventListener('click', () => moveDest(-1));
+    document.getElementById('destMoveRight').addEventListener('click', () => moveDest(1));
+
+    document.getElementById('destDelete').addEventListener('click', () => {
+      if (state.cityOrder.length <= 1) return alert('Il faut garder au moins une destination.');
+      const c = state.cities[destEditId];
+      if (!confirm('Supprimer « ' + c.name + ' » et ses ' + c.items.length + ' élément(s) ? Cette action est définitive.')) return;
+      const i = state.cityOrder.indexOf(destEditId);
+      delete state.cities[destEditId];
+      state.cityOrder.splice(i, 1);
+      activeCity = state.cityOrder[Math.min(i, state.cityOrder.length - 1)];
+      saveState();
+      closeDestModal();
+      render();
     });
 
     document.getElementById('participantsCount').addEventListener('input', (e) => {
