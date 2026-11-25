@@ -496,6 +496,26 @@
       .hero { padding-top: 34px; }
       .form-row { grid-template-columns: 1fr; }
     }
+
+    /* --- Supabase / partage --- */
+    body.readonly #btnEditHeader,
+    body.readonly #btnAddGlobal,
+    body.readonly #btnApiConfig,
+    body.readonly #btnExportHtml,
+    body.readonly #btnReset,
+    body.readonly #btnEditRdvQuick,
+    body.readonly .card-btns,
+    body.readonly [onclick^="openAddModal"] { display: none !important; }
+    body.remote #btnReset { display: none !important; }
+    #syncStatus { font-size: 12px; font-weight: 700; color: var(--muted); align-self: center; }
+    #syncStatus.err { color: var(--red); }
+    #shareModal { position: fixed; inset: 0; background: rgba(16,26,45,.55); display: grid; place-items: center; padding: 18px; z-index: 50; }
+    #shareModal .box { background: #fff; border-radius: 16px; padding: 22px; max-width: 560px; width: 100%; }
+    #shareModal h3 { margin: 0 0 6px; }
+    #shareModal label { display: block; font-weight: 800; font-size: 13px; margin-top: 14px; }
+    #shareModal small { display: block; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+    #shareModal .row { display: flex; gap: 8px; }
+    #shareModal input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -526,6 +546,9 @@
         <button class="btn btn-yellow" id="btnAddGlobal">➕ Ajouter un élément</button>
         <button class="btn" id="btnApiConfig" title="Configurer l'extraction automatique par lien via API">⚡ Auto-lien (API)</button>
         <button class="btn" id="btnExportHtml" title="Télécharger le fichier HTML avec vos modifications enregistrées">💾 Sauvegarder HTML</button>
+        <span id="syncStatus"></span>
+        <button class="btn btn-primary" id="btnPublish" title="Enregistrer ce planning en ligne et obtenir des liens de partage">☁️ Mettre en ligne</button>
+        <button class="btn btn-primary" id="btnShare" style="display:none" title="Liens de partage">🔗 Partager</button>
         <button class="btn btn-danger" id="btnReset" title="Réinitialiser aux données d'origine">↺ Réinitialiser</button>
       </div>
     </div>
@@ -748,6 +771,21 @@
           <button type="submit" class="btn btn-primary">Enregistrer</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="shareModal" class="hidden">
+    <div class="box">
+      <h3>🔗 Partager le planning</h3>
+      <label>Lien de consultation (lecture seule)
+        <small>À envoyer à tous les participants.</small>
+        <div class="row"><input id="shareViewUrl" readonly><button class="btn btn-sm" data-copy="shareViewUrl">Copier</button></div>
+      </label>
+      <label>Lien d'édition (organisateurs uniquement)
+        <small>Quiconque a ce lien peut modifier le planning. Ne le diffusez pas largement.</small>
+        <div class="row"><input id="shareEditUrl" readonly><button class="btn btn-sm" data-copy="shareEditUrl">Copier</button></div>
+      </label>
+      <div style="text-align:right;margin-top:18px"><button class="btn" id="btnCloseShare">Fermer</button></div>
     </div>
   </div>
 
@@ -1182,7 +1220,39 @@
   </script>
 
   <script>
+    // ====== CONFIG SUPABASE (à renseigner) ======
+    const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';
+    const SUPABASE_ANON_KEY = 'VOTRE_CLE_ANON_PUBLIQUE';
+    // ============================================
+
     const STORAGE_KEY = 'evg_planner_state_v4';
+    const API_CFG_KEY = 'evg_api_config';
+
+    const urlParams = new URLSearchParams(location.search);
+    const PLAN_ID = urlParams.get('plan');
+    if (PLAN_ID && urlParams.get('key')) {
+      try { localStorage.setItem('evg_plan_key_' + PLAN_ID, urlParams.get('key')); } catch (e) {}
+      history.replaceState(null, '', location.pathname + '?plan=' + encodeURIComponent(PLAN_ID)); // retire la clé de la barre d'adresse
+    }
+    let EDIT_KEY = null;
+    try { if (PLAN_ID) EDIT_KEY = localStorage.getItem('evg_plan_key_' + PLAN_ID); } catch (e) {}
+    const IS_REMOTE = !!PLAN_ID;
+    const CAN_EDIT = !IS_REMOTE || !!EDIT_KEY;
+    document.body.classList.toggle('remote', IS_REMOTE);
+    document.body.classList.toggle('readonly', !CAN_EDIT);
+
+    function supabaseConfigured() {
+      return SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('VOTRE-PROJET') && !SUPABASE_ANON_KEY.includes('VOTRE_CLE');
+    }
+    async function rpc(fn, args) {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+        body: JSON.stringify(args)
+      });
+      if (!res.ok) throw new Error('Supabase ' + res.status);
+      return res.json();
+    }
 
     const SECTIONS_META = [
       { key: 'transport', badge: 'Transport', title: 'Trajets & multitransport', addLabel: '+ Ajouter un transport', dayOffset: null },
@@ -1198,6 +1268,11 @@
     }
 
     function loadState() {
+      if (IS_REMOTE) {
+        const st = getDefaultState();
+        try { st.apiConfig = JSON.parse(localStorage.getItem(API_CFG_KEY)) || st.apiConfig || { geminiKey: '', evgContext: '' }; } catch (e) {}
+        return st;
+      }
       try {
         const saved = localStorage.getItem(STORAGE_KEY)
           || localStorage.getItem('evg_planner_state_v3')
@@ -1232,10 +1307,51 @@
     let state = loadState();
     let activeCity = 'bruxelles';
 
+    function setSync(msg, isErr) {
+      const el = document.getElementById('syncStatus');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.classList.toggle('err', !!isErr);
+    }
+
+    let pushTimer = null;
+    function stateForRemote() {
+      const copy = JSON.parse(JSON.stringify(state));
+      delete copy.apiConfig; // la clé Gemini ne quitte jamais le navigateur
+      return copy;
+    }
+    async function pushRemote() {
+      pushTimer = null;
+      try {
+        setSync('☁️ Enregistrement…');
+        await rpc('save_plan', { p_id: PLAN_ID, p_key: EDIT_KEY, p_data: stateForRemote() });
+        setSync('✅ Enregistré');
+      } catch (e) { setSync('⚠️ Échec de la sauvegarde en ligne', true); console.warn(e); }
+    }
+
     function saveState() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) { console.warn('Erreur sauvegarde localStorage', e); }
+        if (!IS_REMOTE) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } else {
+          localStorage.setItem(API_CFG_KEY, JSON.stringify(state.apiConfig || {}));
+          if (CAN_EDIT) { clearTimeout(pushTimer); pushTimer = setTimeout(pushRemote, 600); }
+        }
+      } catch (e) { console.warn('Erreur sauvegarde', e); }
+    }
+
+    async function pullRemote() {
+      try {
+        const rows = await rpc('get_plan', { p_id: PLAN_ID });
+        if (!rows || !rows.length) { setSync('⚠️ Planning introuvable', true); return; }
+        const remote = rows[0].data || {};
+        const def = getDefaultState();
+        const merged = Object.assign({}, def, remote, { apiConfig: state.apiConfig });
+        Object.values(merged.cities || {}).forEach(c => (c.items || []).forEach(it => { if (it.enabled === undefined) it.enabled = true; }));
+        state = merged;
+        render();
+        setSync(CAN_EDIT ? '' : '');
+      } catch (e) { setSync('⚠️ Connexion à Supabase impossible', true); console.warn(e); }
     }
 
     function formatEuro(val) {
@@ -1927,8 +2043,56 @@
       }
     });
 
+    // --- Publication / partage ---
+    function planUrls() {
+      const base = location.origin + location.pathname + '?plan=' + encodeURIComponent(PLAN_ID);
+      return { view: base, edit: base + '&key=' + encodeURIComponent(EDIT_KEY) };
+    }
+    function openShare() {
+      const u = planUrls();
+      document.getElementById('shareViewUrl').value = u.view;
+      document.getElementById('shareEditUrl').value = u.edit;
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+    document.getElementById('btnCloseShare').addEventListener('click', () => document.getElementById('shareModal').classList.add('hidden'));
+    document.getElementById('shareModal').addEventListener('click', (e) => { if (e.target.id === 'shareModal') e.currentTarget.classList.add('hidden'); });
+    document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+      const inp = document.getElementById(b.dataset.copy);
+      try { await navigator.clipboard.writeText(inp.value); } catch (e) { inp.select(); document.execCommand('copy'); }
+      b.textContent = 'Copié ✓'; setTimeout(() => b.textContent = 'Copier', 1500);
+    }));
+    document.getElementById('btnShare').addEventListener('click', openShare);
+
+    document.getElementById('btnPublish').addEventListener('click', async () => {
+      if (!supabaseConfigured()) {
+        alert('Renseignez d’abord SUPABASE_URL et SUPABASE_ANON_KEY en haut du script (voir les instructions).');
+        return;
+      }
+      if (!confirm('Enregistrer ce planning en ligne ? Vous obtiendrez un lien de consultation et un lien d’édition.')) return;
+      try {
+        const rows = await rpc('create_plan', { p_data: stateForRemote() });
+        const { plan_id, plan_key } = rows[0];
+        localStorage.setItem('evg_plan_key_' + plan_id, plan_key);
+        location.href = location.pathname + '?plan=' + plan_id + '&key=' + plan_key;
+      } catch (e) { alert('Échec de la mise en ligne : ' + e.message); }
+    });
+
+    if (IS_REMOTE) {
+      document.getElementById('btnPublish').style.display = 'none';
+      if (CAN_EDIT) document.getElementById('btnShare').style.display = '';
+      else document.getElementById('heroDateBadge').insertAdjacentHTML('afterend', '<span class="hero-badge">👀 Lecture seule</span>');
+    }
+
     // Premier rendu
     render();
+    if (IS_REMOTE) {
+      if (!supabaseConfigured()) setSync('⚠️ Supabase non configuré', true);
+      else {
+        pullRemote();
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && !pushTimer) pullRemote(); });
+        if (!CAN_EDIT) setInterval(() => { if (!document.hidden) pullRemote(); }, 30000);
+      }
+    }
   </script>
 </body>
 </html>
