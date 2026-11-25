@@ -31,9 +31,16 @@
     .hero {
       background: linear-gradient(120deg, #101a2d, #253b5c);
       color: white;
-      padding: 44px 22px 38px;
+      padding: 40px 22px 38px;
     }
     .wrap { max-width: 1120px; margin: auto; }
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
     .eyebrow {
       text-transform: uppercase;
       letter-spacing: .16em;
@@ -41,8 +48,43 @@
       font-weight: 800;
       color: var(--yellow);
     }
-    h1 { font-size: clamp(34px, 6vw, 58px); line-height: 1; margin: 10px 0; }
-    .hero p { color: #d8dfeb; margin: 12px 0 0; font-size: 17px; }
+    h1 { font-size: clamp(32px, 5.5vw, 54px); line-height: 1.05; margin: 10px 0; }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .hero-date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .hero p { color: #d8dfeb; margin: 0; font-size: 16px; }
+    .btn-hero {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: white;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+    .btn-hero:hover { background: rgba(255, 255, 255, 0.22); }
+
     main { max-width: 1120px; margin: -18px auto 60px; padding: 0 18px; }
 
     /* Top bar: Tabs + Global Actions */
@@ -163,7 +205,7 @@
       gap: 10px;
       margin-bottom: 12px;
     }
-    .day-title-group { display: flex; align-items: center; gap: 12px; }
+    .day-title-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .day-head h2 { font-size: 20px; margin: 0; }
     .day-badge {
       font-size: 11px;
@@ -173,6 +215,14 @@
       font-weight: 800;
       background: #e9edf4;
       padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .day-date-pill {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--blue);
+      background: #e8f1fb;
+      padding: 3px 9px;
       border-radius: 6px;
     }
     .day-subtotal {
@@ -224,7 +274,6 @@
     .meta { display: grid; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 13px; }
     .meta a { color: var(--blue); text-decoration: none; }
     .meta a:hover { text-decoration: underline; }
-    .placeholder { color: #98a2b3; font-style: italic; }
     .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
     .tag {
       display: inline-block;
@@ -327,9 +376,17 @@
 <body>
   <header class="hero">
     <div class="wrap">
-      <div class="eyebrow">Le week-end du futur marié</div>
-      <h1>EVG</h1>
-      <p>Deux destinations, trois jours, un week-end mémorable — planning interactif & budget dynamique.</p>
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow" id="heroEyebrow">Le week-end du futur marié</div>
+          <h1 id="heroTitle">EVG</h1>
+          <div class="hero-meta">
+            <span class="hero-date-badge" id="heroDateBadge">📅 Dates à définir</span>
+            <p id="heroSubtitle">Deux destinations, trois jours, un week-end mémorable.</p>
+          </div>
+        </div>
+        <button class="btn-hero" id="btnEditHeader">✏️ Modifier titre & dates</button>
+      </div>
     </div>
   </header>
 
@@ -370,7 +427,37 @@
     </div>
   </main>
 
-  <!-- Modale Ajout / Édition -->
+  <!-- Modale Titre & Dates -->
+  <div class="modal-backdrop hidden" id="headerModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="headerModalTitle">
+      <h3 id="headerModalTitle">Personnaliser l'en-tête & les dates</h3>
+      <form id="headerForm" class="form-grid">
+        <div class="field">
+          <label for="fieldEyebrow">Surtitre</label>
+          <input type="text" id="fieldEyebrow" placeholder="Ex : Le week-end du futur marié">
+        </div>
+        <div class="field">
+          <label for="fieldMainTitle">Titre de l'EVG *</label>
+          <input type="text" id="fieldMainTitle" placeholder="Ex : EVG de Thomas" required>
+        </div>
+        <div class="field">
+          <label for="fieldStartDate">Date de début (Vendredi — Jour 1)</label>
+          <input type="date" id="fieldStartDate">
+          <small style="color:var(--muted);font-size:12px;display:block;margin-top:4px;">Les dates du samedi (Jour 2) et dimanche (Jour 3) se calculeront automatiquement.</small>
+        </div>
+        <div class="field">
+          <label for="fieldSubtitle">Sous-titre / Description</label>
+          <input type="text" id="fieldSubtitle" placeholder="Ex : Deux destinations, trois jours, un week-end mémorable.">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btnCancelHeaderModal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Ajout / Édition Activité/Transport -->
   <div class="modal-backdrop hidden" id="itemModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h3 id="modalTitle">Ajouter un élément</h3>
@@ -448,6 +535,10 @@
 
   <script id="initial-data" type="application/json">
   {
+    "eyebrow": "Le week-end du futur marié",
+    "title": "EVG",
+    "subtitle": "Deux destinations, trois jours, un week-end mémorable.",
+    "startDate": "",
     "participants": 12,
     "includeOptions": true,
     "cities": {
@@ -780,14 +871,14 @@
   </script>
 
   <script>
-    const STORAGE_KEY = 'evg_planner_state_v1';
+    const STORAGE_KEY = 'evg_planner_state_v2';
 
     const SECTIONS_META = [
-      { key: 'transport', badge: 'Transport', title: 'Trajets & déplacements', addLabel: '+ Ajouter un transport' },
-      { key: 'lodging', badge: 'Logement', title: 'Hébergement', addLabel: '+ Ajouter un hébergement' },
-      { key: 'day1', badge: 'Jour 1', title: 'Vendredi — Arrivée & mise en jambes', addLabel: '+ Ajouter au Jour 1' },
-      { key: 'day2', badge: 'Jour 2', title: 'Samedi — Activités & soirée', addLabel: '+ Ajouter au Jour 2' },
-      { key: 'day3', badge: 'Jour 3', title: 'Dimanche — Dernier repas & retour', addLabel: '+ Ajouter au Jour 3' }
+      { key: 'transport', badge: 'Transport', title: 'Trajets & déplacements', addLabel: '+ Ajouter un transport', dayOffset: null },
+      { key: 'lodging', badge: 'Logement', title: 'Hébergement', addLabel: '+ Ajouter un hébergement', dayOffset: null },
+      { key: 'day1', badge: 'Jour 1', title: 'Arrivée & mise en jambes', addLabel: '+ Ajouter au Jour 1', dayOffset: 0 },
+      { key: 'day2', badge: 'Jour 2', title: 'Activités & soirée', addLabel: '+ Ajouter au Jour 2', dayOffset: 1 },
+      { key: 'day3', badge: 'Jour 3', title: 'Dernier repas & retour', addLabel: '+ Ajouter au Jour 3', dayOffset: 2 }
     ];
 
     function getDefaultState() {
@@ -797,8 +888,20 @@
 
     function loadState() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) return JSON.parse(saved);
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('evg_planner_state_v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const def = getDefaultState();
+          return {
+            eyebrow: parsed.eyebrow !== undefined ? parsed.eyebrow : def.eyebrow,
+            title: parsed.title !== undefined ? parsed.title : def.title,
+            subtitle: parsed.subtitle !== undefined ? parsed.subtitle : def.subtitle,
+            startDate: parsed.startDate !== undefined ? parsed.startDate : def.startDate,
+            participants: parsed.participants || def.participants,
+            includeOptions: parsed.includeOptions !== undefined ? parsed.includeOptions : def.includeOptions,
+            cities: parsed.cities || def.cities
+          };
+        }
       } catch (e) { console.warn('Erreur lecture localStorage', e); }
       return getDefaultState();
     }
@@ -834,10 +937,46 @@
         .replace(/"/g, '&quot;');
     }
 
+    function parseIsoDate(isoStr) {
+      if (!isoStr || !/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return null;
+      const [y, m, d] = isoStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function addDays(dateObj, days) {
+      const copy = new Date(dateObj.getTime());
+      copy.setDate(copy.getDate() + days);
+      return copy;
+    }
+
+    function formatFrenchDate(dateObj, includeYear = false) {
+      const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+      if (includeYear) opts.year = 'numeric';
+      const str = dateObj.toLocaleDateString('fr-FR', opts);
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function formatDateRange(startDateStr) {
+      const start = parseIsoDate(startDateStr);
+      if (!start) return '📅 Dates à définir';
+      const end = addDays(start, 2);
+      const startDay = start.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+      const endDay = end.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+      return `📅 Du ${startDay} au ${endDay}`;
+    }
+
     function render() {
       const city = state.cities[activeCity];
       const participants = Math.max(1, parseInt(state.participants, 10) || 1);
       const includeOptions = !!state.includeOptions;
+
+      // Mise à jour de l'en-tête & titre de l'onglet navigateur
+      const mainTitle = state.title || 'EVG';
+      document.title = `${mainTitle} — Bruxelles ou Charleroi`;
+      document.getElementById('heroEyebrow').textContent = state.eyebrow || '';
+      document.getElementById('heroTitle').textContent = mainTitle;
+      document.getElementById('heroSubtitle').textContent = state.subtitle || '';
+      document.getElementById('heroDateBadge').textContent = formatDateRange(state.startDate);
 
       document.getElementById('participantsCount').value = participants;
       document.getElementById('includeOptions').checked = includeOptions;
@@ -898,6 +1037,8 @@
       // Rendu des sections
       const container = document.getElementById('cityContent');
       container.innerHTML = '';
+      const baseDate = parseIsoDate(state.startDate);
+      const defaultWeekdays = ['Vendredi', 'Samedi', 'Dimanche'];
 
       SECTIONS_META.forEach(sec => {
         const items = city.items.filter(i => i.category === sec.key);
@@ -907,6 +1048,18 @@
           const c = getPerPersonCost(item, participants);
           if (c !== null) sectionCostPerPerson += c;
         });
+
+        let sectionHeading = sec.title;
+        let datePillHtml = '';
+        if (sec.dayOffset !== null) {
+          if (baseDate) {
+            const d = addDays(baseDate, sec.dayOffset);
+            const formatted = formatFrenchDate(d, false);
+            sectionHeading = `${formatted} — ${sec.title}`;
+          } else {
+            sectionHeading = `${defaultWeekdays[sec.dayOffset]} — ${sec.title}`;
+          }
+        }
 
         const sectionEl = document.createElement('section');
         sectionEl.className = 'day';
@@ -919,7 +1072,8 @@
           <div class="day-head">
             <div class="day-title-group">
               <span class="day-badge">${sec.badge}</span>
-              <h2>${sec.title}</h2>
+              <h2>${escapeHtml(sectionHeading)}</h2>
+              ${datePillHtml}
             </div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
               <div class="day-subtotal">Sous-total : <span>${formatEuro(sectionCostPerPerson)} / pers.</span></div>
@@ -987,7 +1141,38 @@
       `;
     }
 
-    // Gestion Modale
+    // Gestion Modale En-tête (Titre & Dates)
+    const headerModal = document.getElementById('headerModal');
+    const headerForm = document.getElementById('headerForm');
+
+    document.getElementById('btnEditHeader').addEventListener('click', () => {
+      document.getElementById('fieldEyebrow').value = state.eyebrow || '';
+      document.getElementById('fieldMainTitle').value = state.title || 'EVG';
+      document.getElementById('fieldStartDate').value = state.startDate || '';
+      document.getElementById('fieldSubtitle').value = state.subtitle || '';
+      headerModal.classList.remove('hidden');
+      document.getElementById('fieldMainTitle').focus();
+    });
+
+    function closeHeaderModal() {
+      headerModal.classList.add('hidden');
+    }
+
+    document.getElementById('btnCancelHeaderModal').addEventListener('click', closeHeaderModal);
+    headerModal.addEventListener('click', (e) => { if (e.target === headerModal) closeHeaderModal(); });
+
+    headerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.eyebrow = document.getElementById('fieldEyebrow').value.trim();
+      state.title = document.getElementById('fieldMainTitle').value.trim() || 'EVG';
+      state.startDate = document.getElementById('fieldStartDate').value;
+      state.subtitle = document.getElementById('fieldSubtitle').value.trim();
+      saveState();
+      closeHeaderModal();
+      render();
+    });
+
+    // Gestion Modale Activité / Transport
     const modal = document.getElementById('itemModal');
     const form = document.getElementById('itemForm');
 
@@ -1105,6 +1290,7 @@
     document.getElementById('btnReset').addEventListener('click', () => {
       if (confirm('Réinitialiser toutes les données aux valeurs par défaut ? Vos modifications non exportées seront perdues.')) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('evg_planner_state_v1');
         state = getDefaultState();
         render();
       }
@@ -1113,11 +1299,10 @@
     // Export d'un fichier HTML autonome avec l'état actuel intégré
     document.getElementById('btnExportHtml').addEventListener('click', () => {
       const clone = document.documentElement.cloneNode(true);
-      // Nettoyer le contenu dynamique avant export
       clone.querySelector('#summaryCards').innerHTML = '';
       clone.querySelector('#cityContent').innerHTML = '';
       clone.querySelector('#itemModal').classList.add('hidden');
-      // Injecter l'état actuel dans la balise JSON
+      clone.querySelector('#headerModal').classList.add('hidden');
       clone.querySelector('#initial-data').textContent = JSON.stringify(state, null, 2);
 
       const blob = new Blob(['<!doctype html>\n' + clone.outerHTML], { type: 'text/html;charset=utf-8' });
