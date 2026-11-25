@@ -1323,13 +1323,17 @@ $('resetBtn').onclick = () => {
   title.textContent = state.title; save(); render();
 };
 
-// Désactive les champs de saisie pour les lecteurs (se réapplique à chaque rendu)
+// Lecteurs : champs de saisie désactivés (se réapplique à chaque rendu).
+// Admin : on ne touche à rien, et on réactive ce que ce verrou aurait désactivé.
+let lockObserver = null;
 function lockUi() {
-  if (!READONLY) return;
-  document.querySelectorAll('#detail input,#detail select,#detail textarea,#menusView input:not(#menuSearch),#menusView select:not(#menuFilter),#menusView textarea,#djView input,#djView select,#djView textarea')
-    .forEach(el => { if (!el.disabled) el.disabled = true; });
+  if (READONLY) {
+    document.querySelectorAll('#detail input,#detail select,#detail textarea,#menusView input:not(#menuSearch),#menusView select:not(#menuFilter),#menusView textarea,#djView input,#djView select,#djView textarea')
+      .forEach(el => { if (!el.disabled) { el.disabled = true; el.dataset.hublock = '1'; } });
+  } else {
+    document.querySelectorAll('[data-hublock]').forEach(el => { el.disabled = false; delete el.dataset.hublock; });
+  }
 }
-new MutationObserver(lockUi).observe(document.body, { childList: true, subtree: true });
 
 // Démarrage : connexion à la base, rôle (admin / lecteur), premier rendu
 (async function boot() {
@@ -1338,6 +1342,7 @@ new MutationObserver(lockUi).observe(document.body, { childList: true, subtree: 
   READONLY = !hubConn.isAdmin;
   document.body.classList.toggle('readonly', READONLY);
   title.contentEditable = READONLY ? 'false' : 'true';
+  if (READONLY) { lockObserver = new MutationObserver(lockUi); lockObserver.observe(document.body, { childList: true, subtree: true }); }
   hubConn.mountBar();
   const apply = d => {
     state = (d && Array.isArray(d.tables)) ? d : emptyState();
