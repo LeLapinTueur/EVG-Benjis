@@ -25,6 +25,14 @@
       transition:transform .15s, box-shadow .15s, border-color .15s; }
     .card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(16,26,45,.12); border-color:#cbd5e1; }
     .card:focus-visible { outline:3px solid var(--yellow); outline-offset:2px; }
+    .cardwrap { position:relative; display:flex; }
+    .cardwrap .card { flex:1; }
+    .gear { all:unset; position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:10px; display:grid; place-items:center;
+      cursor:pointer; font-size:17px; color:var(--muted); }
+    .gear:hover { background:#f2f4f7; color:var(--ink); }
+    .gear:focus-visible { outline:3px solid var(--yellow); }
+    .chip.pub { background:#e7f0fb; color:#245a9a; }
+    .link { all:unset; cursor:pointer; color:#245a9a; font-weight:700; font-size:13px; text-decoration:underline; margin-right:auto; align-self:center; }
     .ico { width:52px; height:52px; border-radius:14px; background:#fff4c9; display:grid; place-items:center; font-size:28px; }
     .card h2 { margin:2px 0 0; font-size:20px; }
     .card p { margin:0; color:var(--muted); font-size:14px; flex:1; }
@@ -77,6 +85,7 @@
       <label id="pw2Wrap">Confirmer le mot de passe <input type="password" id="pw2" autocomplete="new-password"></label>
       <div class="msg" id="msg"></div>
       <div class="row">
+        <button type="button" class="link" id="guestBtn" hidden>👀 Consulter sans mot de passe</button>
         <button type="button" class="btn" id="cancel">Annuler</button>
         <button type="submit" class="btn pri" id="submit">Entrer</button>
       </div>
@@ -99,18 +108,21 @@
         const ses = Hub.getSession(s.slug);
         const chip = !s.configured ? '<span class="chip setup">⚙️ À configurer</span>'
           : ses ? '<span class="chip on">🔓 Connecté · ' + (ses.role === 'admin' ? 'admin' : 'lecteur') + '</span>'
+          : s.public_read ? '<span class="chip pub">👀 Consultation libre</span>'
           : '<span class="chip">🔒 Mot de passe</span>';
-        const b = document.createElement('button');
-        b.className = 'card';
-        b.innerHTML = '<div class="ico">' + esc(s.emoji) + '</div><h2>' + esc(s.title) + '</h2><p>' + esc(s.description) + '</p>' + chip;
-        b.onclick = () => openSite(s);
-        grid.appendChild(b);
+        const w = document.createElement('div');
+        w.className = 'cardwrap';
+        w.innerHTML = '<button class="card"><div class="ico">' + esc(s.emoji) + '</div><h2>' + esc(s.title) + '</h2><p>' + esc(s.description) + '</p>' + chip + '</button>' +
+          '<button class="gear" title="Réglages (administrateur)" aria-label="Réglages de ' + esc(s.title) + '">⚙️</button>';
+        w.querySelector('.card').onclick = () => openSite(s);
+        w.querySelector('.gear').onclick = () => (s.configured ? Hub.manage(s, (changed) => { if (changed) reload(); }) : openSite(s));
+        grid.appendChild(w);
       });
       $('logoutAll').hidden = !Hub.allSessions().length;
     }
 
     function openSite(s, why, force) {
-      if (!force && s.configured && Hub.getSession(s.slug)) { location.href = s.path; return; }
+      if (!force && s.configured && (Hub.getSession(s.slug) || s.public_read)) { location.href = s.path; return; }
       current = s;
       const first = !s.configured;
       $('mTitle').textContent = (first ? '⚙️ ' : '🔒 ') + s.title;
@@ -121,6 +133,7 @@
       $('pw').autocomplete = first ? 'new-password' : 'current-password';
       $('submit').textContent = first ? 'Créer et entrer' : 'Entrer';
       $('form').reset();
+      $('guestBtn').hidden = !(s.configured && s.public_read);
       const m = $('msg');
       m.className = 'msg' + (why === 'expired' ? ' info' : '');
       m.textContent = why === 'expired' ? 'Votre session a expiré, reconnectez-vous.' : '';
@@ -128,6 +141,7 @@
       $('pw').focus();
     }
     const closeModal = () => $('ovl').classList.add('hidden');
+    $('guestBtn').onclick = () => { location.href = current.path; };
     $('cancel').onclick = closeModal;
     $('ovl').addEventListener('click', (e) => { if (e.target === $('ovl')) closeModal(); });
 
@@ -154,6 +168,11 @@
       await Promise.all(Hub.allSessions().map((slug) => Hub.logout(slug)));
       render();
     };
+
+    async function reload() {
+      try { sites = await Hub.rpc('list_sites'); } catch (e) { return; }
+      render();
+    }
 
     (async function init() {
       if (!Hub.configured()) {

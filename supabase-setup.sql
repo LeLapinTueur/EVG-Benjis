@@ -29,15 +29,29 @@ create table if not exists public.site_sessions (
 );
 create index if not exists site_sessions_slug_idx on public.site_sessions (slug);
 
+-- Consultation libre (sans mot de passe) : réservée aux sites où public_read_allowed = true.
+-- L'administrateur d'un site autorisé peut l'activer / la couper depuis l'accueil.
+do $$
+begin
+  if not exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'sites' and column_name = 'public_read_allowed') then
+    alter table public.sites
+      add column public_read         boolean not null default false,   -- consultation libre activée ?
+      add column public_read_allowed boolean not null default false;   -- le site a-t-il le droit de l'activer ?
+    alter table public.sites add constraint sites_public_needs_allowed check (not public_read or public_read_allowed);
+    update public.sites set public_read_allowed = true where slug = 'plan-de-table';
+  end if;
+end $$;
+
 -- Aucun accès direct aux tables : tout passe par les fonctions ci-dessous
 alter table public.sites         enable row level security;
 alter table public.site_sessions enable row level security;
 revoke all on public.sites, public.site_sessions from anon, authenticated;
 
 -- ---------- Vos sites (ajoutez une ligne pour chaque nouveau bouton) -----
-insert into public.sites (slug, title, emoji, description, sort_order) values
-  ('evg',           'EVG',            '🎉', 'Planning et budget du week-end',        10),
-  ('plan-de-table', 'Plan de table',  '💍', 'Invités, tables, menus, DJ et traiteur', 20)
+insert into public.sites (slug, title, emoji, description, sort_order, public_read_allowed) values
+  ('evg',           'EVG',            '🎉', 'Planning et budget du week-end',        10, false),
+  ('plan-de-table', 'Plan de table',  '💍', 'Invités, tables, menus, DJ et traiteur', 20, true)
 on conflict (slug) do nothing;
 
 -- ---------- Reprise de l'ancien planning EVG (si l'ancienne table existe) --
@@ -57,16 +71,25 @@ end $$;
 create or replace function public._site_role(p_slug text, p_token uuid)
 returns text
 language sql stable security definer set search_path = public as $$
-  select ss.role from public.site_sessions ss
-   where ss.token = p_token and ss.slug = p_slug and ss.expires_at > now();
+  select case
+    when p_token is not null then
+      (select ss.role from public.site_sessions ss
+        where ss.token = p_token and ss.slug = p_slug and ss.expires_at > now())
+    else  -- pas de session : lecteur seulement si la consultation libre est activée
+      (select 'reader' from public.sites s
+        where s.slug = p_slug and s.public_read and s.public_read_allowed)
+  end;
 $$;
 
 -- ---------- Liste des sites (pour l'accueil) — aucune donnée sensible ----
+drop function if exists public.list_sites();
 create or replace function public.list_sites()
-returns table (slug text, title text, emoji text, description text, path text, configured boolean)
+returns table (slug text, title text, emoji text, description text, path text, configured boolean,
+               public_read boolean, can_be_public boolean)
 language sql stable security definer set search_path = public as $$
   select s.slug, s.title, s.emoji, s.description,
-         coalesce(s.path, '/' || s.slug || '/'), s.admin_hash is not null
+         coalesce(s.path, '/' || s.slug || '/'), s.admin_hash is not null,
+         s.public_read, s.public_read_allowed
     from public.sites s
    order by s.sort_order, s.title;
 $$;
@@ -188,6 +211,33 @@ begin
   end if;
 end $$;
 
+-- ---------- Réglages d'un site (admin uniquement) -------------------------
+create or replace function public.site_settings(p_slug text, p_token uuid)
+returns table (has_reader boolean, public_read boolean, can_be_public boolean)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if public._site_role(p_slug, p_token) is distinct from 'admin' then
+    raise exception 'Session invalide';
+  end if;
+  return query
+    select s.reader_hash is not null, s.public_read, s.public_read_allowed
+      from public.sites s where s.slug = p_slug;
+end $$;
+
+-- ---------- Consultation libre on/off (admin uniquement) ------------------
+create or replace function public.site_set_public(p_slug text, p_token uuid, p_public boolean)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if public._site_role(p_slug, p_token) is distinct from 'admin' then
+    raise exception 'Session invalide';
+  end if;
+  if p_public and not exists (select 1 from public.sites s where s.slug = p_slug and s.public_read_allowed) then
+    raise exception 'Ce site ne peut pas être consulté sans mot de passe';
+  end if;
+  update public.sites set public_read = p_public where slug = p_slug;
+end $$;
+
 -- ---------- Déconnexion ---------------------------------------------------
 create or replace function public.site_logout(p_token uuid)
 returns void
@@ -200,12 +250,14 @@ revoke all on function public._site_role(text, uuid) from public, anon, authenti
 revoke all on function
   public.list_sites(), public.site_claim(text, text), public.site_login(text, text),
   public.site_get(text, uuid), public.site_save(text, uuid, jsonb),
-  public.site_set_password(text, uuid, text, text), public.site_logout(uuid)
+  public.site_set_password(text, uuid, text, text), public.site_logout(uuid),
+  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean)
   from public;
 grant execute on function
   public.list_sites(), public.site_claim(text, text), public.site_login(text, text),
   public.site_get(text, uuid), public.site_save(text, uuid, jsonb),
-  public.site_set_password(text, uuid, text, text), public.site_logout(uuid)
+  public.site_set_password(text, uuid, text, text), public.site_logout(uuid),
+  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean)
   to anon, authenticated;
 
 -- =====================================================================
@@ -213,4 +265,9 @@ grant execute on function
 --    insert into public.sites (slug, title, emoji, description, sort_order)
 --    values ('voyage', 'Voyage', '✈️', 'Itinéraire et réservations', 30);
 --  puis ajoutez un dossier /voyage/ au projet (voir _modele/).
+--  Pour autoriser la consultation libre sur ce site : public_read_allowed = true.
+--
+--  Mot de passe admin perdu ? Rendez le site « à configurer » (vous choisirez un nouveau mot de passe) :
+--    update public.sites set admin_hash = null where slug = 'evg';
+--    delete from public.site_sessions where slug = 'evg';
 -- =====================================================================

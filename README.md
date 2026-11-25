@@ -23,3 +23,15 @@ vercel.json, robots.txt   Empêchent l'indexation par les moteurs de recherche
 2. Dans Supabase (SQL Editor) :
    `insert into public.sites (slug, title, emoji, description, sort_order) values ('mon-site', 'Mon site', '✈️', 'Description', 30);`
 3. Poussez sur GitHub : le bouton apparaît tout seul sur l'accueil.
+
+## Réglages d'un site (⚙️ sur l'accueil, ou « ⚙️ Réglages » dans le site)
+Réservés à l'administrateur du site : changer le mot de passe admin, créer / supprimer le mot de passe lecteur,
+et (plan de table uniquement) activer la **consultation libre** : tout le monde voit le site en lecture seule, sans mot de passe.
+La base refuse la consultation libre sur les sites où `public_read_allowed = false` (c'est le cas de l'EVG).
+
+## Mot de passe admin perdu
+Dans Supabase (SQL Editor) : le site redevient « à configurer » et vous choisissez un nouveau mot de passe à l'accueil.
+```sql
+update public.sites set admin_hash = null where slug = 'evg';
+delete from public.site_sessions where slug = 'evg';
+```
