@@ -53,10 +53,10 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       margin-top: 12px;
     }
-    .hero-date-badge {
+    .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 7px;
@@ -66,9 +66,14 @@
       padding: 6px 13px;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
     }
-    .hero p { color: #d8dfeb; margin: 0; font-size: 16px; }
+    .hero-badge.rdv {
+      background: rgba(255, 201, 40, 0.18);
+      border-color: rgba(255, 201, 40, 0.45);
+      color: #ffe89e;
+    }
+    .hero p { color: #d8dfeb; margin: 10px 0 0; font-size: 15px; }
     .btn-hero {
       background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -141,6 +146,41 @@
     .btn-danger { color: var(--red); }
     .btn-danger:hover { background: var(--red-bg); border-color: #fecdca; }
     .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+
+    /* Meeting Point Banner */
+    .rdv-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--yellow);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(16,26,45,.04);
+    }
+    .rdv-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .rdv-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: #fff4c9;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .rdv-title { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; color: var(--muted); }
+    .rdv-details { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 2px; }
+    .rdv-sub { font-size: 13px; color: var(--muted); font-weight: 500; }
 
     /* Summary Cards */
     .summary {
@@ -217,14 +257,6 @@
       padding: 3px 8px;
       border-radius: 6px;
     }
-    .day-date-pill {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--blue);
-      background: #e8f1fb;
-      padding: 3px 9px;
-      border-radius: 6px;
-    }
     .day-subtotal {
       font-size: 13px;
       font-weight: 700;
@@ -249,13 +281,25 @@
       gap: 13px;
       min-width: 0;
       position: relative;
-      transition: box-shadow .15s, border-color .15s;
+      transition: box-shadow .15s, border-color .15s, opacity .15s, background .15s;
     }
     .activity:hover {
       border-color: #cbd5e1;
       box-shadow: 0 4px 12px rgba(16,26,45,.05);
     }
-    .activity.excluded { opacity: 0.55; background: #fafbfc; }
+    .activity.excluded {
+      opacity: 0.58;
+      background: #f8f9fb;
+      border-style: dashed;
+    }
+    .activity.excluded h3 {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .activity.excluded .price {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
     .emoji {
       width: 46px;
       height: 46px;
@@ -285,15 +329,96 @@
       font-weight: 800;
     }
     .tag.option { background: #fef3c7; color: #92400e; }
+    .tag.disabled-tag { background: #fee2e2; color: #991b1b; }
     .tag.group-price { background: #e0f2fe; color: #075985; }
+    .tag.mode-tag { background: #ede9fe; color: #5b21b6; }
 
+    /* Card Footer: Switch + Edit/Delete */
     .card-actions {
       display: flex;
-      gap: 6px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
       margin-top: 12px;
       padding-top: 10px;
       border-top: 1px dashed var(--line);
-      justify-content: flex-end;
+    }
+    .card-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Toggle Switch */
+    .switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      user-select: none;
+    }
+    .switch-label input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-track {
+      width: 36px;
+      height: 20px;
+      background: #cbd5e1;
+      border-radius: 999px;
+      position: relative;
+      transition: background .2s;
+      flex-shrink: 0;
+    }
+    .switch-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .switch-label input:checked + .switch-track {
+      background: var(--green);
+    }
+    .switch-label input:checked + .switch-track::after {
+      transform: translateX(16px);
+    }
+
+    /* Transport Preset Pills in Modal */
+    .transport-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .preset-pill {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .preset-pill:hover {
+      background: #e2e8f0;
+    }
+    .preset-pill.active {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
     }
 
     /* Modal */
@@ -310,7 +435,7 @@
       background: white;
       border-radius: 18px;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       max-height: 90vh;
       overflow-y: auto;
       padding: 24px;
@@ -381,11 +506,12 @@
           <div class="eyebrow" id="heroEyebrow">Le week-end du futur marié</div>
           <h1 id="heroTitle">EVG</h1>
           <div class="hero-meta">
-            <span class="hero-date-badge" id="heroDateBadge">📅 Dates à définir</span>
-            <p id="heroSubtitle">Deux destinations, trois jours, un week-end mémorable.</p>
+            <span class="hero-badge" id="heroDateBadge">📅 Dates à définir</span>
+            <span class="hero-badge rdv" id="heroRdvBadge">📍 RDV : Lieu & horaire à définir</span>
           </div>
+          <p id="heroSubtitle">Deux destinations, trois jours, un week-end mémorable.</p>
         </div>
-        <button class="btn-hero" id="btnEditHeader">✏️ Modifier titre & dates</button>
+        <button class="btn-hero" id="btnEditHeader">✏️ Modifier titre, dates & RDV</button>
       </div>
     </div>
   </header>
@@ -404,6 +530,19 @@
       </div>
     </div>
 
+    <!-- Encart Point de rendez-vous de départ -->
+    <div class="rdv-card">
+      <div class="rdv-info">
+        <div class="rdv-icon">🚩</div>
+        <div>
+          <div class="rdv-title">Point de rendez-vous & départ</div>
+          <div class="rdv-details" id="rdvDisplayMain">Lieu de rencontre à définir</div>
+          <div class="rdv-sub" id="rdvDisplaySub">Cliquez sur « Modifier le RDV » pour indiquer l'adresse et l'heure de rassemblement.</div>
+        </div>
+      </div>
+      <button class="btn btn-sm" id="btnEditRdvQuick">✏️ Modifier le RDV</button>
+    </div>
+
     <!-- Barre participants & options -->
     <div class="participants-bar">
       <label for="participantsCount">
@@ -412,7 +551,7 @@
       </label>
       <label class="option-toggle">
         <input type="checkbox" id="includeOptions" checked>
-        Inclure les activités en « OPTION » dans le calcul du budget
+        Inclure aussi les éléments marqués « OPTION » dans le budget
       </label>
     </div>
 
@@ -424,32 +563,55 @@
     <div id="cityContent"></div>
 
     <div class="footer">
-      <strong>À retenir :</strong> le budget se recalcule automatiquement dès que vous modifiez, ajoutez ou supprimez un transport, un hébergement ou une activité. Vos changements sont enregistrés automatiquement dans votre navigateur, et vous pouvez télécharger une copie autonome via <strong>« Sauvegarder HTML »</strong>.
+      <strong>À retenir :</strong> activez ou désactivez chaque activité ou trajet grâce à son interrupteur <strong>« Inclus »</strong> pour simuler instantanément le budget avec ou sans cet élément. Vous pouvez aussi combiner plusieurs modes de transport (ex. voiture + train + avion/métro) dans la section Transport.
     </div>
   </main>
 
-  <!-- Modale Titre & Dates -->
+  <!-- Modale Titre, Dates & Point de RDV -->
   <div class="modal-backdrop hidden" id="headerModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="headerModalTitle">
-      <h3 id="headerModalTitle">Personnaliser l'en-tête & les dates</h3>
+      <h3 id="headerModalTitle">Personnaliser l'EVG, les dates & le RDV</h3>
       <form id="headerForm" class="form-grid">
-        <div class="field">
-          <label for="fieldEyebrow">Surtitre</label>
-          <input type="text" id="fieldEyebrow" placeholder="Ex : Le week-end du futur marié">
+        <div class="form-row">
+          <div class="field">
+            <label for="fieldEyebrow">Surtitre</label>
+            <input type="text" id="fieldEyebrow" placeholder="Ex : Le week-end du futur marié">
+          </div>
+          <div class="field">
+            <label for="fieldMainTitle">Titre de l'EVG *</label>
+            <input type="text" id="fieldMainTitle" placeholder="Ex : EVG de Thomas" required>
+          </div>
         </div>
-        <div class="field">
-          <label for="fieldMainTitle">Titre de l'EVG *</label>
-          <input type="text" id="fieldMainTitle" placeholder="Ex : EVG de Thomas" required>
-        </div>
+
         <div class="field">
           <label for="fieldStartDate">Date de début (Vendredi — Jour 1)</label>
           <input type="date" id="fieldStartDate">
           <small style="color:var(--muted);font-size:12px;display:block;margin-top:4px;">Les dates du samedi (Jour 2) et dimanche (Jour 3) se calculeront automatiquement.</small>
         </div>
+
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;display:grid;gap:10px;">
+          <div style="font-size:12px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.05em;">🚩 Point de rendez-vous initial</div>
+          <div class="form-row">
+            <div class="field">
+              <label for="fieldMeetingPlace">Lieu de rencontre</label>
+              <input type="text" id="fieldMeetingPlace" placeholder="Ex : Gare de Château-Thierry / Parking...">
+            </div>
+            <div class="field">
+              <label for="fieldMeetingTime">Horaire de RDV</label>
+              <input type="time" id="fieldMeetingTime">
+            </div>
+          </div>
+          <div class="field">
+            <label for="fieldMeetingNote">Précisions (consignes, bagages, covoiturage...)</label>
+            <input type="text" id="fieldMeetingNote" placeholder="Ex : Soyez à l'heure, départ du train à 17h15 !">
+          </div>
+        </div>
+
         <div class="field">
           <label for="fieldSubtitle">Sous-titre / Description</label>
           <input type="text" id="fieldSubtitle" placeholder="Ex : Deux destinations, trois jours, un week-end mémorable.">
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn" id="btnCancelHeaderModal">Annuler</button>
           <button type="submit" class="btn btn-primary">Enregistrer</button>
@@ -464,7 +626,7 @@
       <h3 id="apiModalTitle">⚡ Extraction automatique depuis un lien (API)</h3>
       <form id="apiForm" class="form-grid">
         <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.5;">
-          Pour contourner les blocages d'accès direct aux sites depuis un fichier local, vous pouvez connecter une <b>clé API Gemini</b> (ou laisser vide pour tenter un simple lecteur de page public). La clé reste enregistrée uniquement dans votre navigateur (<code>localStorage</code>).
+          Connectez une <b>clé API Gemini</b> (ou laissez vide pour tenter un lecteur de page public) afin de pré-remplir automatiquement le titre, le lieu et le prix depuis un lien web. La clé est enregistrée uniquement dans votre navigateur.
         </p>
         <div class="field">
           <label for="fieldGeminiKey">Clé API Gemini (optionnel)</label>
@@ -492,7 +654,7 @@
           <div class="field">
             <label for="fieldCategory">Catégorie / Moment</label>
             <select id="fieldCategory" required>
-              <option value="transport">🚆 Transport (aller/retour & trajets)</option>
+              <option value="transport">🚆 Transport (multitransport possible)</option>
               <option value="lodging">🏨 Hébergement</option>
               <option value="day1">📅 Jour 1 — Vendredi</option>
               <option value="day2">📅 Jour 2 — Samedi</option>
@@ -505,20 +667,22 @@
           </div>
         </div>
 
-        <div class="field" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;">
-          <label for="fieldImportUrl">🔗 Remplissage auto depuis un lien web (expérimental)</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="url" id="fieldImportUrl" placeholder="Collez l'URL d'une activité, resto ou bar..." style="flex:1;">
-            <button type="button" class="btn btn-primary btn-sm" id="btnFetchUrl">Analyser</button>
+        <!-- Sélecteur rapide de mode de transport (visible surtout quand catégorie = transport) -->
+        <div class="field" id="transportModeBox" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:12px;">
+          <label>Mode de transport (vous pouvez ajouter plusieurs étapes : voiture + train + avion...)</label>
+          <div class="transport-presets" id="transportPresets">
+            <button type="button" class="preset-pill" data-mode="Train" data-emoji="🚄">🚄 Train</button>
+            <button type="button" class="preset-pill" data-mode="Avion" data-emoji="✈️">✈️ Avion</button>
+            <button type="button" class="preset-pill" data-mode="Voiture" data-emoji="🚗">🚗 Voiture / Covoit</button>
+            <button type="button" class="preset-pill" data-mode="Bus / Navette" data-emoji="🚌">🚌 Bus / Navette</button>
+            <button type="button" class="preset-pill" data-mode="Métro / Uber" data-emoji="🚇">🚇 Métro / Uber</button>
           </div>
-          <div id="importStatus" style="font-size:12px;color:var(--muted);margin-top:6px;">
-            Collez un lien puis cliquez sur <b>Analyser</b> (utilise l'API configurée ou un essai de lecture directe de la page).
-          </div>
+          <input type="hidden" id="fieldTransportMode" value="">
         </div>
 
         <div class="field">
-          <label for="fieldTitle">Titre de l'activité ou du transport *</label>
-          <input type="text" id="fieldTitle" placeholder="Ex : Train Eurostar / TGV, Karting, Restaurant..." required>
+          <label for="fieldTitle">Titre de l'activité ou du trajet *</label>
+          <input type="text" id="fieldTitle" placeholder="Ex : Train Eurostar, Voiture jusqu'à la gare, Karting..." required>
         </div>
 
         <div class="form-row">
@@ -537,12 +701,12 @@
 
         <div class="field">
           <label for="fieldLocation">Lieu / Trajet</label>
-          <input type="text" id="fieldLocation" placeholder="Ex : Gare du Nord → Bruxelles-Midi, ou adresse">
+          <input type="text" id="fieldLocation" placeholder="Ex : Départ → Gare → Bruxelles-Midi, ou adresse">
         </div>
 
         <div class="field">
           <label for="fieldDetails">Horaires / Détails (un par ligne)</label>
-          <textarea id="fieldDetails" placeholder="Ex : Départ 17h30 - Arrivée 18h52&#10;Réservation confirmée"></textarea>
+          <textarea id="fieldDetails" placeholder="Ex : Départ 17h30 - Arrivée 18h52&#10;3 voitures prévues (carburant + péage)"></textarea>
         </div>
 
         <div class="form-row">
@@ -556,10 +720,28 @@
           </div>
         </div>
 
-        <label class="checkbox-row">
-          <input type="checkbox" id="fieldIsOption">
-          Marquer comme activité en OPTION
-        </label>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;">
+          <label class="checkbox-row">
+            <input type="checkbox" id="fieldEnabled" checked>
+            Activé (inclus dans le calcul du budget)
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="fieldIsOption">
+            Marquer comme OPTION
+          </label>
+        </div>
+
+        <!-- Import rapide par URL -->
+        <div class="field" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;">
+          <label for="fieldImportUrl">🔗 Remplissage auto depuis un lien web (optionnel)</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="url" id="fieldImportUrl" placeholder="Collez l'URL d'une activité, resto ou vol..." style="flex:1;">
+            <button type="button" class="btn btn-primary btn-sm" id="btnFetchUrl">Analyser</button>
+          </div>
+          <div id="importStatus" style="font-size:12px;color:var(--muted);margin-top:5px;">
+            Collez un lien puis cliquez sur <b>Analyser</b> pour pré-remplir la fiche.
+          </div>
+        </div>
 
         <div class="modal-footer">
           <button type="button" class="btn" id="btnCancelModal">Annuler</button>
@@ -575,38 +757,77 @@
     "title": "EVG",
     "subtitle": "Deux destinations, trois jours, un week-end mémorable.",
     "startDate": "",
+    "meetingPoint": {
+      "place": "",
+      "time": "",
+      "note": ""
+    },
     "participants": 12,
     "includeOptions": true,
     "cities": {
       "bruxelles": {
         "name": "Bruxelles",
-        "notice": "Budget calculé automatiquement selon les éléments chiffrés (transport, hébergement, activités et repas). Activez ou désactivez les options en haut de page.",
+        "notice": "Activez ou désactivez chaque carte avec son interrupteur pour simuler différentes journées et budgets. Vous pouvez cumuler plusieurs étapes de transport (ex. Voiture + Train + Métro).",
         "items": [
+          {
+            "id": "bxl-tr-car",
+            "category": "transport",
+            "transportMode": "Voiture",
+            "emoji": "🚗",
+            "title": "Étape 1 : Trajet voiture jusqu'à la gare / parking",
+            "price": null,
+            "priceType": "total_group",
+            "location": "Point de RDV → Gare de départ",
+            "details": ["Carburant + parking week-end à partager entre les voitures"],
+            "link": "",
+            "linkText": "",
+            "isOption": false,
+            "enabled": true
+          },
           {
             "id": "bxl-tr-1",
             "category": "transport",
+            "transportMode": "Train",
             "emoji": "🚄",
-            "title": "Train Aller / Retour (TGV / Eurostar)",
+            "title": "Étape 2 : Train Aller / Retour (TGV / Eurostar)",
             "price": null,
             "priceType": "per_person",
             "location": "Gare de départ → Bruxelles-Midi",
             "details": ["Tarif groupe ou billets individuels à renseigner", "🕒 Horaires aller vendredi / retour dimanche à définir"],
             "link": "https://www.sncf-connect.com/",
             "linkText": "Rechercher les billets sur SNCF Connect",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
+          },
+          {
+            "id": "bxl-tr-plane",
+            "category": "transport",
+            "transportMode": "Avion",
+            "emoji": "✈️",
+            "title": "Alternative : Vol Aller / Retour (Bruxelles Zaventem)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Aéroport de départ → Bruxelles (BRU)",
+            "details": ["Désactivé par défaut — activez-le pour comparer avec le train"],
+            "link": "",
+            "linkText": "",
+            "isOption": false,
+            "enabled": false
           },
           {
             "id": "bxl-tr-2",
             "category": "transport",
+            "transportMode": "Métro / Uber",
             "emoji": "🚇",
-            "title": "Transports sur place (STIB / Métro / Uber)",
+            "title": "Étape 3 : Transports sur place (STIB / Métro / Uber)",
             "price": 15,
             "priceType": "per_person",
             "location": "Réseau STIB Bruxelles (Pass 48h/72h ou tickets Brupass)",
             "details": ["Estimation pass transport week-end + trajets nocturnes"],
             "link": "https://www.stib-mivb.be/",
             "linkText": "Tarifs STIB Bruxelles",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-lod-1",
@@ -619,7 +840,8 @@
             "details": ["Chambres dortoirs privatisées ou chambres multiples"],
             "link": "https://book.meininger-hotels.com/reservations/stay",
             "linkText": "Consulter les disponibilités / réserver",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d1-1",
@@ -632,7 +854,8 @@
             "details": ["ℹ️ Point de départ et destination à préciser"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d1-2",
@@ -645,7 +868,8 @@
             "details": ["⏱️ Partie : 20 min (dont 15 min de jeu)", "🕒 Arrivée conseillée 15 min avant"],
             "link": "https://www.spacefungame.com/laser-games-2/",
             "linkText": "Site & réservation Space Fun Game",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-1",
@@ -658,7 +882,8 @@
             "details": ["🕒 Horaire à définir (pas de réservation en général, arriver tôt)"],
             "link": "https://www.findesiecle.be/",
             "linkText": "Site de Fin de Siècle",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-2",
@@ -671,7 +896,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "https://futuristgames.be/",
             "linkText": "Site Futurist Games",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-3",
@@ -684,7 +910,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "https://www.prison-island.be/activities/prisonisland/",
             "linkText": "Activité & réservation Prison Island",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-4",
@@ -697,7 +924,8 @@
             "details": ["⏱️ Session de 60 min · dès 21 € selon le site", "🕒 Samedi : 10h45–23h"],
             "link": "https://woodcutter.world/en/brussels",
             "linkText": "Site & réservation WoodCutter",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-5",
@@ -710,7 +938,8 @@
             "details": ["🕒 Vendredi et samedi : 18h–3h"],
             "link": "https://www.laportenoire.be/",
             "linkText": "Site de La Porte Noire",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d2-6",
@@ -723,7 +952,8 @@
             "details": ["ℹ️ Budget et conditions à confirmer"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d3-1",
@@ -736,7 +966,8 @@
             "details": ["🍱 Teppanyaki proposé · horaires : 12h–14h30 et 18h–22h30"],
             "link": "https://www.restaurant-kabuki.be/",
             "linkText": "Site & réservation Kabuki",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "bxl-d3-2",
@@ -749,30 +980,64 @@
             "details": ["ℹ️ Activité optionnelle · tarif initial noté : 60 € / pers."],
             "link": "https://shop.airspace.be/adultes",
             "linkText": "Offres adultes & réservation",
-            "isOption": true
+            "isOption": true,
+            "enabled": true
           }
         ]
       },
       "charleroi": {
         "name": "Charleroi",
-        "notice": "Budget calculé automatiquement selon les éléments chiffrés (transport, hébergement, activités et repas). Ajoutez les prix manquants pour affiner le total.",
+        "notice": "Activez ou désactivez chaque carte avec son interrupteur pour simuler différentes journées et budgets. Vous pouvez cumuler plusieurs modes de transport (ex. Voiture + Train + Avion).",
         "items": [
           {
             "id": "crl-tr-1",
             "category": "transport",
+            "transportMode": "Voiture",
             "emoji": "🚗",
-            "title": "Trajet Aller / Retour (Covoiturage ou Train)",
+            "title": "Trajet Aller / Retour en Voiture (Covoiturage)",
+            "price": null,
+            "priceType": "total_group",
+            "location": "Point de RDV → Charleroi",
+            "details": ["Carburant + péages aller/retour pour l'ensemble des voitures"],
+            "link": "",
+            "linkText": "",
+            "isOption": false,
+            "enabled": true
+          },
+          {
+            "id": "crl-tr-train",
+            "category": "transport",
+            "transportMode": "Train",
+            "emoji": "🚄",
+            "title": "Alternative : Train Aller / Retour (SNCF / SNCB)",
             "price": null,
             "priceType": "per_person",
-            "location": "Départ → Charleroi",
-            "details": ["Carburant + péages (si voiture) ou billets SNCB à renseigner"],
+            "location": "Gare de départ → Charleroi-Central",
+            "details": ["Désactivé par défaut — activez-le pour comparer avec la voiture"],
             "link": "https://www.belgiantrain.be/fr",
             "linkText": "Horaires & tarifs SNCB",
-            "isOption": false
+            "isOption": false,
+            "enabled": false
+          },
+          {
+            "id": "crl-tr-plane",
+            "category": "transport",
+            "transportMode": "Avion",
+            "emoji": "✈️",
+            "title": "Alternative : Vol Aller / Retour (Brussels South Charleroi)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Aéroport de départ → Charleroi (CRL)",
+            "details": ["Désactivé par défaut — activez-le si trajet en avion"],
+            "link": "https://www.brussels-charleroi-airport.com/",
+            "linkText": "Aéroport de Charleroi",
+            "isOption": false,
+            "enabled": false
           },
           {
             "id": "crl-tr-2",
             "category": "transport",
+            "transportMode": "Bus / Navette",
             "emoji": "🚌",
             "title": "Déplacements locaux (TEC / Taxi / Voitures)",
             "price": null,
@@ -781,7 +1046,8 @@
             "details": ["Prévoir navettes ou voitures pour rejoindre les zones d'activités"],
             "link": "https://www.letec.be/",
             "linkText": "Réseau TEC Charleroi",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-lod-1",
@@ -794,7 +1060,8 @@
             "details": ["À réserver selon la taille finale du groupe"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d1-1",
@@ -807,7 +1074,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d1-2",
@@ -820,7 +1088,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d2-1",
@@ -833,7 +1102,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d2-2",
@@ -846,7 +1116,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d2-3",
@@ -859,7 +1130,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "https://shop.airspace.be/adultes",
             "linkText": "Site Airspace",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d2-4",
@@ -872,7 +1144,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d2-5",
@@ -885,7 +1158,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           },
           {
             "id": "crl-d3-1",
@@ -898,7 +1172,8 @@
             "details": ["🕒 Horaire à définir"],
             "link": "",
             "linkText": "",
-            "isOption": false
+            "isOption": false,
+            "enabled": true
           }
         ]
       }
@@ -907,10 +1182,10 @@
   </script>
 
   <script>
-    const STORAGE_KEY = 'evg_planner_state_v3';
+    const STORAGE_KEY = 'evg_planner_state_v4';
 
     const SECTIONS_META = [
-      { key: 'transport', badge: 'Transport', title: 'Trajets & déplacements', addLabel: '+ Ajouter un transport', dayOffset: null },
+      { key: 'transport', badge: 'Transport', title: 'Trajets & multitransport', addLabel: '+ Ajouter un transport', dayOffset: null },
       { key: 'lodging', badge: 'Logement', title: 'Hébergement', addLabel: '+ Ajouter un hébergement', dayOffset: null },
       { key: 'day1', badge: 'Jour 1', title: 'Arrivée & mise en jambes', addLabel: '+ Ajouter au Jour 1', dayOffset: 0 },
       { key: 'day2', badge: 'Jour 2', title: 'Activités & soirée', addLabel: '+ Ajouter au Jour 2', dayOffset: 1 },
@@ -924,18 +1199,30 @@
 
     function loadState() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('evg_planner_state_v1');
+        const saved = localStorage.getItem(STORAGE_KEY)
+          || localStorage.getItem('evg_planner_state_v3')
+          || localStorage.getItem('evg_planner_state_v2')
+          || localStorage.getItem('evg_planner_state_v1');
         if (saved) {
           const parsed = JSON.parse(saved);
           const def = getDefaultState();
+          const cities = parsed.cities || def.cities;
+          // S'assurer que chaque item a bien `enabled` défini
+          Object.values(cities).forEach(c => {
+            (c.items || []).forEach(it => {
+              if (it.enabled === undefined) it.enabled = true;
+            });
+          });
           return {
             eyebrow: parsed.eyebrow !== undefined ? parsed.eyebrow : def.eyebrow,
             title: parsed.title !== undefined ? parsed.title : def.title,
             subtitle: parsed.subtitle !== undefined ? parsed.subtitle : def.subtitle,
             startDate: parsed.startDate !== undefined ? parsed.startDate : def.startDate,
+            meetingPoint: parsed.meetingPoint || def.meetingPoint,
             participants: parsed.participants || def.participants,
             includeOptions: parsed.includeOptions !== undefined ? parsed.includeOptions : def.includeOptions,
-            cities: parsed.cities || def.cities
+            apiConfig: parsed.apiConfig || { geminiKey: '', evgContext: '' },
+            cities
           };
         }
       } catch (e) { console.warn('Erreur lecture localStorage', e); }
@@ -1001,12 +1288,19 @@
       return `📅 Du ${startDay} au ${endDay}`;
     }
 
+    function isItemIncluded(item, includeOptions) {
+      if (item.enabled === false) return false;
+      if (item.isOption && !includeOptions) return false;
+      return true;
+    }
+
     function render() {
       const city = state.cities[activeCity];
       const participants = Math.max(1, parseInt(state.participants, 10) || 1);
       const includeOptions = !!state.includeOptions;
+      const rdv = state.meetingPoint || { place: '', time: '', note: '' };
 
-      // Mise à jour de l'en-tête & titre de l'onglet navigateur
+      // Mise à jour en-tête & titre navigateur
       const mainTitle = state.title || 'EVG';
       document.title = `${mainTitle} — Bruxelles ou Charleroi`;
       document.getElementById('heroEyebrow').textContent = state.eyebrow || '';
@@ -1014,25 +1308,48 @@
       document.getElementById('heroSubtitle').textContent = state.subtitle || '';
       document.getElementById('heroDateBadge').textContent = formatDateRange(state.startDate);
 
+      // Affichage Point de RDV (dans hero + encart dédié)
+      const timeFormatted = rdv.time ? rdv.time.replace(':', 'h') : '';
+      if (rdv.place || timeFormatted) {
+        const parts = [];
+        if (rdv.place) parts.push(rdv.place);
+        if (timeFormatted) parts.push(`à ${timeFormatted}`);
+        const summaryRdv = parts.join(' ');
+        document.getElementById('heroRdvBadge').textContent = `🚩 RDV : ${summaryRdv}`;
+        document.getElementById('rdvDisplayMain').textContent = summaryRdv;
+        document.getElementById('rdvDisplaySub').textContent = rdv.note || 'Point de rassemblement confirmé pour le départ.';
+      } else {
+        document.getElementById('heroRdvBadge').textContent = '🚩 RDV : Lieu & horaire à définir';
+        document.getElementById('rdvDisplayMain').textContent = 'Lieu de rencontre & horaire à définir';
+        document.getElementById('rdvDisplaySub').textContent = 'Cliquez sur « Modifier le RDV » pour indiquer où et à quelle heure tout le monde se retrouve.';
+      }
+
       document.getElementById('participantsCount').value = participants;
       document.getElementById('includeOptions').checked = includeOptions;
       document.getElementById('cityNotice').textContent = city.notice;
 
-      // Calculs budgétaires
+      // Calculs budgétaires (actifs vs désactivés)
       let totalPerPerson = 0;
+      let fullPotentialPerPerson = 0;
       let transportPerPerson = 0;
       let activitiesLodgingPerPerson = 0;
-      let pricedCount = 0;
-      let unpricedCount = 0;
+      let pricedActiveCount = 0;
+      let unpricedActiveCount = 0;
+      let disabledCount = 0;
 
       city.items.forEach(item => {
-        const isExcluded = item.isOption && !includeOptions;
+        const included = isItemIncluded(item, includeOptions);
         const unitCost = getPerPersonCost(item, participants);
 
+        if (item.enabled === false) {
+          disabledCount++;
+        }
+
         if (unitCost !== null) {
-          if (!isExcluded) {
+          fullPotentialPerPerson += unitCost;
+          if (included) {
             totalPerPerson += unitCost;
-            pricedCount++;
+            pricedActiveCount++;
             if (item.category === 'transport') {
               transportPerPerson += unitCost;
             } else {
@@ -1040,16 +1357,17 @@
             }
           }
         } else {
-          if (!isExcluded) unpricedCount++;
+          if (included) unpricedActiveCount++;
         }
       });
 
       const totalGroup = totalPerPerson * participants;
+      const savedDiff = fullPotentialPerPerson - totalPerPerson;
 
       // Rendu des KPIs
       document.getElementById('summaryCards').innerHTML = `
         <div class="metric">
-          <small>Budget estimé / personne</small>
+          <small>Budget retenu / personne</small>
           <strong class="highlight">${formatEuro(totalPerPerson)}</strong>
           <div class="sub-metric">Total groupe (${participants} pers.) : <b>${formatEuro(totalGroup)}</b></div>
         </div>
@@ -1059,14 +1377,14 @@
           <div class="sub-metric">Activités & logement : <b>${formatEuro(activitiesLodgingPerPerson)}</b></div>
         </div>
         <div class="metric">
-          <small>Éléments chiffrés</small>
-          <strong>${pricedCount} / ${pricedCount + unpricedCount}</strong>
-          <div class="sub-metric">${unpricedCount > 0 ? unpricedCount + ' élément(s) à chiffrer' : 'Tout est chiffré !'}</div>
+          <small>Simulation / Écart</small>
+          <strong>${savedDiff > 0 ? '-' + formatEuro(savedDiff) : '0 €'}</strong>
+          <div class="sub-metric">${disabledCount > 0 ? disabledCount + ' élément(s) désactivé(s)' : 'Tout est activé'}</div>
         </div>
         <div class="metric">
-          <small>Destination active</small>
-          <strong>${escapeHtml(city.name)}</strong>
-          <div class="sub-metric">${includeOptions ? 'Options incluses' : 'Hors options'}</div>
+          <small>Éléments actifs chiffrés</small>
+          <strong>${pricedActiveCount} / ${pricedActiveCount + unpricedActiveCount}</strong>
+          <div class="sub-metric">${unpricedActiveCount > 0 ? unpricedActiveCount + ' actif(s) à chiffrer' : 'Tous les actifs sont chiffrés'}</div>
         </div>
       `;
 
@@ -1080,18 +1398,16 @@
         const items = city.items.filter(i => i.category === sec.key);
         let sectionCostPerPerson = 0;
         items.forEach(item => {
-          if (item.isOption && !includeOptions) return;
+          if (!isItemIncluded(item, includeOptions)) return;
           const c = getPerPersonCost(item, participants);
           if (c !== null) sectionCostPerPerson += c;
         });
 
         let sectionHeading = sec.title;
-        let datePillHtml = '';
         if (sec.dayOffset !== null) {
           if (baseDate) {
             const d = addDays(baseDate, sec.dayOffset);
-            const formatted = formatFrenchDate(d, false);
-            sectionHeading = `${formatted} — ${sec.title}`;
+            sectionHeading = `${formatFrenchDate(d, false)} — ${sec.title}`;
           } else {
             sectionHeading = `${defaultWeekdays[sec.dayOffset]} — ${sec.title}`;
           }
@@ -1109,10 +1425,9 @@
             <div class="day-title-group">
               <span class="day-badge">${sec.badge}</span>
               <h2>${escapeHtml(sectionHeading)}</h2>
-              ${datePillHtml}
             </div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <div class="day-subtotal">Sous-total : <span>${formatEuro(sectionCostPerPerson)} / pers.</span></div>
+              <div class="day-subtotal">Sous-total actif : <span>${formatEuro(sectionCostPerPerson)} / pers.</span></div>
               <button class="btn btn-sm" onclick="openAddModal('${sec.key}')">${sec.addLabel}</button>
             </div>
           </div>
@@ -1126,7 +1441,9 @@
 
     function renderCard(item, participants, includeOptions) {
       const unitCost = getPerPersonCost(item, participants);
-      const isExcluded = item.isOption && !includeOptions;
+      const isManuallyDisabled = item.enabled === false;
+      const isOptionExcluded = item.isOption && !includeOptions;
+      const isExcluded = isManuallyDisabled || isOptionExcluded;
 
       let priceDisplay = '<span class="price tbd">À définir</span>';
       if (unitCost !== null) {
@@ -1149,7 +1466,15 @@
         : '';
 
       const tags = [];
-      if (item.isOption) tags.push('<span class="tag option">OPTION</span>');
+      if (item.category === 'transport' && item.transportMode) {
+        tags.push(`<span class="tag mode-tag">${escapeHtml(item.transportMode)}</span>`);
+      }
+      if (isManuallyDisabled) {
+        tags.push('<span class="tag disabled-tag">DÉSACTIVÉ (HORS BUDGET)</span>');
+      }
+      if (item.isOption) {
+        tags.push('<span class="tag option">OPTION</span>');
+      }
       if (item.priceType === 'total_group' && unitCost !== null) {
         tags.push(`<span class="tag group-price">Forfait groupe : ${formatEuro(item.price)}</span>`);
       }
@@ -1169,26 +1494,52 @@
             </div>
             ${tags.length ? `<div class="tags-row">${tags.join('')}</div>` : ''}
             <div class="card-actions">
-              <button class="btn btn-sm" onclick="openEditModal('${item.id}')">✏️ Modifier</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">🗑️ Supprimer</button>
+              <label class="switch-label" title="Activer ou désactiver pour simuler le budget sans cet élément">
+                <input type="checkbox" ${!isManuallyDisabled ? 'checked' : ''} onchange="toggleItemEnabled('${item.id}', this.checked)">
+                <span class="switch-track"></span>
+                <span>${!isManuallyDisabled ? 'Inclus' : 'Désactivé'}</span>
+              </label>
+              <div class="card-btns">
+                <button class="btn btn-sm" onclick="openEditModal('${item.id}')">✏️ Modifier</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">🗑️</button>
+              </div>
             </div>
           </div>
         </article>
       `;
     }
 
-    // Gestion Modale En-tête (Titre & Dates)
+    window.toggleItemEnabled = function(id, isChecked) {
+      const item = state.cities[activeCity].items.find(i => i.id === id);
+      if (!item) return;
+      item.enabled = isChecked;
+      saveState();
+      render();
+    };
+
+    // Gestion Modale En-tête (Titre, Dates & RDV)
     const headerModal = document.getElementById('headerModal');
     const headerForm = document.getElementById('headerForm');
 
-    document.getElementById('btnEditHeader').addEventListener('click', () => {
+    function openHeaderModal(focusRdv = false) {
+      const rdv = state.meetingPoint || { place: '', time: '', note: '' };
       document.getElementById('fieldEyebrow').value = state.eyebrow || '';
       document.getElementById('fieldMainTitle').value = state.title || 'EVG';
       document.getElementById('fieldStartDate').value = state.startDate || '';
+      document.getElementById('fieldMeetingPlace').value = rdv.place || '';
+      document.getElementById('fieldMeetingTime').value = rdv.time || '';
+      document.getElementById('fieldMeetingNote').value = rdv.note || '';
       document.getElementById('fieldSubtitle').value = state.subtitle || '';
       headerModal.classList.remove('hidden');
-      document.getElementById('fieldMainTitle').focus();
-    });
+      if (focusRdv) {
+        document.getElementById('fieldMeetingPlace').focus();
+      } else {
+        document.getElementById('fieldMainTitle').focus();
+      }
+    }
+
+    document.getElementById('btnEditHeader').addEventListener('click', () => openHeaderModal(false));
+    document.getElementById('btnEditRdvQuick').addEventListener('click', () => openHeaderModal(true));
 
     function closeHeaderModal() {
       headerModal.classList.add('hidden');
@@ -1202,6 +1553,11 @@
       state.eyebrow = document.getElementById('fieldEyebrow').value.trim();
       state.title = document.getElementById('fieldMainTitle').value.trim() || 'EVG';
       state.startDate = document.getElementById('fieldStartDate').value;
+      state.meetingPoint = {
+        place: document.getElementById('fieldMeetingPlace').value.trim(),
+        time: document.getElementById('fieldMeetingTime').value.trim(),
+        note: document.getElementById('fieldMeetingNote').value.trim()
+      };
       state.subtitle = document.getElementById('fieldSubtitle').value.trim();
       saveState();
       closeHeaderModal();
@@ -1211,12 +1567,40 @@
     // Gestion Modale Activité / Transport
     const modal = document.getElementById('itemModal');
     const form = document.getElementById('itemForm');
+    const categorySelect = document.getElementById('fieldCategory');
+    const transportModeBox = document.getElementById('transportModeBox');
+
+    function syncTransportModeUI(selectedMode = '') {
+      const isTransport = categorySelect.value === 'transport';
+      transportModeBox.classList.toggle('hidden', !isTransport);
+      document.getElementById('fieldTransportMode').value = isTransport ? selectedMode : '';
+      document.querySelectorAll('#transportPresets .preset-pill').forEach(btn => {
+        btn.classList.toggle('active', isTransport && btn.dataset.mode === selectedMode);
+      });
+    }
+
+    categorySelect.addEventListener('change', () => {
+      syncTransportModeUI(document.getElementById('fieldTransportMode').value);
+    });
+
+    document.querySelectorAll('#transportPresets .preset-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        const emoji = btn.dataset.emoji;
+        syncTransportModeUI(mode);
+        document.getElementById('fieldEmoji').value = emoji;
+        const titleInput = document.getElementById('fieldTitle');
+        if (!titleInput.value.trim()) {
+          titleInput.value = `Trajet en ${mode.toLowerCase()}`;
+        }
+      });
+    });
 
     window.openAddModal = function(defaultCategory = 'day1') {
       document.getElementById('modalTitle').textContent = 'Ajouter un élément (' + state.cities[activeCity].name + ')';
       document.getElementById('editId').value = '';
       document.getElementById('fieldCategory').value = defaultCategory;
-      document.getElementById('fieldEmoji').value = defaultCategory === 'transport' ? '🚆' : (defaultCategory === 'lodging' ? '🏨' : '🎯');
+      document.getElementById('fieldEmoji').value = defaultCategory === 'transport' ? '🚄' : (defaultCategory === 'lodging' ? '🏨' : '🎯');
       document.getElementById('fieldTitle').value = '';
       document.getElementById('fieldPrice').value = '';
       document.getElementById('fieldPriceType').value = 'per_person';
@@ -1224,7 +1608,11 @@
       document.getElementById('fieldDetails').value = '';
       document.getElementById('fieldLink').value = '';
       document.getElementById('fieldLinkText').value = '';
+      document.getElementById('fieldEnabled').checked = true;
       document.getElementById('fieldIsOption').checked = false;
+      document.getElementById('fieldImportUrl').value = '';
+      document.getElementById('importStatus').innerHTML = 'Collez un lien puis cliquez sur <b>Analyser</b> pour pré-remplir la fiche.';
+      syncTransportModeUI(defaultCategory === 'transport' ? 'Train' : '');
       modal.classList.remove('hidden');
       document.getElementById('fieldTitle').focus();
     };
@@ -1243,7 +1631,11 @@
       document.getElementById('fieldDetails').value = (item.details || []).join('\n');
       document.getElementById('fieldLink').value = item.link || '';
       document.getElementById('fieldLinkText').value = item.linkText || '';
+      document.getElementById('fieldEnabled').checked = item.enabled !== false;
       document.getElementById('fieldIsOption').checked = !!item.isOption;
+      document.getElementById('fieldImportUrl').value = item.link || '';
+      document.getElementById('importStatus').innerHTML = 'Collez un lien puis cliquez sur <b>Analyser</b> pour pré-remplir la fiche.';
+      syncTransportModeUI(item.transportMode || '');
       modal.classList.remove('hidden');
     };
 
@@ -1269,10 +1661,12 @@
       const editId = document.getElementById('editId').value;
       const priceRaw = document.getElementById('fieldPrice').value.trim();
       const priceVal = priceRaw === '' ? null : parseFloat(priceRaw);
+      const cat = document.getElementById('fieldCategory').value;
 
       const newItemData = {
         id: editId || ('item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
-        category: document.getElementById('fieldCategory').value,
+        category: cat,
+        transportMode: cat === 'transport' ? document.getElementById('fieldTransportMode').value : '',
         emoji: document.getElementById('fieldEmoji').value.trim() || '📌',
         title: document.getElementById('fieldTitle').value.trim(),
         price: isNaN(priceVal) ? null : priceVal,
@@ -1281,6 +1675,7 @@
         details: document.getElementById('fieldDetails').value.split('\n').map(s => s.trim()).filter(Boolean),
         link: document.getElementById('fieldLink').value.trim(),
         linkText: document.getElementById('fieldLinkText').value.trim(),
+        enabled: document.getElementById('fieldEnabled').checked,
         isOption: document.getElementById('fieldIsOption').checked
       };
 
@@ -1326,6 +1721,8 @@
     document.getElementById('btnReset').addEventListener('click', () => {
       if (confirm('Réinitialiser toutes les données aux valeurs par défaut ? Vos modifications non exportées seront perdues.')) {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('evg_planner_state_v3');
+        localStorage.removeItem('evg_planner_state_v2');
         localStorage.removeItem('evg_planner_state_v1');
         state = getDefaultState();
         render();
@@ -1406,6 +1803,7 @@
       else if (/sky|chute|airspace|fly/.test(lower)) emoji = '🪂';
       else if (/resto|restaurant|bar|pub|beer|bière|fin-de-siecle|porte-noire|kabuki/.test(lower)) emoji = '🍻';
       else if (/hotel|hôtel|meininger|airbnb/.test(lower)) emoji = '🏨';
+      else if (/flight|vol|avion|air|ryanair|brusselsairlines/.test(lower)) emoji = '✈️';
       else if (/train|sncf|sncb|eurostar|bus|stib|tec/.test(lower)) emoji = '🚆';
 
       return { title, emoji, link: rawUrl, linkText: 'Voir le site (' + host + ')' };
@@ -1417,7 +1815,6 @@
       const pageTitle = (doc.querySelector('title')?.textContent || '').split('|')[0].split('-')[0].trim();
       const bodyText = (doc.body?.textContent || htmlOrText).replace(/\s+/g, ' ').trim();
 
-      // Prix en euros (ex: 29 €, 29€, 29.50 €)
       let price = null;
       const priceMatches = [...bodyText.matchAll(/(\d{1,3}(?:[.,]\d{1,2})?)\s*€/g)];
       if (priceMatches.length > 0) {
@@ -1427,7 +1824,6 @@
         if (candidates.length > 0) price = candidates[0];
       }
 
-      // Adresse postale belge ou française approximative
       let location = '';
       const addrMatch = bodyText.match(/\b(\d{1,4}\s+(?:rue|avenue|av\.|boulevard|bd|chaussée|place|pl\.|impasse|allée)\s+[^,.;\n]{3,55},?\s*\d{4,5}\s+[A-ZÀ-ÿ][a-zà-ÿ-]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ-]+)?)/i);
       if (addrMatch) location = addrMatch[1].trim();
@@ -1494,7 +1890,6 @@
         if (geminiKey) {
           extracted = await fetchViaGeminiApi(targetUrl, geminiKey, state.apiConfig.evgContext);
         } else {
-          // Essai via proxy public allorigins (peut échouer selon les sites/réseaux)
           const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
           const resp = await fetch(proxyUrl);
           if (!resp.ok) throw new Error('Lecture distante impossible');
@@ -1524,7 +1919,6 @@
 
         statusEl.innerHTML = '✅ Infos pré-remplies — <b>vérifiez et ajustez</b> si besoin avant d’enregistrer.';
       } catch (err) {
-        // Repli propre sur l'analyse de l'URL seule
         if (!document.getElementById('fieldTitle').value) document.getElementById('fieldTitle').value = baseGuess.title;
         document.getElementById('fieldEmoji').value = baseGuess.emoji;
         document.getElementById('fieldLink').value = targetUrl;
