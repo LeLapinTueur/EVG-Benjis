@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Nouveau site</title>
+  <style>
+    body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: #f5f6f8; color: #172238; }
+    main { max-width: 720px; margin: 24px auto; padding: 0 18px; }
+    textarea { width: 100%; min-height: 240px; padding: 12px; border: 1px solid #d0d5dd; border-radius: 10px; font: inherit; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mon nouveau site</h1>
+    <p>Modèle minimal : un bloc de notes enregistré dans la base. Remplacez-le par votre propre contenu.</p>
+    <textarea id="notes" placeholder="Écrivez ici…"></textarea>
+  </main>
+
+  <script src="/shared/config.js"></script>
+  <script src="/shared/hub.js"></script>
+  <script>
+    (async function () {
+      // 1. Remplacez 'modele' par le slug déclaré dans la table « sites »
+      const hub = await Hub.connect('modele');
+      hub.mountBar();                                   // barre du haut : accueil, rôle, mots de passe
+
+      const notes = document.getElementById('notes');
+      const show = (data) => { notes.value = data.notes || ''; };
+      show(hub.data);                                   // hub.data = ce qui est enregistré en base ({} la 1re fois)
+
+      if (hub.isAdmin) {
+        // 2. À chaque modification : hub.save(() => ...données à enregistrer...)
+        notes.addEventListener('input', () => hub.save(() => ({ notes: notes.value })));
+      } else {
+        notes.readOnly = true;                          // lecteur : lecture seule
+        hub.poll(show);                                 // et mise à jour automatique toutes les 30 s
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Plan de table</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E8EEE7; --panel:#F6F8F4; --forest:#1F3A33; --forest-2:#35574d;
+  --blush:#F0BFB6; --blush-2:#F8DDD7; --gold:#B58B3E; --line:#c9d4c8; --white:#fff;
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'Outfit',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);font-weight:400;color:var(--forest);background:var(--bg);min-height:100vh;
+  background-image:radial-gradient(circle at 85% -10%,var(--blush-2),transparent 45%)}
+header{padding:28px clamp(16px,4vw,48px) 8px;display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1;margin:0;outline:none}
+h1:focus{border-bottom:1px dashed var(--gold)}
+.sub{margin:6px 0 0;font-weight:300;color:var(--forest-2)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.btn{font:inherit;font-size:.9rem;border:1px solid var(--forest);background:transparent;color:var(--forest);
+  padding:8px 14px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+button:hover,.btn:hover{background:var(--forest);color:var(--white)}
+button.primary{background:var(--forest);color:var(--white)}
+button.primary:hover{background:var(--forest-2)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.tabs-wrap{padding:8px clamp(16px,4vw,48px) 0;display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:2}
+.tab-btn{border:1px solid var(--line);background:var(--panel);color:var(--forest-2);padding:9px 18px;border-radius:999px;font-weight:500}
+.tab-btn.active{background:var(--forest);color:var(--white);border-color:var(--forest)}
+
+main{display:grid;grid-template-columns:320px 1fr;gap:24px;padding:16px clamp(16px,4vw,48px) 48px;align-items:start}
+main.hidden{display:none}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
+aside h2,.room-head h2,.menus-panel h2,.dj-panel h2,.dash-panel h2{font-family:var(--serif);font-size:1.6rem;margin:0 0 4px;font-weight:600}
+.menus-panel h3,.dash-panel h3{font-family:var(--serif);font-size:1.25rem;margin:0;font-weight:600;color:var(--forest)}
+.count{font-size:.85rem;color:var(--forest-2);margin:0 0 12px}
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;background:var(--gold);transition:width .3s}
+form{display:flex;gap:6px;margin-bottom:8px}
+input[type=text],input[type=search],input[type=number],input[type=tel],input[type=email],input[type=url],textarea{
+  font:inherit;font-size:.9rem;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--white);color:var(--forest);min-width:0;width:100%
+}
+textarea{resize:vertical;min-height:76px;line-height:1.4}
+form button{flex:none}
+#guestList{overflow:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px;min-height:80px;flex:1}
+#guestList.over{outline:2px dashed var(--gold);outline-offset:2px;border-radius:12px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;
+  font-size:.92rem;cursor:grab;user-select:none;transition:transform .12s,border-color .12s}
+.chip:hover{border-color:var(--gold)}
+.chip.sel{background:var(--blush);border-color:var(--forest);transform:scale(1.02)}
+.chip span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip .menu-tag{flex:none;font-size:.72rem;background:var(--bg);color:var(--forest-2);padding:2px 7px;border-radius:999px}
+.chip .x{border:0;padding:0 6px;font-size:1rem;opacity:.45;border-radius:50%}
+.chip .x:hover{opacity:1;background:transparent;color:var(--forest)}
+.empty{font-size:.9rem;color:var(--forest-2);font-weight:300;padding:8px 4px}
+.hint{font-size:.8rem;color:var(--forest-2);font-weight:300;margin:10px 0 0}
+.room-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.tname{font-family:var(--serif);font-size:1.4rem;font-weight:600;border:0;background:transparent;padding:2px 4px;width:100%;text-align:left;border-radius:8px}
+.tname:hover,.tname:focus{background:var(--white)}
+.tcap{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--forest-2);flex:none}
+.tcap input{width:48px;padding:4px 6px;text-align:center}
+.seats{position:relative;width:200px;height:200px;margin:8px auto 10px}
+.disc{position:absolute;inset:48px;border-radius:50%;background:var(--forest-2);color:var(--white);display:grid;place-items:center;
+  font-family:var(--serif);font-size:1.7rem;line-height:1;transition:background .2s}
+.disc small{display:block;font-family:var(--sans);font-size:.7rem;font-weight:300;opacity:.8;margin-top:2px}
+.seat{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;display:grid;place-items:center;
+  font-size:.7rem;font-weight:500;border:1.5px dashed var(--forest-2);color:var(--forest-2);background:transparent;padding:0}
+.seat.on{background:var(--blush);border:1.5px solid var(--forest);color:var(--forest);cursor:pointer}
+.seat.on:hover{background:var(--forest);color:var(--white)}
+.names{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:24px}
+.names .chip{padding:4px 8px 4px 12px;font-size:.82rem;cursor:grab}
+.room{position:relative;width:100%;aspect-ratio:16/10;min-height:480px;border:3px solid var(--forest);border-radius:18px;background:#fbfcf9;
+  background-image:radial-gradient(var(--line) 1.2px,transparent 1.3px);background-size:24px 24px;overflow:hidden}
+.tbl,.item{position:absolute;transform:translate(-50%,-50%);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.tbl.drag,.item.drag{cursor:grabbing;z-index:5;filter:drop-shadow(0 10px 14px rgba(31,58,51,.28))}
+.tbl .seats{margin:0}
+.tbl .seat.on{cursor:grab}
+.tbl .seat.on:hover{background:var(--blush);color:var(--forest)}
+.tbl .seat.hot{background:var(--gold);border-style:solid;border-color:var(--forest);color:#fff}
+.tbl .seat.on.sel{background:var(--gold);border-color:var(--forest);color:#fff}
+.tbl .disc{font-size:.9rem;line-height:1.1;padding:6px;text-align:center;box-shadow:0 0 0 0 transparent;transition:box-shadow .15s,background .2s}
+.tbl.full .disc{background:var(--forest)}
+.tbl.sel .disc{box-shadow:0 0 0 4px var(--gold)}
+.tbl.over .disc{box-shadow:0 0 0 7px var(--blush)}
+.item{display:grid;place-items:center;text-align:center;background:var(--blush-2);border:1.5px dashed var(--forest-2);border-radius:12px;font-family:var(--serif);font-size:1.05rem;font-weight:600}
+.item.sel{border-style:solid;border-color:var(--gold);box-shadow:0 0 0 3px rgba(181,139,62,.3)}
+.detail{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.detail .tname{width:210px;flex:none;border:1px solid var(--line);background:var(--white)}
+.detail .names{width:100%;justify-content:flex-start;margin-top:4px}
+.detail .tcap input{width:64px}
+.detail input[type=color]{padding:0;height:32px;width:44px;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer}
+.detail .warn{font-size:.8rem;color:#a33;width:100%}
+.detail .del:hover{background:#a33;border-color:#a33}
+select{font:inherit;font-size:.9rem;border:1px solid var(--forest);background:var(--white);color:var(--forest);padding:7px 12px;border-radius:999px;cursor:pointer}
+
+/* Onglets secondaires */
+.dash-view,.menus-view,.dj-view{padding:16px clamp(16px,4vw,48px) 48px}
+.dash-view.hidden,.menus-view.hidden,.dj-view.hidden{display:none}
+.dash-panel,.menus-panel,.dj-panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px}
+
+/* Tableau de bord avancement */
+.dash-top{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.global-pct{display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:8px 16px}
+.global-pct strong{font-size:1.25rem;color:var(--forest)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:22px}
+.kpi-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.kpi-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.kpi-pct{font-family:var(--serif);font-size:1.7rem;font-weight:600;color:var(--forest)}
+.kpi-bar{height:7px;background:var(--bg);border-radius:999px;overflow:hidden}
+.kpi-bar i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.kpi-bar i.done{background:var(--forest-2)}
+.kpi-meta{font-size:.84rem;color:var(--forest-2)}
+.pill-state{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:500;width:fit-content}
+.pill-state.todo{background:#fbe9e6;color:#933224}
+.pill-state.wip{background:var(--blush-2);color:var(--forest)}
+.pill-state.done{background:#dfece6;color:var(--forest)}
+.kpi-card .btn-link{align-self:flex-start;padding:5px 12px;font-size:.82rem}
+
+.todo-box{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:18px}
+.todo-box h3{margin-bottom:12px}
+.todo-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.todo-item{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.9rem}
+.todo-left{display:flex;align-items:center;gap:10px}
+.todo-cat{font-size:.75rem;font-weight:500;background:var(--white);border:1px solid var(--line);padding:2px 9px;border-radius:999px;color:var(--forest-2)}
+.todo-done-msg{background:#dfece6;border:1px solid #b8d1c5;border-radius:12px;padding:12px 16px;font-size:.92rem;color:var(--forest)}
+
+.menus-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.caterer-box{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:18px}
+.caterer-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.caterer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.menu-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.summary-pill{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:5px 10px 5px 12px;font-size:.84rem;color:var(--forest)}
+.summary-pill strong{color:var(--forest-2)}
+.summary-pill .rm-menu{border:0;background:transparent;padding:0 3px;font-size:.95rem;line-height:1;opacity:.5;border-radius:50%}
+.summary-pill .rm-menu:hover{opacity:1;background:var(--blush-2);color:var(--forest)}
+.menu-types-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:18px}
+.menu-types-bar input{max-width:220px}
+.table-wrap{overflow:auto;background:var(--white);border:1px solid var(--line);border-radius:16px}
+table.guest-menus{width:100%;border-collapse:collapse;font-size:.92rem}
+table.guest-menus th,table.guest-menus td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line)}
+table.guest-menus th{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--forest-2);background:var(--bg)}
+table.guest-menus tr:last-child td{border-bottom:0}
+table.guest-menus tr:hover td{background:#fafcf9}
+.badge-unplaced{font-size:.8rem;color:var(--forest-2);font-style:italic}
+.badge-placed{display:inline-block;background:var(--blush-2);color:var(--forest);padding:2px 9px;border-radius:999px;font-size:.82rem;font-weight:500}
+
+/* Grille de la fiche DJ */
+.dj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:16px}
+.dj-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.dj-card h3{font-family:var(--serif);font-size:1.3rem;margin:0;color:var(--forest);border-bottom:1px solid var(--line);padding-bottom:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.8rem;font-weight:500;color:var(--forest-2)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dj-status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:.84rem;font-weight:500;background:var(--blush-2);color:var(--forest)}
+.dj-status-badge.ok{background:var(--forest);color:var(--white)}
+.dj-balance{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:.86rem;display:flex;justify-content:space-between;align-items:center}
+.dj-balance strong{font-size:1rem;color:var(--forest)}
+
+/* Infobulle survol invité / DJ */
+.hover-tip{position:fixed;pointer-events:none;z-index:30;background:var(--forest);color:var(--white);padding:8px 13px;
+  border-radius:12px;font-size:.84rem;line-height:1.35;box-shadow:0 8px 20px rgba(31,58,51,.25);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.hover-tip.show{opacity:1;transform:translateY(0)}
+.hover-tip small{display:block;color:var(--blush);font-size:.76rem;margin-top:2px}
+
+@media(max-width:860px){.room{aspect-ratio:3/4} main{grid-template-columns:1fr}aside{position:static;max-height:none}#guestList{max-height:260px}}
+@media print{.detail,.tabs-wrap,.dash-view,.menus-view,.dj-view,.hover-tip{display:none!important}.room{break-inside:avoid}body{background:#fff}aside,.bar,form,.tdel,.tcap,.hint,.toast{display:none!important}main{display:block}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--forest);color:var(--white);padding:10px 18px;border-radius:999px;
+  font-size:.9rem;opacity:0;pointer-events:none;transition:all .25s;z-index:40}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* --- Hub : chargement & lecture seule --- */
+body.booting > *:not(.hubbar):not(script){visibility:hidden}
+body.readonly #addTable,body.readonly #addItem,body.readonly #importLabel,body.readonly #resetBtn,
+body.readonly #guestForm,body.readonly .menu-types-bar,body.readonly .del-guest,body.readonly .rm-menu,
+body.readonly .chip .x,body.readonly #detail button,body.readonly #detail label.btn,body.readonly .hint{display:none!important}
+body.readonly h1{outline:none;border-bottom:0}
+body.readonly input:disabled,body.readonly select:disabled,body.readonly textarea:disabled{opacity:1;color:inherit;-webkit-text-fill-color:currentColor;background:transparent;cursor:default}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="title" contenteditable spellcheck="false" aria-label="Titre du plan de table"></h1>
+    <p class="sub">Déplacez les tables pour dessiner votre salle. Glissez les invités sur une table, ou touchez un invité puis une table.</p>
+  </div>
+  <div class="bar">
+    <button type="button" id="addTable" class="primary">Ajouter une table</button>
+    <select id="addItem" aria-label="Ajouter un élément à la salle">
+      <option value="">Ajouter un élément</option>
+      <option>Piste de danse</option><option>DJ</option><option>Buffet</option><option>Bar</option><option>Scène</option><option>Gâteau</option><option>Entrée</option>
+      <option value="*">Autre, nom libre…</option>
+    </select>
+    <button type="button" id="exportBtn">Exporter</button>
+    <label class="btn" id="importLabel" tabindex="0">Importer<input id="importFile" type="file" accept="application/json" hidden></label>
+    <button type="button" id="printBtn">Imprimer</button>
+    <button type="button" id="resetBtn">Tout effacer</button>
+  </div>
+</header>
+
+<nav class="tabs-wrap" id="tabsNav" aria-label="Navigation principale">
+  <button type="button" class="tab-btn active" data-tab="dashboard" id="tabDashBtn">Avancement</button>
+  <button type="button" class="tab-btn" data-tab="room" id="tabRoomBtn">Plan de salle</button>
+  <button type="button" class="tab-btn" data-tab="menus" id="tabMenusBtn">Traiteur, Invités &amp; Menus</button>
+  <button type="button" class="tab-btn" data-tab="dj" id="tabDjBtn">DJ &amp; Animation</button>
+</nav>
+
+<section class="dash-view" id="dashView" aria-label="Tableau de bord d'avancement">
+  <div class="dash-panel">
+    <div class="dash-top">
+      <div>
+        <h2>Tableau de bord &amp; avancement</h2>
+        <p class="count" style="margin:0">Suivez ce qui est prêt, l'état des paiements et ce qu'il reste à faire.</p>
+      </div>
+      <div class="global-pct">
+        <span>Avancement global :</span>
+        <strong id="globalPct">0%</strong>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="todo-box">
+      <h3>Ce qu'il reste à faire</h3>
+      <ul class="todo-list" id="todoList"></ul>
+    </div>
+  </div>
+</section>
+
+<main id="roomView" class="hidden">
+  <aside>
+    <h2>Invités</h2>
+    <p class="count" id="count"></p>
+    <div class="progress"><i id="bar"></i></div>
+    <form id="guestForm">
+      <input type="text" id="guestName" placeholder="Prénom Nom" aria-label="Nom de l'invité" autocomplete="off">
+      <button class="primary" type="submit">Ajouter</button>
+    </form>
+    <input type="search" id="search" placeholder="Rechercher un invité" aria-label="Rechercher" style="margin-bottom:10px">
+    <div id="guestList"></div>
+    <p class="hint">Astuce : collez plusieurs noms séparés par des virgules ou des retours à la ligne pour les ajouter d'un coup.</p>
+  </aside>
+  <section>
+    <div class="room-head"><h2>La salle</h2><span class="count" id="seatInfo"></span></div>
+    <div class="room" id="room"></div>
+    <div class="detail" id="detail"></div>
+  </section>
+</main>
+
+<section class="menus-view hidden" id="menusView" aria-label="Gestion du traiteur, des invités et des menus">
+  <div class="menus-panel">
+    <div class="menus-top">
+      <div>
+        <h2>Traiteur, Invités &amp; Menus</h2>
+        <p class="count" id="menusCount" style="margin:0"></p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="search" id="menuSearch" placeholder="Rechercher un invité ou une table…" aria-label="Rechercher dans les menus" style="width:230px">
+        <select id="menuFilter" aria-label="Filtrer par menu">
+          <option value="">Tous les menus</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="caterer-box" aria-label="Détails du traiteur retenu">
+      <div class="caterer-head">
+        <h3>Traiteur retenu</h3>
+        <span class="dj-status-badge" id="catererStatusBadge">Devis en cours</span>
+      </div>
+      <div class="caterer-grid">
+        <div class="field">
+          <label for="catererName">Nom / Maison traiteur</label>
+          <input type="text" id="catererName" placeholder="Ex. Maison Saveurs &amp; Réceptions">
+        </div>
+        <div class="field">
+          <label for="catererStatus">Statut</label>
+          <select id="catererStatus" style="border-radius:12px">
+            <option value="Devis en cours">Devis en cours</option>
+            <option value="Dégustation effectuée">Dégustation effectuée</option>
+            <option value="Devis validé / Contrat signé">Devis validé / Contrat signé</option>
+            <option value="Confirmé">Confirmé</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="catererPhone">Téléphone</label>
+          <input type="tel" id="catererPhone" placeholder="03 23 00 00 00">
+        </div>
+        <div class="field">
+          <label for="catererEmail">E-mail</label>
+          <input type="email" id="catererEmail" placeholder="contact@traiteur.fr">
+        </div>
+        <div class="field">
+          <label for="catererPricePerGuest">Tarif / invité (€)</label>
+          <input type="number" id="catererPricePerGuest" min="0" step="1" placeholder="85">
+        </div>
+        <div class="field">
+          <label for="catererExtraFee">Forfait / frais annexes (€)</label>
+          <input type="number" id="catererExtraFee" min="0" step="10" placeholder="450">
+        </div>
+        <div class="field">
+          <label for="catererDeposit">Acompte versé (€)</label>
+          <input type="number" id="catererDeposit" min="0" step="10" placeholder="1000">
+        </div>
+        <div class="field">
+          <label>Estimation &amp; Reste à régler</label>
+          <div class="dj-balance">
+            <span id="catererTotalText">Total : 0 €</span>
+            <strong id="catererBalance">Reste : 0 €</strong>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="catererNotes">Dégustation, plats retenus, horaires de service &amp; remarques</label>
+        <textarea id="catererNotes" placeholder="Entrée / plat / dessert retenus, régimes spéciaux, repas prestataires inclus, horaires vin d'honneur &amp; dîner…"></textarea>
+      </div>
+    </div>
+
+    <div class="menu-types-bar">
+      <strong style="font-size:.86rem">Nouveau choix de menu :</strong>
+      <input type="text" id="newMenuName" placeholder="Ex. Sans gluten, Vegan…">
+      <button type="button" class="primary" id="addMenuTypeBtn">Ajouter l'option</button>
+    </div>
+
+    <div class="menu-summary" id="menuSummary"></div>
+
+    <div class="table-wrap">
+      <table class="guest-menus">
+        <thead>
+          <tr>
+            <th>Invité</th>
+            <th>Table</th>
+            <th>Menu choisi</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="guestMenusBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="dj-view hidden" id="djView" aria-label="Informations sur le DJ">
+  <div class="dj-panel">
+    <div class="menus-top">
+      <div>
+        <h2>DJ &amp; Animation musicale</h2>
+        <p class="count" style="margin:0">Centralisez les coordonnées, disponibilités, tarifs et consignes musicales.</p>
+      </div>
+      <span class="dj-status-badge" id="djStatusBadge">À contacter</span>
+    </div>
+
+    <div class="dj-grid">
+      <div class="dj-card">
+        <h3>Identité &amp; Contact</h3>
+        <div class="field">
+          <label for="djName">Nom ou Pseudo de scène</label>
+          <input type="text" id="djName" placeholder="Ex. DJ Alex / Sono Événement">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="djPhone">Téléphone</label>
+            <input type="tel" id="djPhone" placeholder="06 12 34 56 78">
+          </div>
+          <div class="field">
+            <label for="djEmail">E-mail</label>
+            <input type="email" id="djEmail" placeholder="contact@dj-exemple.fr">
+          </div>
+        </div>
+        <div class="field">
+          <label for="djSocial">Site web / Réseaux sociaux</label>
+          <input type="url" id="djSocial" placeholder="https://instagram.com/...">
+        </div>
+      </div>
+
+      <div class="dj-card">
+        <h3>Disponibilité &amp; Horaires</h3>
+        <div class="field">
+          <label for="djStatus">Statut de réservation</label>
+          <select id="djStatus" style="border-radius:12px">
+            <option value="À contacter">À contacter</option>
+            <option value="Disponible · Devis demandé">Disponible · Devis demandé</option>
+            <option value="Option posée">Option posée</option>
+            <option value="Confirmé / Réservé">Confirmé / Réservé</option>
+            <option value="Indisponible">Indisponible</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="djDate">Date retenue</label>
+            <input type="text" id="djDate" placeholder="Ex. Samedi 14 juin">
+          </div>
+          <div class="field">
+            <label for="djSetupTime">Arrivée / Installation</label>
+            <input type="text" id="djSetupTime" placeholder="Ex. 15h30">
+          </div>
+        </div>
+        <div class="field">
+          <label for="djHours">Plage horaire de prestation</label>
+          <input type="text" id="djHours" placeholder="Ex. 18h00 – 04h00 (cocktails + soirée)">
+        </div>
+      </div>
+
+      <div class="dj-card">
+        <h3>Tarif &amp; Règlement</h3>
+        <div class="field-row">
+          <div class="field">
+            <label for="djPrice">Tarif prestation (€)</label>
+            <input type="number" id="djPrice" min="0" step="10" placeholder="1200">
+          </div>
+          <div class="field">
+            <label for="djDeposit">Acompte versé (€)</label>
+            <input type="number" id="djDeposit" min="0" step="10" placeholder="350">
+          </div>
+        </div>
+        <div class="dj-balance">
+          <span>Reste à régler :</span>
+          <strong id="djBalance">0 €</strong>
+        </div>
+        <div class="field">
+          <label for="djEquipment">Matériel &amp; options incluses</label>
+          <textarea id="djEquipment" placeholder="Sonorisation salle + extérieur, jeux de lumière, micro sans fil, fumée lourde, heure sup…"></textarea>
+        </div>
+      </div>
+
+      <div class="dj-card">
+        <h3>Renseignements &amp; Consignes musicales</h3>
+        <div class="field">
+          <label for="djKeySongs">Moments clés (entrée, ouverture de bal, gâteau…)</label>
+          <textarea id="djKeySongs" placeholder="Entrée salle : ...&#10;Ouverture de bal : ...&#10;Arrivée du gâteau : ..."></textarea>
+        </div>
+        <div class="field">
+          <label for="djNotes">Notes techniques, repas prestataire &amp; blacklist</label>
+          <textarea id="djNotes" placeholder="Repas prévu pour le DJ, prise 16A dédiée, styles à privilégier ou titres à éviter…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="hover-tip" id="hoverTip" role="tooltip"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/shared/config.js"></script>
+<script src="/shared/hub.js"></script>
+<script>
+let READONLY = true, hubConn = null;
+const DEFAULT_MENUS = ['Non défini', 'Viande', 'Poisson', 'Végétarien', 'Enfant'];
+const defaultDj = () => ({
+  name: '',
+  phone: '',
+  email: '',
+  social: '',
+  status: 'À contacter',
+  date: '',
+  setupTime: '',
+  hours: '',
+  price: '',
+  deposit: '',
+  equipment: '',
+  keySongs: '',
+  notes: ''
+});
+const defaultCaterer = () => ({
+  name: '',
+  status: 'Devis en cours',
+  phone: '',
+  email: '',
+  pricePerGuest: '',
+  extraFee: '',
+  deposit: '',
+  notes: ''
+});
+const uid = () => Math.random().toString(36).slice(2, 9);
+const sample = () => ({
+  title: 'Camille & Julien',
+  menuOptions: [...DEFAULT_MENUS],
+  caterer: defaultCaterer(),
+  dj: defaultDj(),
+  tables: ['Les Pivoines', 'Les Oliviers', 'Les Lavandes'].map(n => ({ id: uid(), name: n, cap: 8 })),
+  guests: ['Sophie Martin','Thomas Bernard','Léa Dubois','Hugo Petit','Emma Moreau','Lucas Laurent','Chloé Simon','Nathan Michel','Inès Garcia','Louis Roux']
+    .map((n, idx) => ({ id: uid(), name: n, table: null, menu: DEFAULT_MENUS[(idx % 4) + 1] })),
+  items: [{ id: uid(), label: 'Piste de danse', w: 170, h: 120, x: 50, y: 76 }, { id: uid(), label: 'Entrée', w: 100, h: 36, x: 50, y: 94 }]
+});
+const emptyState = () => ({ title: 'Notre plan de table', menuOptions: [...DEFAULT_MENUS], caterer: defaultCaterer(), dj: defaultDj(), tables: [], guests: [], items: [] });
+let state = emptyState(), selected = null, activeTab = 'dashboard';
+function migrate() {
+  state.items = Array.isArray(state.items) ? state.items : [];
+  state.tables = Array.isArray(state.tables) ? state.tables : [];
+  state.dj = { ...defaultDj(), ...(state.dj && typeof state.dj === 'object' ? state.dj : {}) };
+  state.caterer = { ...defaultCaterer(), ...(state.caterer && typeof state.caterer === 'object' ? state.caterer : {}) };
+  if (!Array.isArray(state.menuOptions) || !state.menuOptions.length) {
+    state.menuOptions = [...DEFAULT_MENUS];
+  } else if (!state.menuOptions.includes('Non défini')) {
+    state.menuOptions.unshift('Non défini');
+  }
+  state.guests = Array.isArray(state.guests) ? state.guests : [];
+  state.guests.forEach(g => {
+    if (!g.menu) g.menu = 'Non défini';
+    if (!state.menuOptions.includes(g.menu)) state.menuOptions.push(g.menu);
+  });
+  state.tables.forEach((t, i) => {
+    if (t.x == null) { t.x = 18 + (i % 4) * 22; t.y = 22 + Math.floor(i / 4) * 30; }
+    if (!t.shape) t.shape = 'round';
+    if (!t.w) t.w = Math.round(2 * (Math.max(60, t.cap * 30 / (2 * Math.PI)) - 22));
+    if (!t.h) t.h = t.w;
+    const gs = state.guests.filter(g => g.table === t.id);
+    const used = new Set(gs.filter(g => g.seat != null).map(g => g.seat));
+    gs.filter(g => g.seat == null).forEach(g => { let k = 0; while (used.has(k)) k++; g.seat = k; used.add(k); });
+  });
+}
+migrate();
+const save = () => { if (READONLY || !hubConn) return; hubConn.save(() => state); };
+const $ = id => document.getElementById(id);
+const initials = n => String(n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtEur = v => `${Math.max(0, Math.round(Number(v) || 0)).toLocaleString('fr-FR')} €`;
+let toastT;
+function toast(msg) { const t = $('toast'); if (!t) return; t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+
+function removeMenuOption(menuName) {
+  if (menuName === 'Non défini') return;
+  const affected = state.guests.filter(g => (g.menu || 'Non défini') === menuName).length;
+  const msg = affected
+    ? `Retirer le menu « ${menuName} » ? ${affected} invité(s) repasseront sur « Non défini ».`
+    : `Retirer le menu « ${menuName} » ?`;
+  if (!confirm(msg)) return;
+  state.menuOptions = state.menuOptions.filter(m => m !== menuName);
+  state.guests.forEach(g => {
+    if (g.menu === menuName) g.menu = 'Non défini';
+  });
+  if ($('menuFilter').value === menuName) $('menuFilter').value = '';
+  save();
+  render();
+  toast(`Menu « ${menuName} » retiré`);
+}
+
+// Infobulle au survol d'un invité dans une table ou de l'élément DJ
+const tip = $('hoverTip');
+function showTipHtml(e, html) {
+  if (!tip) return;
+  tip.innerHTML = html;
+  tip.classList.add('show');
+  moveGuestTip(e);
+}
+function showGuestTip(e, g) {
+  if (!g) return;
+  const tbl = state.tables.find(t => t.id === g.table);
+  showTipHtml(e, `<strong>${esc(g.name)}</strong><small>Menu : ${esc(g.menu || 'Non défini')}${tbl ? ' · ' + esc(tbl.name) : ''}</small>`);
+}
+function moveGuestTip(e) {
+  if (!tip) return;
+  const pad = 14;
+  const x = Math.min(window.innerWidth - tip.offsetWidth - 10, e.clientX + pad);
+  const y = Math.min(window.innerHeight - tip.offsetHeight - 10, e.clientY + pad);
+  tip.style.left = Math.max(8, x) + 'px';
+  tip.style.top = Math.max(8, y) + 'px';
+}
+function hideGuestTip() { if (tip) tip.classList.remove('show'); }
+function attachGuestHover(el, g) {
+  el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' || !e.pointerType) showGuestTip(e, g); });
+  el.addEventListener('pointermove', e => { if (tip && tip.classList.contains('show')) moveGuestTip(e); });
+  el.addEventListener('pointerleave', hideGuestTip);
+}
+function attachDjHover(el) {
+  el.addEventListener('pointerenter', e => {
+    if (e.pointerType && e.pointerType !== 'mouse') return;
+    const dj = state.dj || {};
+    const title = dj.name ? esc(dj.name) : 'DJ (non renseigné)';
+    const details = [dj.status, dj.hours, dj.price ? dj.price + ' €' : ''].filter(Boolean).join(' · ');
+    showTipHtml(e, `<strong>🎧 ${title}</strong><small>${esc(details || 'Renseignez sa fiche dans l’onglet DJ')}</small>`);
+  });
+  el.addEventListener('pointermove', e => { if (tip && tip.classList.contains('show')) moveGuestTip(e); });
+  el.addEventListener('pointerleave', hideGuestTip);
+}
+
+function setTab(tab) {
+  activeTab = tab;
+  $('dashView').classList.toggle('hidden', tab !== 'dashboard');
+  $('roomView').classList.toggle('hidden', tab !== 'room');
+  $('menusView').classList.toggle('hidden', tab !== 'menus');
+  $('djView').classList.toggle('hidden', tab !== 'dj');
+  $('tabDashBtn').classList.toggle('active', tab === 'dashboard');
+  $('tabRoomBtn').classList.toggle('active', tab === 'room');
+  $('tabMenusBtn').classList.toggle('active', tab === 'menus');
+  $('tabDjBtn').classList.toggle('active', tab === 'dj');
+  hideGuestTip();
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'menus') renderMenusView();
+  if (tab === 'dj') renderDjView();
+}
+
+// Délégation fiable sur la barre d'onglets
+$('tabsNav').addEventListener('click', e => {
+  const btn = e.target.closest('[data-tab]');
+  if (btn) setTab(btn.dataset.tab);
+});
+
+function computeProgress() {
+  const guests = Array.isArray(state.guests) ? state.guests : [];
+  const tables = Array.isArray(state.tables) ? state.tables : [];
+  const totalGuests = guests.length;
+  const placedGuests = guests.filter(g => g.table).length;
+  const unplacedNames = guests.filter(g => !g.table).map(g => g.name);
+  const totalSeats = tables.reduce((a, t) => a + (Number(t.cap) || 0), 0);
+
+  // 1. Placement de table
+  const seatingPct = totalGuests === 0 ? 0 : Math.round((placedGuests / totalGuests) * 100);
+  const seatingBadge = totalGuests === 0
+    ? { cls: 'todo', label: 'Aucun invité' }
+    : placedGuests === totalGuests
+      ? { cls: 'done', label: 'Complet' }
+      : placedGuests > 0
+        ? { cls: 'wip', label: 'En cours' }
+        : { cls: 'todo', label: 'Pas fait' };
+
+  // 2. Menus des invités
+  const definedMenus = guests.filter(g => g.menu && g.menu !== 'Non défini').length;
+  const undefinedMenuGuests = guests.filter(g => !g.menu || g.menu === 'Non défini');
+  const menusPct = totalGuests === 0 ? 0 : Math.round((definedMenus / totalGuests) * 100);
+  const menusBadge = totalGuests === 0
+    ? { cls: 'todo', label: 'Aucun invité' }
+    : definedMenus === totalGuests
+      ? { cls: 'done', label: 'Complet' }
+      : definedMenus > 0
+        ? { cls: 'wip', label: 'En cours' }
+        : { cls: 'todo', label: 'Pas fait' };
+
+  // 3. Traiteur
+  const cat = { ...defaultCaterer(), ...(state.caterer || {}) };
+  const catHasName = Boolean(String(cat.name || '').trim());
+  const catPpg = parseFloat(cat.pricePerGuest) || 0;
+  const catExtra = parseFloat(cat.extraFee) || 0;
+  const catDeposit = parseFloat(cat.deposit) || 0;
+  const catTotal = totalGuests * catPpg + catExtra;
+  const catRest = Math.max(0, catTotal - catDeposit);
+  const catBooked = cat.status === 'Devis validé / Contrat signé' || cat.status === 'Confirmé';
+
+  let catPaymentState = 'Pas payé';
+  if (catTotal <= 0 && catDeposit <= 0) catPaymentState = 'Tarif non défini';
+  else if (catDeposit <= 0) catPaymentState = `Non payé (${fmtEur(catTotal)} à régler)`;
+  else if (catRest > 0) catPaymentState = `Acompte ${fmtEur(catDeposit)} versé · Reste ${fmtEur(catRest)}`;
+  else catPaymentState = `Soldé (${fmtEur(catTotal)})`;
+
+  let catScore = 0;
+  if (catHasName) catScore += 40;
+  if (catPpg > 0) catScore += 25;
+  if (catBooked) catScore += 25;
+  if (catDeposit > 0) catScore += 10;
+  const catPct = !catHasName && !catPpg && !catDeposit && !catBooked ? 0 : Math.min(100, catScore);
+  const catBadge = catPct === 0
+    ? { cls: 'todo', label: 'Pas fait' }
+    : catPct >= 90
+      ? { cls: 'done', label: cat.status }
+      : { cls: 'wip', label: cat.status || 'En cours' };
+
+  // 4. DJ
+  const dj = { ...defaultDj(), ...(state.dj || {}) };
+  const djHasName = Boolean(String(dj.name || '').trim());
+  const djHasSchedule = Boolean(String(dj.hours || '').trim() || String(dj.date || '').trim());
+  const djPrice = parseFloat(dj.price) || 0;
+  const djDeposit = parseFloat(dj.deposit) || 0;
+  const djRest = Math.max(0, djPrice - djDeposit);
+  const djBooked = dj.status === 'Confirmé / Réservé';
+  const djOption = dj.status === 'Option posée' || dj.status === 'Disponible · Devis demandé';
+
+  let djPaymentState = 'Pas payé';
+  if (djPrice <= 0 && djDeposit <= 0) djPaymentState = 'Tarif non défini';
+  else if (djDeposit <= 0) djPaymentState = `Non payé (${fmtEur(djPrice)} à régler)`;
+  else if (djRest > 0) djPaymentState = `Acompte ${fmtEur(djDeposit)} versé · Reste ${fmtEur(djRest)}`;
+  else djPaymentState = `Soldé (${fmtEur(djPrice)})`;
+
+  let djScore = 0;
+  if (djHasName) djScore += 40;
+  if (djHasSchedule) djScore += 20;
+  if (djBooked) djScore += 25;
+  else if (djOption) djScore += 10;
+  if (djPrice > 0) djScore += 5;
+  if (djDeposit > 0) djScore += 10;
+  const djPct = !djHasName && !djHasSchedule && !djPrice && !djDeposit && !djBooked && !djOption ? 0 : Math.min(100, djScore);
+  const djBadge = djPct === 0
+    ? { cls: 'todo', label: 'Pas de DJ · 0%' }
+    : djBooked
+      ? { cls: 'done', label: 'Confirmé' }
+      : { cls: 'wip', label: dj.status || 'En cours' };
+
+  const globalPct = Math.round((seatingPct + menusPct + catPct + djPct) / 4);
+
+  const todos = [];
+  if (totalGuests === 0) {
+    todos.push({ cat: 'Invités', text: 'Ajouter votre liste d’invités pour commencer le placement et les menus.', tab: 'room' });
+  } else {
+    if (unplacedNames.length > 0) {
+      const preview = unplacedNames.slice(0, 4).join(', ') + (unplacedNames.length > 4 ? ` (+${unplacedNames.length - 4})` : '');
+      todos.push({ cat: 'Placement', text: `Placer ${unplacedNames.length} invité(s) sur une table : ${preview}.`, tab: 'room' });
+    }
+    if (totalSeats < totalGuests) {
+      todos.push({ cat: 'Placement', text: `Capacité insuffisante : ${totalSeats} places pour ${totalGuests} invités (ajoutez une table ou augmentez les places).`, tab: 'room' });
+    }
+    if (undefinedMenuGuests.length > 0) {
+      const preview = undefinedMenuGuests.slice(0, 4).map(g => g.name).join(', ') + (undefinedMenuGuests.length > 4 ? ` (+${undefinedMenuGuests.length - 4})` : '');
+      todos.push({ cat: 'Menus', text: `Définir le menu de ${undefinedMenuGuests.length} invité(s) : ${preview}.`, tab: 'menus' });
+    }
+  }
+
+  if (!catHasName) {
+    todos.push({ cat: 'Traiteur', text: 'Renseigner le nom / la maison du traiteur retenu.', tab: 'menus' });
+  } else if (!catBooked) {
+    todos.push({ cat: 'Traiteur', text: `Finaliser le statut du traiteur « ${cat.name} » (actuellement : ${cat.status}).`, tab: 'menus' });
+  }
+  if (catHasName && catPpg <= 0 && catExtra <= 0) {
+    todos.push({ cat: 'Traiteur', text: `Indiquer le tarif par invité (ou forfait) pour « ${cat.name} ».`, tab: 'menus' });
+  } else if (catHasName && catDeposit <= 0 && (catPpg > 0 || catExtra > 0)) {
+    todos.push({ cat: 'Paiement Traiteur', text: `Acompte traiteur non payé (${fmtEur(catTotal)} estimés).`, tab: 'menus' });
+  } else if (catHasName && catRest > 0) {
+    todos.push({ cat: 'Paiement Traiteur', text: `Solde traiteur à régler : ${fmtEur(catRest)}.`, tab: 'menus' });
+  }
+
+  if (!djHasName) {
+    todos.push({ cat: 'DJ', text: 'Aucun DJ renseigné : ajouter son nom ou pseudo.', tab: 'dj' });
+  } else if (!djBooked) {
+    todos.push({ cat: 'DJ', text: `Confirmer la disponibilité / réservation de « ${dj.name} » (${dj.status}).`, tab: 'dj' });
+  }
+  if (djHasName && !djHasSchedule) {
+    todos.push({ cat: 'DJ', text: `Préciser la date ou les horaires de prestation de « ${dj.name} ».`, tab: 'dj' });
+  }
+  if (djHasName && djPrice <= 0) {
+    todos.push({ cat: 'Paiement DJ', text: `Renseigner le tarif de « ${dj.name} ».`, tab: 'dj' });
+  } else if (djHasName && djDeposit <= 0 && djPrice > 0) {
+    todos.push({ cat: 'Paiement DJ', text: `Acompte DJ non payé (${fmtEur(djPrice)}).`, tab: 'dj' });
+  } else if (djHasName && djRest > 0) {
+    todos.push({ cat: 'Paiement DJ', text: `Solde DJ à régler : ${fmtEur(djRest)}.`, tab: 'dj' });
+  }
+
+  return {
+    globalPct,
+    cards: [
+      {
+        title: 'Placement de table',
+        pct: seatingPct,
+        badge: seatingBadge,
+        meta: `${placedGuests} / ${totalGuests} invité(s) placé(s) · ${totalSeats} place(s) (${tables.length} table(s))`,
+        subMeta: unplacedNames.length ? `${unplacedNames.length} à placer` : 'Toutes les places attribuées',
+        tab: 'room',
+        cta: 'Ouvrir le plan'
+      },
+      {
+        title: 'Menus invités',
+        pct: menusPct,
+        badge: menusBadge,
+        meta: `${definedMenus} / ${totalGuests} menu(s) défini(s)`,
+        subMeta: undefinedMenuGuests.length ? `${undefinedMenuGuests.length} « Non défini »` : 'Tous les menus renseignés',
+        tab: 'menus',
+        cta: 'Gérer les menus'
+      },
+      {
+        title: 'Traiteur',
+        pct: catPct,
+        badge: catBadge,
+        meta: catHasName ? cat.name : 'Aucun traiteur renseigné',
+        subMeta: `Paiement : ${catPaymentState}`,
+        tab: 'menus',
+        cta: 'Voir le traiteur'
+      },
+      {
+        title: 'DJ & Animation',
+        pct: djPct,
+        badge: djBadge,
+        meta: djHasName ? dj.name : 'Aucun DJ renseigné',
+        subMeta: `Paiement : ${djPaymentState}`,
+        tab: 'dj',
+        cta: 'Voir le DJ'
+      }
+    ],
+    todos
+  };
+}
+
+function renderDashboard() {
+  try {
+    const p = computeProgress();
+    $('globalPct').textContent = `${p.globalPct}%`;
+    const grid = $('kpiGrid');
+    grid.innerHTML = '';
+
+    p.cards.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'kpi-card';
+      card.innerHTML = `
+        <div class="kpi-head">
+          <h3>${esc(c.title)}</h3>
+          <span class="kpi-pct">${c.pct}%</span>
+        </div>
+        <span class="pill-state ${c.badge.cls}">${esc(c.badge.label)}</span>
+        <div class="kpi-bar"><i class="${c.pct === 100 ? 'done' : ''}" style="width:${c.pct}%"></i></div>
+        <div class="kpi-meta">${esc(c.meta)}</div>
+        <div class="kpi-meta"><strong>${esc(c.subMeta)}</strong></div>
+        <button type="button" class="btn btn-link" data-goto="${esc(c.tab)}">${esc(c.cta)} →</button>
+      `;
+      grid.appendChild(card);
+    });
+
+    const todoList = $('todoList');
+    todoList.innerHTML = '';
+    if (!p.todos.length) {
+      todoList.innerHTML = `<li class="todo-done-msg">🎉 Tout est complet : placement, menus, traiteur et DJ sont renseignés et réglés.</li>`;
+      return;
+    }
+    p.todos.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'todo-item';
+      li.innerHTML = `
+        <div class="todo-left">
+          <span class="todo-cat">${esc(item.cat)}</span>
+          <span>${esc(item.text)}</span>
+        </div>
+        <button type="button" class="btn" data-goto="${esc(item.tab)}" style="padding:5px 12px;font-size:.82rem">Aller →</button>
+      `;
+      todoList.appendChild(li);
+    });
+  } catch (err) {
+    console.error('Erreur tableau de bord:', err);
+  }
+}
+
+$('dashView').addEventListener('click', e => {
+  const btn = e.target.closest('[data-goto]');
+  if (btn) setTab(btn.dataset.goto);
+});
+
+function assign(gid, tid, seat) {
+  if (READONLY) return;
+  const g = state.guests.find(x => x.id === gid); if (!g) return;
+  if (!tid) { g.table = null; g.seat = null; selected = null; save(); render(); return; }
+  const t = state.tables.find(x => x.id === tid);
+  const others = state.guests.filter(x => x.table === tid && x.id !== gid);
+  if (seat == null) {
+    const used = new Set(others.map(x => x.seat));
+    seat = [...Array(t.cap).keys()].find(i => !used.has(i));
+    if (seat == null) { toast(t.name + ' est complète'); return; }
+  } else {
+    const h = others.find(x => x.seat === seat);
+    if (h) { h.table = g.table; h.seat = g.table ? g.seat : null; }
+  }
+  g.table = tid; g.seat = seat; selected = null; save(); render();
+}
+
+function chip(g, inTable) {
+  const el = document.createElement('div');
+  el.className = 'chip' + (selected === g.id ? ' sel' : '');
+  el.draggable = !READONLY; el.tabIndex = 0;
+  const menuBadge = g.menu && g.menu !== 'Non défini' ? `<span class="menu-tag">${esc(g.menu)}</span>` : '';
+  el.innerHTML = `<span>${esc(g.name)}</span>${menuBadge}<button type="button" class="x" aria-label="${inTable ? 'Retirer de la table' : 'Supprimer'} ${esc(g.name)}">${inTable ? '↩' : '×'}</button>`;
+  if (inTable) attachGuestHover(el, g);
+  el.addEventListener('dragstart', e => { hideGuestTip(); e.dataTransfer.setData('text/plain', g.id); e.dataTransfer.effectAllowed = 'move'; });
+  el.addEventListener('click', e => {
+    if (READONLY && e.target.closest('.x')) return;
+    if (e.target.closest('.x')) {
+      hideGuestTip();
+      if (inTable) assign(g.id, null);
+      else { state.guests = state.guests.filter(x => x.id !== g.id); save(); render(); }
+      return;
+    }
+    selected = selected === g.id ? null : g.id; render();
+  });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+  return el;
+}
+
+function render() {
+  const q = $('search').value.trim().toLowerCase();
+  const free = state.guests.filter(g => !g.table && g.name.toLowerCase().includes(q));
+  const list = $('guestList'); list.innerHTML = '';
+  free.forEach(g => list.appendChild(chip(g, false)));
+  if (!free.length) list.innerHTML = `<div class="empty">${state.guests.length && !q ? 'Tout le monde est placé 🎉' : q ? 'Aucun résultat.' : 'Ajoutez votre premier invité ci-dessus.'}</div>`;
+  const placed = state.guests.filter(g => g.table).length, total = state.guests.length;
+  $('count').textContent = `${placed} placés sur ${total} · ${total - placed} à placer`;
+  $('bar').style.width = total ? (placed / total * 100) + '%' : '0%';
+  const seats = state.tables.reduce((a, t) => a + t.cap, 0);
+  $('seatInfo').textContent = `${state.tables.length} tables · ${seats} places`;
+
+  renderRoom();
+  if (activeTab === 'dashboard') renderDashboard();
+  if (activeTab === 'menus') renderMenusView();
+  if (activeTab === 'dj') renderDjView();
+}
+
+// Gestion du traiteur dans la partie Menus
+const CATERER_FIELDS = [
+  ['catererName', 'name'],
+  ['catererStatus', 'status'],
+  ['catererPhone', 'phone'],
+  ['catererEmail', 'email'],
+  ['catererPricePerGuest', 'pricePerGuest'],
+  ['catererExtraFee', 'extraFee'],
+  ['catererDeposit', 'deposit'],
+  ['catererNotes', 'notes']
+];
+
+function updateCatererSummaryUI() {
+  const cat = state.caterer;
+  const badge = $('catererStatusBadge');
+  badge.textContent = cat.status || 'Devis en cours';
+  badge.classList.toggle('ok', cat.status === 'Confirmé' || cat.status === 'Devis validé / Contrat signé');
+
+  const guestsCount = state.guests.length;
+  const ppg = parseFloat(cat.pricePerGuest) || 0;
+  const extra = parseFloat(cat.extraFee) || 0;
+  const deposit = parseFloat(cat.deposit) || 0;
+  const total = guestsCount * ppg + extra;
+  const rest = Math.max(0, total - deposit);
+
+  $('catererTotalText').textContent = `Total estimé (${guestsCount} inv.) : ${total.toLocaleString('fr-FR')} €`;
+  $('catererBalance').textContent = `Reste : ${rest.toLocaleString('fr-FR')} €`;
+}
+
+function renderCatererFields() {
+  CATERER_FIELDS.forEach(([elId, key]) => {
+    const el = $(elId);
+    if (el) el.value = state.caterer[key] ?? '';
+  });
+  updateCatererSummaryUI();
+}
+
+CATERER_FIELDS.forEach(([elId, key]) => {
+  const el = $(elId);
+  if (!el) return;
+  const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+  el.addEventListener(evt, () => {
+    state.caterer[key] = el.value;
+    save();
+    updateCatererSummaryUI();
+  });
+});
+
+function renderMenusView() {
+  renderCatererFields();
+
+  const filterSel = $('menuFilter');
+  const currentFilter = filterSel.value;
+  filterSel.innerHTML = `<option value="">Tous les menus</option>` +
+    state.menuOptions.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  if (state.menuOptions.includes(currentFilter)) filterSel.value = currentFilter;
+
+  const summary = $('menuSummary');
+  summary.innerHTML = '';
+  state.menuOptions.forEach(m => {
+    const c = state.guests.filter(g => (g.menu || 'Non défini') === m).length;
+    const pill = document.createElement('span');
+    pill.className = 'summary-pill';
+    pill.innerHTML = `<strong>${c}</strong> · ${esc(m)}` +
+      (m !== 'Non défini' ? `<button type="button" class="rm-menu" title="Retirer le menu ${esc(m)}" aria-label="Retirer le menu ${esc(m)}">×</button>` : '');
+    const rmBtn = pill.querySelector('.rm-menu');
+    if (rmBtn) rmBtn.onclick = () => removeMenuOption(m);
+    summary.appendChild(pill);
+  });
+
+  const q = $('menuSearch').value.trim().toLowerCase();
+  const f = filterSel.value;
+  const rows = state.guests.filter(g => {
+    const tbl = state.tables.find(t => t.id === g.table);
+    const matchText = !q || g.name.toLowerCase().includes(q) || (tbl && tbl.name.toLowerCase().includes(q)) || (g.menu || '').toLowerCase().includes(q);
+    const matchMenu = !f || (g.menu || 'Non défini') === f;
+    return matchText && matchMenu;
+  });
+
+  $('menusCount').textContent = `${state.guests.length} invité(s) au total · ${rows.length} affiché(s)`;
+  const tbody = $('guestMenusBody');
+  tbody.innerHTML = '';
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">Aucun invité à afficher.</td></tr>`;
+    return;
+  }
+
+  rows.forEach(g => {
+    const tbl = state.tables.find(t => t.id === g.table);
+    const tr = document.createElement('tr');
+    const optsHtml = state.menuOptions.map(m =>
+      `<option value="${esc(m)}" ${(g.menu || 'Non défini') === m ? 'selected' : ''}>${esc(m)}</option>`
+    ).join('');
+    tr.innerHTML = `
+      <td><strong>${esc(g.name)}</strong></td>
+      <td>${tbl ? `<span class="badge-placed">${esc(tbl.name)}</span>` : `<span class="badge-unplaced">Non placé</span>`}</td>
+      <td><select aria-label="Menu de ${esc(g.name)}">${optsHtml}</select></td>
+      <td><button type="button" class="del-guest">Supprimer</button></td>
+    `;
+    tr.querySelector('select').onchange = e => {
+      g.menu = e.target.value;
+      save();
+      render();
+      toast(`Menu de ${g.name} : ${g.menu}`);
+    };
+    tr.querySelector('.del-guest').onclick = () => {
+      state.guests = state.guests.filter(x => x.id !== g.id);
+      if (selected === g.id) selected = null;
+      save();
+      render();
+    };
+    tbody.appendChild(tr);
+  });
+}
+
+// Gestion de l'onglet DJ
+const DJ_FIELDS = [
+  ['djName', 'name'],
+  ['djPhone', 'phone'],
+  ['djEmail', 'email'],
+  ['djSocial', 'social'],
+  ['djStatus', 'status'],
+  ['djDate', 'date'],
+  ['djSetupTime', 'setupTime'],
+  ['djHours', 'hours'],
+  ['djPrice', 'price'],
+  ['djDeposit', 'deposit'],
+  ['djEquipment', 'equipment'],
+  ['djKeySongs', 'keySongs'],
+  ['djNotes', 'notes']
+];
+
+function updateDjSummaryUI() {
+  const dj = state.dj;
+  const badge = $('djStatusBadge');
+  badge.textContent = dj.status || 'À contacter';
+  badge.classList.toggle('ok', dj.status === 'Confirmé / Réservé');
+
+  const price = parseFloat(dj.price) || 0;
+  const deposit = parseFloat(dj.deposit) || 0;
+  const rest = Math.max(0, price - deposit);
+  $('djBalance').textContent = `${rest.toLocaleString('fr-FR')} €`;
+}
+
+function renderDjView() {
+  DJ_FIELDS.forEach(([elId, key]) => {
+    const el = $(elId);
+    if (el) el.value = state.dj[key] ?? '';
+  });
+  updateDjSummaryUI();
+}
+
+DJ_FIELDS.forEach(([elId, key]) => {
+  const el = $(elId);
+  if (!el) return;
+  const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+  el.addEventListener(evt, () => {
+    state.dj[key] = el.value;
+    save();
+    updateDjSummaryUI();
+  });
+});
+
+$('addMenuTypeBtn').onclick = () => {
+  const inp = $('newMenuName');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!state.menuOptions.includes(val)) {
+    state.menuOptions.push(val);
+    save();
+    renderMenusView();
+    toast(`Menu « ${val} » ajouté`);
+  }
+  inp.value = '';
+};
+$('newMenuName').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('addMenuTypeBtn').click(); } };
+$('menuSearch').oninput = renderMenusView;
+$('menuFilter').onchange = renderMenusView;
+
+let sel = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(v) || a));
+const tH = t => t.shape === 'rect' ? t.h : t.w;
+const OFF = 22;
+
+function seatPos(t, i) {
+  if (t.shape === 'round') {
+    const a = 2 * Math.PI * i / t.cap - Math.PI / 2, r = t.w / 2 + OFF;
+    return [r * Math.cos(a), r * Math.sin(a)];
+  }
+  const a = t.w / 2 + OFF, b = tH(t) / 2 + OFF;
+  let d = i * 4 * (a + b) / t.cap;
+  if (d < a) return [d, -b]; d -= a;
+  if (d < 2 * b) return [a, -b + d]; d -= 2 * b;
+  if (d < 2 * a) return [a - d, b]; d -= 2 * a;
+  if (d < 2 * b) return [-a, b - d]; d -= 2 * b;
+  return [-a + d, -b];
+}
+const seatGap = t => (t.shape === 'round' ? Math.PI * (t.w + 2 * OFF) : 2 * (t.w + tH(t) + 4 * OFF)) / t.cap;
+
+function renderRoom() {
+  const rm = $('room'); rm.innerHTML = '';
+  state.items.forEach(it => {
+    const el = document.createElement('div');
+    el.className = 'item' + (sel && sel.id === it.id ? ' sel' : '');
+    el.style.cssText = `left:${it.x}%;top:${it.y}%;width:${it.w}px;height:${it.h}px`;
+    if (it.shape === 'ellipse') el.style.borderRadius = '50%';
+    if (/^#[0-9a-f]{6}$/i.test(it.color || '')) el.style.backgroundColor = it.color;
+    if ((it.bg || '').startsWith('data:image/')) {
+      el.style.backgroundImage = `url("${it.bg}")`;
+      el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
+      el.style.color = '#fff'; el.style.textShadow = '0 1px 5px rgba(0,0,0,.7)';
+    }
+    el.textContent = it.label;
+    if (/^dj\b/i.test(it.label.trim())) attachDjHover(el);
+    makeDraggable(el, it, 'item'); rm.appendChild(el);
+  });
+  state.tables.forEach(t => {
+    const guests = state.guests.filter(g => g.table === t.id);
+    const W = t.w + 2 * (OFF + 15), H = tH(t) + 2 * (OFF + 15);
+    const el = document.createElement('div');
+    el.className = 'tbl' + (guests.length >= t.cap ? ' full' : '') + (sel && sel.id === t.id ? ' sel' : '');
+    el.style.left = t.x + '%'; el.style.top = t.y + '%';
+    const seats = document.createElement('div');
+    seats.className = 'seats'; seats.style.width = W + 'px'; seats.style.height = H + 'px';
+    seats.innerHTML = `<div class="disc" style="inset:${OFF + 15}px;border-radius:${t.shape === 'round' ? '50%' : '16px'}"><div>${esc(t.name)}<small>${guests.length}/${t.cap}</small></div></div>`;
+    for (let i = 0; i < t.cap; i++) {
+      const [x, y] = seatPos(t, i), g = guests.find(q => q.seat === i);
+      const s = document.createElement('div');
+      s.className = 'seat' + (g ? ' on' : '') + (g && selected === g.id ? ' sel' : '');
+      s.dataset.i = i; s.style.left = (W / 2 + x) + 'px'; s.style.top = (H / 2 + y) + 'px';
+      if (g) {
+        s.textContent = initials(g.name);
+        s.title = `${g.name} — Menu : ${g.menu || 'Non défini'}`;
+        s.draggable = !READONLY;
+        attachGuestHover(s, g);
+        s.addEventListener('dragstart', e => { hideGuestTip(); e.dataTransfer.setData('text/plain', g.id); e.dataTransfer.effectAllowed = 'move'; });
+        s.addEventListener('click', () => {
+          sel = { kind: 'table', id: t.id };
+          if (selected && selected !== g.id) assign(selected, t.id, i);
+          else { selected = selected === g.id ? null : g.id; render(); }
+        });
+      }
+      seats.appendChild(s);
+    }
+    el.appendChild(seats);
+    makeDraggable(el, t, 'table');
+    const seatOf = e => { const q = e.target.closest && e.target.closest('.seat'); return q ? +q.dataset.i : undefined; };
+    const clear = () => { el.classList.remove('over'); el.querySelectorAll('.seat.hot').forEach(x => x.classList.remove('hot')); };
+    el.addEventListener('dragover', e => {
+      e.preventDefault(); clear(); el.classList.add('over');
+      const i = seatOf(e); if (i != null) el.querySelector(`.seat[data-i="${i}"]`).classList.add('hot');
+    });
+    el.addEventListener('dragleave', clear);
+    el.addEventListener('drop', e => { e.preventDefault(); clear(); assign(e.dataTransfer.getData('text/plain'), t.id, seatOf(e)); });
+    rm.appendChild(el);
+  });
+  renderDetail();
+}
+
+function makeDraggable(el, obj, kind) {
+  el.addEventListener('pointerdown', e => {
+    if (e.button) return;
+    if (READONLY) { sel = { kind, id: obj.id }; render(); return; }
+    const seatEl = e.target.closest && e.target.closest('.seat');
+    if (seatEl && seatEl.classList.contains('on')) return;
+    const seatIdx = seatEl ? +seatEl.dataset.i : undefined;
+    const rect = $('room').getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY, ox = obj.x, oy = obj.y;
+    let moved = false;
+    el.setPointerCapture(e.pointerId);
+    const move = ev => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 5) return;
+      moved = true; el.classList.add('drag');
+      obj.x = Math.max(4, Math.min(96, ox + dx / rect.width * 100));
+      obj.y = Math.max(4, Math.min(96, oy + dy / rect.height * 100));
+      el.style.left = obj.x + '%'; el.style.top = obj.y + '%';
+    };
+    const up = ev => {
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
+      if (ev.type === 'pointercancel') return;
+      sel = { kind, id: obj.id };
+      if (moved) { save(); render(); return; }
+      if (kind === 'table' && selected) { assign(selected, obj.id, seatIdx); return; }
+      render();
+    };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+}
+
+function readImage(file, cb) {
+  const r = new FileReader();
+  r.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 700 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', .82));
+    };
+    im.onerror = () => toast('Image illisible');
+    im.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function renderDetail() {
+  const d = $('detail');
+  const t = sel && sel.kind === 'table' && state.tables.find(x => x.id === sel.id);
+  const it = sel && sel.kind === 'item' && state.items.find(x => x.id === sel.id);
+  if (!t && !it) {
+    sel = null;
+    d.innerHTML = '<div class="empty">Touchez une table ou un élément pour le modifier. Survolez un invité de la table pour voir son menu.</div>';
+    return;
+  }
+  const num = (c, label, v, min, max, step) => `<label class="tcap">${label} <input type="number" class="${c}" min="${min}" max="${max}" step="${step}" value="${v}"></label>`;
+  const q = c => d.querySelector(c);
+  if (it) {
+    d.innerHTML = `<input class="tname" value="${esc(it.label)}" aria-label="Nom de l'élément">
+      ${num('iw', 'Largeur', it.w, 30, 600, 10)}${num('ih', 'Hauteur', it.h, 20, 500, 10)}
+      <label class="tcap">Forme <select class="ish"><option value="rect">Rectangle</option><option value="ellipse">Ovale</option></select></label>
+      <label class="tcap">Couleur <input type="color" class="ic" value="${/^#[0-9a-f]{6}$/i.test(it.color || '') ? it.color : '#f8ddd7'}"></label>
+      <label class="btn" tabindex="0">${it.bg ? 'Changer le fond' : 'Ajouter un fond'}<input type="file" class="ib" accept="image/*" hidden></label>
+      ${it.bg ? '<button type="button" class="nobg">Retirer le fond</button>' : ''}
+      <button type="button" class="del">Supprimer</button>`;
+    q('.ish').value = it.shape || 'rect';
+    q('.tname').onchange = e => { it.label = e.target.value.trim() || 'Élément'; save(); render(); };
+    q('.iw').onchange = e => { it.w = clamp(e.target.value, 30, 600); save(); render(); };
+    q('.ih').onchange = e => { it.h = clamp(e.target.value, 20, 500); save(); render(); };
+    q('.ish').onchange = e => { it.shape = e.target.value; save(); render(); };
+    q('.ic').onchange = e => { it.color = e.target.value; save(); render(); };
+    q('.ib').onchange = e => { const f = e.target.files[0]; if (f) readImage(f, url => { it.bg = url; save(); render(); }); };
+    if (q('.nobg')) q('.nobg').onclick = () => { delete it.bg; save(); render(); };
+    q('.del').onclick = () => { state.items = state.items.filter(x => x !== it); sel = null; save(); render(); };
+    return;
+  }
+  const guests = state.guests.filter(g => g.table === t.id);
+  d.innerHTML = `<input class="tname" value="${esc(t.name)}" aria-label="Nom de la table">
+    <label class="tcap">Forme <select class="shape"><option value="round">Ronde</option><option value="square">Carrée</option><option value="rect">Rectangle</option></select></label>
+    ${num('tw', t.shape === 'round' ? 'Diamètre' : t.shape === 'square' ? 'Côté' : 'Longueur', t.w, 50, 400, 10)}
+    ${t.shape === 'rect' ? num('th', 'Largeur', t.h, 50, 400, 10) : ''}
+    ${num('cap', 'Places', t.cap, 1, 40, 1)}
+    <button type="button" class="dup">Dupliquer</button><button type="button" class="del">Supprimer</button>
+    ${seatGap(t) < 32 ? '<div class="warn">Les places sont serrées : agrandissez la table ou réduisez le nombre de places.</div>' : ''}
+    <div class="names"></div>`;
+  q('.shape').value = t.shape;
+  const names = q('.names');
+  guests.forEach(g => names.appendChild(chip(g, true)));
+  if (!guests.length) names.innerHTML = '<div class="empty">Aucun invité. Glissez un invité sur une place de la table pour l\'asseoir.</div>';
+  q('.tname').onchange = e => { t.name = e.target.value.trim() || 'Table'; save(); render(); };
+  q('.shape').onchange = e => { t.shape = e.target.value; if (t.shape !== 'rect') t.h = t.w; save(); render(); };
+  q('.tw').onchange = e => { t.w = clamp(e.target.value, 50, 400); if (t.shape !== 'rect') t.h = t.w; save(); render(); };
+  if (q('.th')) q('.th').onchange = e => { t.h = clamp(e.target.value, 50, 400); save(); render(); };
+  q('.cap').onchange = e => {
+    const v = clamp(e.target.value, 1, 40);
+    if (v < t.cap) {
+      if (guests.length > v) { toast('Retirez d\'abord des invités'); render(); return; }
+      const used = new Set(guests.filter(g => g.seat < v).map(g => g.seat));
+      guests.filter(g => g.seat >= v).forEach(g => { let k = 0; while (used.has(k)) k++; g.seat = k; used.add(k); });
+    }
+    t.cap = v; save(); render();
+  };
+  q('.dup').onclick = () => {
+    const c = { id: uid(), name: t.name + ' bis', cap: t.cap, shape: t.shape, w: t.w, h: t.h, x: Math.min(94, t.x + 6), y: Math.min(94, t.y + 8) };
+    state.tables.push(c); sel = { kind: 'table', id: c.id }; save(); render();
+  };
+  q('.del').onclick = () => {
+    if (guests.length && !confirm(`Supprimer ${t.name} ? Ses ${guests.length} invités reviendront dans la liste.`)) return;
+    guests.forEach(g => { g.table = null; g.seat = null; });
+    state.tables = state.tables.filter(x => x !== t); sel = null; save(); render();
+  };
+}
+
+$('guestForm').onsubmit = e => {
+  e.preventDefault();
+  const names = $('guestName').value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+  names.forEach(n => state.guests.push({ id: uid(), name: n, table: null, menu: 'Non défini' }));
+  $('guestName').value = ''; save(); render();
+};
+$('search').oninput = render;
+$('addTable').onclick = () => {
+  const n = state.tables.length;
+  const t = { id: uid(), name: 'Table ' + (n + 1), cap: 8, shape: 'round', w: 100, h: 100, x: 15 + (n % 5) * 17, y: 20 + (Math.floor(n / 5) % 3) * 28 };
+  state.tables.push(t); sel = { kind: 'table', id: t.id }; save(); render();
+};
+const PRESETS = { 'Piste de danse': [170, 120], 'DJ': [110, 56], 'Buffet': [150, 46], 'Bar': [130, 44], 'Scène': [190, 72], 'Gâteau': [70, 40], 'Entrée': [100, 36] };
+$('addItem').onchange = e => {
+  let l = e.target.value, size = PRESETS[l]; e.target.value = '';
+  if (!l) return;
+  if (l === '*') {
+    l = (prompt('Nom de l\'élément (ex. Photobooth, Table des cadeaux)') || '').trim();
+    if (!l) return; size = [120, 60];
+  }
+  const it = { id: uid(), label: l, w: size[0], h: size[1], x: 50, y: 50 };
+  state.items.push(it); sel = { kind: 'item', id: it.id }; save(); render();
+};
+
+const gl = $('guestList');
+gl.addEventListener('dragover', e => { e.preventDefault(); gl.classList.add('over'); });
+gl.addEventListener('dragleave', () => gl.classList.remove('over'));
+gl.addEventListener('drop', e => { e.preventDefault(); gl.classList.remove('over'); assign(e.dataTransfer.getData('text/plain'), null); });
+
+const title = $('title'); title.textContent = state.title || 'Notre plan de table';
+title.onblur = () => { state.title = title.textContent.trim() || 'Notre plan de table'; document.title = state.title; save(); };
+title.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
+document.title = state.title;
+
+$('exportBtn').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
+  a.download = 'plan-de-table.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+$('importFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!Array.isArray(d.tables) || !Array.isArray(d.guests)) throw 0;
+      state = d; migrate(); title.textContent = state.title || 'Notre plan de table'; save(); render(); toast('Plan importé');
+    } catch (err) { toast('Fichier invalide'); }
+  };
+  r.readAsText(f); e.target.value = '';
+};
+$('printBtn').onclick = () => window.print();
+$('resetBtn').onclick = () => {
+  if (!confirm('Tout effacer et recommencer ?')) return;
+  state = { title: 'Notre plan de table', menuOptions: [...DEFAULT_MENUS], caterer: defaultCaterer(), dj: defaultDj(), tables: [], guests: [], items: [] };
+  title.textContent = state.title; save(); render();
+};
+
+// Désactive les champs de saisie pour les lecteurs (se réapplique à chaque rendu)
+function lockUi() {
+  if (!READONLY) return;
+  document.querySelectorAll('#detail input,#detail select,#detail textarea,#menusView input:not(#menuSearch),#menusView select:not(#menuFilter),#menusView textarea,#djView input,#djView select,#djView textarea')
+    .forEach(el => { if (!el.disabled) el.disabled = true; });
+}
+new MutationObserver(lockUi).observe(document.body, { childList: true, subtree: true });
+
+// Démarrage : connexion à la base, rôle (admin / lecteur), premier rendu
+(async function boot() {
+  document.body.classList.add('booting');
+  hubConn = await Hub.connect('plan-de-table');
+  READONLY = !hubConn.isAdmin;
+  document.body.classList.toggle('readonly', READONLY);
+  title.contentEditable = READONLY ? 'false' : 'true';
+  hubConn.mountBar();
+  const apply = d => {
+    state = (d && Array.isArray(d.tables)) ? d : emptyState();
+    migrate();
+    title.textContent = state.title || 'Notre plan de table';
+    document.title = state.title || 'Plan de table';
+    render(); lockUi();
+  };
+  apply(hubConn.data);
+  document.body.classList.remove('booting');
+  if (READONLY) hubConn.poll(apply);
+  else if (!Array.isArray(hubConn.data.tables)) toast('Base vide : cliquez sur « Importer » pour reprendre votre fichier .json');
+})();
+</script>
+</body>
+</html>
