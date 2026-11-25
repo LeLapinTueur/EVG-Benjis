@@ -509,13 +509,15 @@
     body.remote #btnReset { display: none !important; }
     #syncStatus { font-size: 12px; font-weight: 700; color: var(--muted); align-self: center; }
     #syncStatus.err { color: var(--red); }
-    #shareModal { position: fixed; inset: 0; background: rgba(16,26,45,.55); display: grid; place-items: center; padding: 18px; z-index: 50; }
-    #shareModal .box { background: #fff; border-radius: 16px; padding: 22px; max-width: 560px; width: 100%; }
-    #shareModal h3 { margin: 0 0 6px; }
-    #shareModal label { display: block; font-weight: 800; font-size: 13px; margin-top: 14px; }
-    #shareModal small { display: block; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
-    #shareModal .row { display: flex; gap: 8px; }
-    #shareModal input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px; }
+    .ovl { position: fixed; inset: 0; background: rgba(16,26,45,.55); display: grid; place-items: center; padding: 18px; z-index: 50; }
+    .ovl .box { background: #fff; border-radius: 16px; padding: 22px; max-width: 560px; width: 100%; }
+    .ovl h3 { margin: 0 0 6px; }
+    .ovl label { display: block; font-weight: 800; font-size: 13px; margin-top: 14px; }
+    .ovl small { display: block; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+    .ovl .row { display: flex; gap: 8px; }
+    .ovl input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px; }
+      .ovl .err { color: var(--red); font-size: 13px; font-weight: 700; margin-top: 10px; min-height: 18px; }
+    .ovl p.desc { color: var(--muted); margin: 0; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -548,7 +550,10 @@
         <button class="btn" id="btnExportHtml" title="Télécharger le fichier HTML avec vos modifications enregistrées">💾 Sauvegarder HTML</button>
         <span id="syncStatus"></span>
         <button class="btn btn-primary" id="btnPublish" title="Enregistrer ce planning en ligne et obtenir des liens de partage">☁️ Mettre en ligne</button>
-        <button class="btn btn-primary" id="btnShare" style="display:none" title="Liens de partage">🔗 Partager</button>
+        <button class="btn btn-primary" id="btnAdminLogin" style="display:none" title="Se connecter en administrateur">🔐 Admin</button>
+        <button class="btn btn-primary" id="btnShare" style="display:none" title="Copier le lien de partage">🔗 Partager</button>
+        <button class="btn" id="btnAdminPwd" style="display:none" title="Changer le mot de passe administrateur">🔑 Mot de passe</button>
+        <button class="btn" id="btnLogout" style="display:none" title="Repasser en mode lecture">🚪 Déconnexion</button>
         <button class="btn btn-danger" id="btnReset" title="Réinitialiser aux données d'origine">↺ Réinitialiser</button>
       </div>
     </div>
@@ -774,19 +779,29 @@
     </div>
   </div>
 
-  <div id="shareModal" class="hidden">
+  <div id="shareModal" class="ovl hidden">
     <div class="box">
       <h3>🔗 Partager le planning</h3>
-      <label>Lien de consultation (lecture seule)
-        <small>À envoyer à tous les participants.</small>
+      <label>Lien unique pour tout le monde
+        <small>Les participants consultent en lecture seule. Seul l'administrateur (mot de passe) peut modifier.</small>
         <div class="row"><input id="shareViewUrl" readonly><button class="btn btn-sm" data-copy="shareViewUrl">Copier</button></div>
-      </label>
-      <label>Lien d'édition (organisateurs uniquement)
-        <small>Quiconque a ce lien peut modifier le planning. Ne le diffusez pas largement.</small>
-        <div class="row"><input id="shareEditUrl" readonly><button class="btn btn-sm" data-copy="shareEditUrl">Copier</button></div>
       </label>
       <div style="text-align:right;margin-top:18px"><button class="btn" id="btnCloseShare">Fermer</button></div>
     </div>
+  </div>
+
+  <div id="authModal" class="ovl hidden">
+    <form class="box" id="authForm" autocomplete="off">
+      <h3 id="authTitle"></h3>
+      <p class="desc" id="authDesc"></p>
+      <label>Mot de passe <input type="password" id="authPw" autocomplete="new-password"></label>
+      <label id="authPw2Wrap">Confirmer le mot de passe <input type="password" id="authPw2" autocomplete="new-password"></label>
+      <div class="err" id="authErr"></div>
+      <div style="text-align:right;margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn" id="btnCancelAuth">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="btnSubmitAuth">Valider</button>
+      </div>
+    </form>
   </div>
 
   <script id="initial-data" type="application/json">
@@ -1259,7 +1274,8 @@
         try { const j = await res.json(); detail = j.message || j.hint || ''; } catch (e) {}
         throw new Error('Supabase ' + res.status + (detail ? ' : ' + detail : ''));
       }
-      return res.json();
+      const txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
     }
 
     const SECTIONS_META = [
@@ -1334,7 +1350,15 @@
         setSync('☁️ Enregistrement…');
         await rpc('save_plan', { p_id: PLAN_ID, p_key: EDIT_KEY, p_data: stateForRemote() });
         setSync('✅ Enregistré');
-      } catch (e) { setSync('⚠️ Échec de la sauvegarde en ligne', true); console.warn(e); }
+      } catch (e) {
+        console.warn(e);
+        if (String(e.message).includes('Clé invalide')) {
+          try { localStorage.removeItem('evg_plan_key_' + PLAN_ID); } catch (x) {}
+          setSync('⚠️ Session admin expirée : reconnectez-vous', true);
+          alert('Votre session administrateur a expiré (le mot de passe a été changé). La page va se recharger.');
+          location.reload();
+        } else setSync('⚠️ Échec de la sauvegarde en ligne', true);
+      }
     }
 
     function saveState() {
@@ -2051,17 +2075,13 @@
       }
     });
 
-    // --- Publication / partage ---
-    function planUrls() {
-      const base = location.origin + location.pathname + '?plan=' + encodeURIComponent(PLAN_ID);
-      return { view: base, edit: base + '&key=' + encodeURIComponent(EDIT_KEY) };
-    }
-    function openShare() {
-      const u = planUrls();
-      document.getElementById('shareViewUrl').value = u.view;
-      document.getElementById('shareEditUrl').value = u.edit;
+    // --- Partage, rôles & connexion admin ---
+    const storeKey = (k) => { try { localStorage.setItem('evg_plan_key_' + PLAN_ID, k); } catch (e) {} };
+
+    document.getElementById('btnShare').addEventListener('click', () => {
+      document.getElementById('shareViewUrl').value = location.origin + location.pathname + '?plan=' + encodeURIComponent(PLAN_ID);
       document.getElementById('shareModal').classList.remove('hidden');
-    }
+    });
     document.getElementById('btnCloseShare').addEventListener('click', () => document.getElementById('shareModal').classList.add('hidden'));
     document.getElementById('shareModal').addEventListener('click', (e) => { if (e.target.id === 'shareModal') e.currentTarget.classList.add('hidden'); });
     document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
@@ -2069,26 +2089,86 @@
       try { await navigator.clipboard.writeText(inp.value); } catch (e) { inp.select(); document.execCommand('copy'); }
       b.textContent = 'Copié ✓'; setTimeout(() => b.textContent = 'Copier', 1500);
     }));
-    document.getElementById('btnShare').addEventListener('click', openShare);
 
-    document.getElementById('btnPublish').addEventListener('click', async () => {
+    const authModal = document.getElementById('authModal');
+    const authForm = document.getElementById('authForm');
+    const authErr = document.getElementById('authErr');
+    let authMode = null;
+    const AUTH_MODES = {
+      publish: { title: '☁️ Mettre en ligne', desc: 'Choisissez le mot de passe administrateur. Tout le monde aura le même lien ; seule la personne qui connaît ce mot de passe pourra modifier le planning.', confirm: true, label: 'Créer en ligne' },
+      login:   { title: '🔐 Connexion administrateur', desc: 'Saisissez le mot de passe pour modifier le planning.', confirm: false, label: 'Se connecter' },
+      setpw:   { title: '🔑 Mot de passe administrateur', desc: 'Définissez le mot de passe (6 caractères minimum). Les autres appareils connectés en admin seront déconnectés.', confirm: true, label: 'Enregistrer' }
+    };
+    function openAuth(mode) {
       if (!supabaseConfigured()) {
-        alert('Renseignez d’abord SUPABASE_URL et SUPABASE_ANON_KEY en haut du script (voir les instructions).');
+        alert('Renseignez d’abord SUPABASE_URL et SUPABASE_ANON_KEY en haut du script.');
         return;
       }
-      if (!confirm('Enregistrer ce planning en ligne ? Vous obtiendrez un lien de consultation et un lien d’édition.')) return;
+      authMode = mode;
+      const c = AUTH_MODES[mode];
+      document.getElementById('authTitle').textContent = c.title;
+      document.getElementById('authDesc').textContent = c.desc;
+      document.getElementById('btnSubmitAuth').textContent = c.label;
+      document.getElementById('authPw2Wrap').style.display = c.confirm ? '' : 'none';
+      authForm.reset();
+      authErr.textContent = '';
+      authModal.classList.remove('hidden');
+      document.getElementById('authPw').focus();
+    }
+    const closeAuth = () => authModal.classList.add('hidden');
+    document.getElementById('btnCancelAuth').addEventListener('click', closeAuth);
+    authModal.addEventListener('click', (e) => { if (e.target === authModal) closeAuth(); });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pw = document.getElementById('authPw').value;
+      const pw2 = document.getElementById('authPw2').value;
+      const fail = (m) => { authErr.textContent = m; };
+      if (authMode !== 'login') {
+        if (pw.length < 6) return fail('6 caractères minimum.');
+        if (pw !== pw2) return fail('Les deux mots de passe sont différents.');
+      } else if (!pw) return fail('Saisissez le mot de passe.');
+
+      const btn = document.getElementById('btnSubmitAuth');
+      btn.disabled = true; authErr.textContent = '';
       try {
-        const rows = await rpc('create_plan', { p_data: stateForRemote() });
-        const { plan_id, plan_key } = rows[0];
-        localStorage.setItem('evg_plan_key_' + plan_id, plan_key);
-        location.href = location.pathname + '?plan=' + plan_id + '&key=' + plan_key;
-      } catch (e) { alert('Échec de la mise en ligne : ' + e.message); }
+        if (authMode === 'publish') {
+          const rows = await rpc('create_plan', { p_data: stateForRemote(), p_password: pw });
+          const { plan_id, plan_key } = rows[0];
+          try { localStorage.setItem('evg_plan_key_' + plan_id, plan_key); } catch (x) {}
+          location.href = location.pathname + '?plan=' + plan_id;
+        } else if (authMode === 'login') {
+          const key = await rpc('login_admin', { p_id: PLAN_ID, p_password: pw });
+          if (!key) return fail('Mot de passe incorrect (ou trop d’essais : réessayez dans 10 minutes).');
+          storeKey(key);
+          location.reload();
+        } else if (authMode === 'setpw') {
+          const key = await rpc('set_admin_password', { p_id: PLAN_ID, p_key: EDIT_KEY, p_password: pw });
+          if (!key) return fail('Échec : session admin invalide.');
+          storeKey(key); EDIT_KEY = key;
+          closeAuth(); setSync('✅ Mot de passe mis à jour');
+        }
+      } catch (err) { fail(err.message); }
+      finally { btn.disabled = false; }
+    });
+
+    document.getElementById('btnPublish').addEventListener('click', () => openAuth('publish'));
+    document.getElementById('btnAdminLogin').addEventListener('click', () => openAuth('login'));
+    document.getElementById('btnAdminPwd').addEventListener('click', () => openAuth('setpw'));
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      try { localStorage.removeItem('evg_plan_key_' + PLAN_ID); } catch (e) {}
+      location.reload();
     });
 
     if (IS_REMOTE) {
       document.getElementById('btnPublish').style.display = 'none';
-      if (CAN_EDIT) document.getElementById('btnShare').style.display = '';
-      else document.getElementById('heroDateBadge').insertAdjacentHTML('afterend', '<span class="hero-badge">👀 Lecture seule</span>');
+      if (CAN_EDIT) {
+        ['btnShare', 'btnAdminPwd', 'btnLogout'].forEach(id => document.getElementById(id).style.display = '');
+        document.getElementById('heroDateBadge').insertAdjacentHTML('afterend', '<span class="hero-badge rdv">🛠️ Mode admin</span>');
+      } else {
+        document.getElementById('btnAdminLogin').style.display = '';
+        document.getElementById('heroDateBadge').insertAdjacentHTML('afterend', '<span class="hero-badge">👀 Lecture seule</span>');
+      }
     }
 
     // Premier rendu
