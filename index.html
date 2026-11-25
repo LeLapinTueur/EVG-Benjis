@@ -6,25 +6,322 @@
   <meta name="theme-color" content="#101a2d">
   <title>EVG — Bruxelles ou Charleroi</title>
   <style>
-    :root{--ink:#172238;--muted:#667085;--navy:#101a2d;--yellow:#ffc928;--paper:#f5f6f8;--line:#e5e8ee;--white:#fff;--green:#16794b}
-    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .hero{background:linear-gradient(120deg,#101a2d,#253b5c);color:white;padding:44px 22px 38px}
-    .wrap{max-width:1120px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:800;color:var(--yellow)}
-    h1{font-size:clamp(34px,6vw,58px);line-height:1;margin:10px 0}.hero p{color:#d8dfeb;margin:12px 0 0;font-size:17px}
-    main{max-width:1120px;margin:-18px auto 60px;padding:0 18px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid var(--line);background:white;color:var(--ink);border-radius:999px;padding:11px 18px;font-weight:800;cursor:pointer}.tab.active{background:var(--yellow);border-color:var(--yellow)}
-    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}.metric{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.metric small{display:block;color:var(--muted);font-weight:700}.metric strong{display:block;font-size:27px;margin-top:3px}
-    .notice{font-size:13px;color:var(--muted);margin:0 0 22px}
-    .day{margin:22px 0}.day-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}.day-head h2{font-size:21px;margin:0}.day-head span{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800}
-    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .activity{background:white;border:1px solid var(--line);border-radius:16px;padding:17px;display:grid;grid-template-columns:48px 1fr;gap:13px;min-width:0}
-    .emoji{width:46px;height:46px;border-radius:13px;background:#fff4c9;display:grid;place-items:center;font-size:23px}
-    .activity h3{margin:0;font-size:17px}.price{font-weight:900;color:var(--green);white-space:nowrap}.topline{display:flex;justify-content:space-between;gap:10px;align-items:start}
-    .meta{display:grid;gap:5px;margin-top:10px;color:var(--muted);font-size:13px}.meta a{color:#245a9a;text-decoration:none}.meta a:hover{text-decoration:underline}
-    .placeholder{color:#98a2b3;font-style:italic}.tag{display:inline-block;background:#eef1f5;color:#596579;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;margin-top:8px}
-    .footer{background:var(--navy);color:#dbe2ed;border-radius:16px;padding:18px;margin-top:26px;font-size:13px}.footer strong{color:white}
-    .hidden{display:none!important}
-    @media(max-width:680px){.summary{grid-template-columns:1fr 1fr}.summary .metric:last-child{grid-column:1/-1}.cards{grid-template-columns:1fr}.hero{padding-top:34px}}
+    :root {
+      --ink: #172238;
+      --muted: #667085;
+      --navy: #101a2d;
+      --yellow: #ffc928;
+      --yellow-hover: #f5bc16;
+      --paper: #f5f6f8;
+      --line: #e5e8ee;
+      --white: #fff;
+      --green: #16794b;
+      --green-bg: #e8f5ee;
+      --red: #b42318;
+      --red-bg: #fef3f2;
+      --blue: #245a9a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .hero {
+      background: linear-gradient(120deg, #101a2d, #253b5c);
+      color: white;
+      padding: 44px 22px 38px;
+    }
+    .wrap { max-width: 1120px; margin: auto; }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: .16em;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--yellow);
+    }
+    h1 { font-size: clamp(34px, 6vw, 58px); line-height: 1; margin: 10px 0; }
+    .hero p { color: #d8dfeb; margin: 12px 0 0; font-size: 17px; }
+    main { max-width: 1120px; margin: -18px auto 60px; padding: 0 18px; }
+
+    /* Top bar: Tabs + Global Actions */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 11px 20px;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: 0 2px 6px rgba(16,26,45,.06);
+    }
+    .tab.active { background: var(--yellow); border-color: var(--yellow); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s, border-color .15s;
+    }
+    .btn:hover { background: #f9fafb; border-color: #cbd5e1; }
+    .btn-primary {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+    .btn-primary:hover { background: #1e2f4f; }
+    .btn-yellow {
+      background: var(--yellow);
+      color: var(--ink);
+      border-color: var(--yellow);
+    }
+    .btn-yellow:hover { background: var(--yellow-hover); }
+    .btn-danger { color: var(--red); }
+    .btn-danger:hover { background: var(--red-bg); border-color: #fecdca; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+
+    /* Summary Cards */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .metric {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .metric small { display: block; color: var(--muted); font-weight: 700; font-size: 12px; }
+    .metric strong { display: block; font-size: 25px; margin-top: 3px; color: var(--ink); }
+    .metric strong.highlight { color: var(--green); }
+    .metric .sub-metric { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Participants control */
+    .participants-bar {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .participants-bar label { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .participants-bar input[type="number"] {
+      width: 70px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 15px;
+      text-align: center;
+    }
+    .option-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .notice { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
+
+    /* Sections & Days */
+    .day { margin: 26px 0; }
+    .day-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .day-title-group { display: flex; align-items: center; gap: 12px; }
+    .day-head h2 { font-size: 20px; margin: 0; }
+    .day-badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      font-weight: 800;
+      background: #e9edf4;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .day-subtotal {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .day-subtotal span { color: var(--green); font-weight: 800; }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .cards.single-col { grid-template-columns: 1fr; }
+    .activity {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 17px;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 13px;
+      min-width: 0;
+      position: relative;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    .activity:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(16,26,45,.05);
+    }
+    .activity.excluded { opacity: 0.55; background: #fafbfc; }
+    .emoji {
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      background: #fff4c9;
+      display: grid;
+      place-items: center;
+      font-size: 23px;
+    }
+    .emoji.transport { background: #e0f2fe; }
+    .emoji.lodging { background: #f3e8ff; }
+    .activity h3 { margin: 0; font-size: 16px; }
+    .price { font-weight: 900; color: var(--green); white-space: nowrap; font-size: 15px; }
+    .price.tbd { color: var(--muted); font-weight: 700; font-size: 13px; }
+    .topline { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .meta { display: grid; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+    .meta a { color: var(--blue); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+    .placeholder { color: #98a2b3; font-style: italic; }
+    .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+    .tag {
+      display: inline-block;
+      background: #eef1f5;
+      color: #596579;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .tag.option { background: #fef3c7; color: #92400e; }
+    .tag.group-price { background: #e0f2fe; color: #075985; }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      justify-content: flex-end;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 26, 45, 0.55);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+    .modal {
+      background: white;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.2);
+    }
+    .modal h3 { margin: 0 0 16px; font-size: 20px; }
+    .form-grid { display: grid; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 5px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #d0d5dd;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 14px;
+    }
+    .field textarea { min-height: 68px; resize: vertical; }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer {
+      background: var(--navy);
+      color: #dbe2ed;
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 26px;
+      font-size: 13px;
+    }
+    .footer strong { color: white; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 820px) {
+      .summary { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 680px) {
+      .summary { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+      .hero { padding-top: 34px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -32,97 +329,810 @@
     <div class="wrap">
       <div class="eyebrow">Le week-end du futur marié</div>
       <h1>EVG</h1>
-      <p>Deux destinations, trois jours, un week-end mémorable.</p>
+      <p>Deux destinations, trois jours, un week-end mémorable — planning interactif & budget dynamique.</p>
     </div>
   </header>
+
   <main>
-    <nav class="tabs" aria-label="Choisir une destination">
-      <button class="tab active" data-city="bruxelles">🇧🇪 Bruxelles</button>
-      <button class="tab" data-city="charleroi">🇧🇪 Charleroi</button>
-    </nav>
-
-    <section id="bruxelles" class="city">
-      <div class="summary">
-        <div class="metric"><small>Budget connu / personne</small><strong>215 €</strong></div>
-        <div class="metric"><small>Activités chiffrées</small><strong>6</strong></div>
-        <div class="metric"><small>À compléter</small><strong>Repas & soirée</strong></div>
+    <div class="topbar">
+      <nav class="tabs" aria-label="Choisir une destination">
+        <button class="tab active" data-city="bruxelles">🇧🇪 Bruxelles</button>
+        <button class="tab" data-city="charleroi">🇧🇪 Charleroi</button>
+      </nav>
+      <div class="toolbar">
+        <button class="btn btn-yellow" id="btnAddGlobal">➕ Ajouter un élément</button>
+        <button class="btn" id="btnExportHtml" title="Télécharger le fichier HTML avec vos modifications enregistrées">💾 Sauvegarder HTML</button>
+        <button class="btn btn-danger" id="btnReset" title="Réinitialiser aux données d'origine">↺ Réinitialiser</button>
       </div>
-      <p class="notice">Estimation provisoire : comprend les activités chiffrées, dont le simulateur de chute en option. Hors repas non chiffrés, transport, hébergement et club.</p>
-      <article class="activity" style="margin:0 0 18px;grid-template-columns:48px 1fr"><div class="emoji">🏨</div><div><div class="topline"><h3>Hébergement — MEININGER Hotels</h3><span class="price">À chiffrer</span></div><div class="meta"><div>📍 Hôtel et dates à sélectionner</div><div>🔗 <a href="https://book.meininger-hotels.com/reservations/stay" target="_blank" rel="noopener">Consulter les disponibilités / réserver</a></div></div></div></article>
+    </div>
 
-      <section class="day">
-        <div class="day-head"><span>Jour 1</span><h2>Vendredi — Arrivée & mise en jambes</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🚗</div><div><div class="topline"><h3>Déplacement</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Trajet d'environ 7 km en voiture ou ligne 5</span></div><div>ℹ️ Point de départ et destination à préciser</div></div></div></article>
-          <article class="activity"><div class="emoji">🔫</div><div><div class="topline"><h3>Laser Game</h3><span class="price">26 € / pers.</span></div><div class="meta"><div>📍 Shopping Carrefour Saint-Michel, entrée parking en face du 1 rue de l’Escadron, 1040 Etterbeek</div><div>⏱️ Partie : 20 min (dont 15 min de jeu)</div><div>🕒 Arrivée conseillée 15 min avant</div><div>🔗 <a href="https://www.spacefungame.com/laser-games-2/" target="_blank" rel="noopener">Site & réservation Space Fun Game</a></div></div></div></article>
-        </div>
-      </section>
+    <!-- Barre participants & options -->
+    <div class="participants-bar">
+      <label for="participantsCount">
+        👥 Nombre de participants :
+        <input type="number" id="participantsCount" min="1" max="50" value="12">
+      </label>
+      <label class="option-toggle">
+        <input type="checkbox" id="includeOptions" checked>
+        Inclure les activités en « OPTION » dans le calcul du budget
+      </label>
+    </div>
 
-      <section class="day">
-        <div class="day-head"><span>Jour 2</span><h2>Samedi — Activités & soirée</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Déjeuner au Fin de Siècle</h3><span class="price">25 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://www.findesiecle.be/" target="_blank" rel="noopener">Site de Fin de Siècle</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🕹️</div><div><div class="topline"><h3>Futurist Game</h3><span class="price">45 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://futuristgames.be/" target="_blank" rel="noopener">Site Futurist Games</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🧩</div><div><div class="topline"><h3>Prison Island</h3><span class="price">40 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://www.prison-island.be/activities/prisonisland/" target="_blank" rel="noopener">Activité & réservation Prison Island</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🪓</div><div><div class="topline"><h3>Lancer de hache</h3><span class="price">49 € / pers.</span></div><div class="meta"><div>📍 37 rue des Alexiens, 1000 Bruxelles</div><div>⏱️ Session de 60 min · dès 21 € selon le site</div><div>🕒 Samedi : 10h45–23h</div><div>🔗 <a href="https://woodcutter.world/en/brussels" target="_blank" rel="noopener">Site & réservation WoodCutter</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🍻</div><div><div class="topline"><h3>La Porte Noire</h3><span class="price">30 € / pers.</span></div><div class="meta"><div>📍 Rue des Alexiens 67, 1000 Bruxelles</div><div>🕒 Vendredi et samedi : 18h–3h</div><div>🔗 <a href="https://www.laportenoire.be/" target="_blank" rel="noopener">Site de La Porte Noire</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🌙</div><div><div class="topline"><h3>Club de strip-tease</h3><span class="price">À définir</span></div><div class="meta"><div>📍 Établissement à choisir</div><div>ℹ️ Budget et conditions à confirmer</div></div></div></article>
-        </div>
-      </section>
+    <!-- Résumé dynamique -->
+    <div class="summary" id="summaryCards"></div>
+    <p class="notice" id="cityNotice"></p>
 
-      <section class="day">
-        <div class="day-head"><span>Jour 3</span><h2>Dimanche — Dernier repas & option</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🍣</div><div><div class="topline"><h3>Restaurant — Teppanyaki ?</h3><span class="price">À définir</span></div><div class="meta"><div>📍 Rue Marché aux Poulets 32, 1000 Bruxelles</div><div>🍱 Teppanyaki proposé · horaires : 12h–14h30 et 18h–22h30</div><div>🔗 <a href="https://www.restaurant-kabuki.be/" target="_blank" rel="noopener">Site & réservation Kabuki</a></div></div></div></article>
-          <article class="activity"><div class="emoji">🪂</div><div><div class="topline"><h3>Simulateur de chute</h3><span class="price">60 € / pers.</span></div><div class="meta"><div>📍 Airspace — adresse à confirmer</div><div>ℹ️ Activité optionnelle · tarif initial noté : 60 € / pers.</div><div>🔗 <a href="https://shop.airspace.be/adultes" target="_blank" rel="noopener">Offres adultes & réservation</a></div></div><span class="tag">OPTION</span></div></article>
-        </div>
-      </section>
-    </section>
+    <!-- Contenu dynamique de la ville active -->
+    <div id="cityContent"></div>
 
-    <section id="charleroi" class="city hidden">
-      <div class="summary">
-        <div class="metric"><small>Budget connu / personne</small><strong>237 €</strong></div>
-        <div class="metric"><small>Activités chiffrées</small><strong>5</strong></div>
-        <div class="metric"><small>À compléter</small><strong>Restaurants & lieux</strong></div>
-      </div>
-      <p class="notice">Estimation provisoire : comprend les activités chiffrées. Hors restaurants du vendredi et du dimanche, transport et hébergement.</p>
-
-      <section class="day">
-        <div class="day-head"><span>Jour 1</span><h2>Vendredi — Arrivée & soirée</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Restaurant</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
-          <article class="activity"><div class="emoji">🔫</div><div><div class="topline"><h3>Laser Game</h3><span class="price">28 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Adresse à ajouter</span></div><div>🕒 Horaire à définir</div><div>🔗 <span class="placeholder">Lien de réservation à ajouter</span></div></div></div></article>
-        </div>
-      </section>
-
-      <section class="day">
-        <div class="day-head"><span>Jour 2</span><h2>Samedi — Activités</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Restaurant</h3><span class="price">25 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
-          <article class="activity"><div class="emoji">🥽</div><div><div class="topline"><h3>EVA — réalité virtuelle</h3><span class="price">45 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Adresse à ajouter</span></div><div>🕒 Horaire à définir</div><div>🔗 <span class="placeholder">Lien de réservation à ajouter</span></div></div></div></article>
-          <article class="activity"><div class="emoji">🪂</div><div><div class="topline"><h3>Simulateur de chute</h3><span class="price">60 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Lieu à confirmer</span></div><div>🕒 Horaire à définir</div></div></div></article>
-          <article class="activity"><div class="emoji">🪓</div><div><div class="topline"><h3>Lancer de hache</h3><span class="price">49 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">À prévoir dans une ville à déterminer</span></div><div>🕒 Horaire à définir</div></div></div></article>
-          <article class="activity"><div class="emoji">🍴</div><div><div class="topline"><h3>Restaurant / soirée</h3><span class="price">30 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
-        </div>
-      </section>
-
-      <section class="day">
-        <div class="day-head"><span>Jour 3</span><h2>Dimanche — Retour au calme</h2></div>
-        <div class="cards">
-          <article class="activity"><div class="emoji">🍳</div><div><div class="topline"><h3>Restaurant</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
-        </div>
-      </section>
-    </section>
-
-    <div class="footer"><strong>À retenir :</strong> les budgets sont indicatifs et seront recalculés lorsque les lieux, horaires, repas et options seront confirmés. Les adresses, liens et horaires affichés comme « à définir » sont des champs à compléter.</div>
+    <div class="footer">
+      <strong>À retenir :</strong> le budget se recalcule automatiquement dès que vous modifiez, ajoutez ou supprimez un transport, un hébergement ou une activité. Vos changements sont enregistrés automatiquement dans votre navigateur, et vous pouvez télécharger une copie autonome via <strong>« Sauvegarder HTML »</strong>.
+    </div>
   </main>
+
+  <!-- Modale Ajout / Édition -->
+  <div class="modal-backdrop hidden" id="itemModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Ajouter un élément</h3>
+      <form id="itemForm" class="form-grid">
+        <input type="hidden" id="editId">
+        <div class="form-row">
+          <div class="field">
+            <label for="fieldCategory">Catégorie / Moment</label>
+            <select id="fieldCategory" required>
+              <option value="transport">🚆 Transport (aller/retour & trajets)</option>
+              <option value="lodging">🏨 Hébergement</option>
+              <option value="day1">📅 Jour 1 — Vendredi</option>
+              <option value="day2">📅 Jour 2 — Samedi</option>
+              <option value="day3">📅 Jour 3 — Dimanche</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fieldEmoji">Icône (Emoji)</label>
+            <input type="text" id="fieldEmoji" value="🎯" maxlength="4" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fieldTitle">Titre de l'activité ou du transport *</label>
+          <input type="text" id="fieldTitle" placeholder="Ex : Train Eurostar / TGV, Karting, Restaurant..." required>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="fieldPrice">Prix (€) — laisser vide si à définir</label>
+            <input type="number" id="fieldPrice" step="0.01" min="0" placeholder="Ex : 35">
+          </div>
+          <div class="field">
+            <label for="fieldPriceType">Type de tarif</label>
+            <select id="fieldPriceType">
+              <option value="per_person">Par personne (€ / pers.)</option>
+              <option value="total_group">Total pour le groupe (€ total)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fieldLocation">Lieu / Trajet</label>
+          <input type="text" id="fieldLocation" placeholder="Ex : Gare du Nord → Bruxelles-Midi, ou adresse">
+        </div>
+
+        <div class="field">
+          <label for="fieldDetails">Horaires / Détails (un par ligne)</label>
+          <textarea id="fieldDetails" placeholder="Ex : Départ 17h30 - Arrivée 18h52&#10;Réservation confirmée"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="fieldLink">Lien web (URL)</label>
+            <input type="url" id="fieldLink" placeholder="https://...">
+          </div>
+          <div class="field">
+            <label for="fieldLinkText">Texte du lien</label>
+            <input type="text" id="fieldLinkText" placeholder="Ex : Réserver / Voir le site">
+          </div>
+        </div>
+
+        <label class="checkbox-row">
+          <input type="checkbox" id="fieldIsOption">
+          Marquer comme activité en OPTION
+        </label>
+
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btnCancelModal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script id="initial-data" type="application/json">
+  {
+    "participants": 12,
+    "includeOptions": true,
+    "cities": {
+      "bruxelles": {
+        "name": "Bruxelles",
+        "notice": "Budget calculé automatiquement selon les éléments chiffrés (transport, hébergement, activités et repas). Activez ou désactivez les options en haut de page.",
+        "items": [
+          {
+            "id": "bxl-tr-1",
+            "category": "transport",
+            "emoji": "🚄",
+            "title": "Train Aller / Retour (TGV / Eurostar)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Gare de départ → Bruxelles-Midi",
+            "details": ["Tarif groupe ou billets individuels à renseigner", "🕒 Horaires aller vendredi / retour dimanche à définir"],
+            "link": "https://www.sncf-connect.com/",
+            "linkText": "Rechercher les billets sur SNCF Connect",
+            "isOption": false
+          },
+          {
+            "id": "bxl-tr-2",
+            "category": "transport",
+            "emoji": "🚇",
+            "title": "Transports sur place (STIB / Métro / Uber)",
+            "price": 15,
+            "priceType": "per_person",
+            "location": "Réseau STIB Bruxelles (Pass 48h/72h ou tickets Brupass)",
+            "details": ["Estimation pass transport week-end + trajets nocturnes"],
+            "link": "https://www.stib-mivb.be/",
+            "linkText": "Tarifs STIB Bruxelles",
+            "isOption": false
+          },
+          {
+            "id": "bxl-lod-1",
+            "category": "lodging",
+            "emoji": "🏨",
+            "title": "Hébergement — MEININGER Hotels",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Hôtel et dates à sélectionner (2 nuits)",
+            "details": ["Chambres dortoirs privatisées ou chambres multiples"],
+            "link": "https://book.meininger-hotels.com/reservations/stay",
+            "linkText": "Consulter les disponibilités / réserver",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d1-1",
+            "category": "day1",
+            "emoji": "🚗",
+            "title": "Déplacement vers activité",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Trajet d'environ 7 km en voiture ou ligne 5",
+            "details": ["ℹ️ Point de départ et destination à préciser"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d1-2",
+            "category": "day1",
+            "emoji": "🔫",
+            "title": "Laser Game",
+            "price": 26,
+            "priceType": "per_person",
+            "location": "Shopping Carrefour Saint-Michel, entrée parking en face du 1 rue de l’Escadron, 1040 Etterbeek",
+            "details": ["⏱️ Partie : 20 min (dont 15 min de jeu)", "🕒 Arrivée conseillée 15 min avant"],
+            "link": "https://www.spacefungame.com/laser-games-2/",
+            "linkText": "Site & réservation Space Fun Game",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-1",
+            "category": "day2",
+            "emoji": "🍽️",
+            "title": "Déjeuner au Fin de Siècle",
+            "price": 25,
+            "priceType": "per_person",
+            "location": "Rue des Chartreux 9, 1000 Bruxelles (à confirmer)",
+            "details": ["🕒 Horaire à définir (pas de réservation en général, arriver tôt)"],
+            "link": "https://www.findesiecle.be/",
+            "linkText": "Site de Fin de Siècle",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-2",
+            "category": "day2",
+            "emoji": "🕹️",
+            "title": "Futurist Game",
+            "price": 45,
+            "priceType": "per_person",
+            "location": "Adresse à confirmer",
+            "details": ["🕒 Horaire à définir"],
+            "link": "https://futuristgames.be/",
+            "linkText": "Site Futurist Games",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-3",
+            "category": "day2",
+            "emoji": "🧩",
+            "title": "Prison Island",
+            "price": 40,
+            "priceType": "per_person",
+            "location": "Adresse à confirmer",
+            "details": ["🕒 Horaire à définir"],
+            "link": "https://www.prison-island.be/activities/prisonisland/",
+            "linkText": "Activité & réservation Prison Island",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-4",
+            "category": "day2",
+            "emoji": "🪓",
+            "title": "Lancer de hache",
+            "price": 49,
+            "priceType": "per_person",
+            "location": "37 rue des Alexiens, 1000 Bruxelles",
+            "details": ["⏱️ Session de 60 min · dès 21 € selon le site", "🕒 Samedi : 10h45–23h"],
+            "link": "https://woodcutter.world/en/brussels",
+            "linkText": "Site & réservation WoodCutter",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-5",
+            "category": "day2",
+            "emoji": "🍻",
+            "title": "La Porte Noire",
+            "price": 30,
+            "priceType": "per_person",
+            "location": "Rue des Alexiens 67, 1000 Bruxelles",
+            "details": ["🕒 Vendredi et samedi : 18h–3h"],
+            "link": "https://www.laportenoire.be/",
+            "linkText": "Site de La Porte Noire",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d2-6",
+            "category": "day2",
+            "emoji": "🌙",
+            "title": "Club de strip-tease",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Établissement à choisir",
+            "details": ["ℹ️ Budget et conditions à confirmer"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d3-1",
+            "category": "day3",
+            "emoji": "🍣",
+            "title": "Restaurant — Teppanyaki ?",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Rue Marché aux Poulets 32, 1000 Bruxelles",
+            "details": ["🍱 Teppanyaki proposé · horaires : 12h–14h30 et 18h–22h30"],
+            "link": "https://www.restaurant-kabuki.be/",
+            "linkText": "Site & réservation Kabuki",
+            "isOption": false
+          },
+          {
+            "id": "bxl-d3-2",
+            "category": "day3",
+            "emoji": "🪂",
+            "title": "Simulateur de chute",
+            "price": 60,
+            "priceType": "per_person",
+            "location": "Airspace — adresse à confirmer",
+            "details": ["ℹ️ Activité optionnelle · tarif initial noté : 60 € / pers."],
+            "link": "https://shop.airspace.be/adultes",
+            "linkText": "Offres adultes & réservation",
+            "isOption": true
+          }
+        ]
+      },
+      "charleroi": {
+        "name": "Charleroi",
+        "notice": "Budget calculé automatiquement selon les éléments chiffrés (transport, hébergement, activités et repas). Ajoutez les prix manquants pour affiner le total.",
+        "items": [
+          {
+            "id": "crl-tr-1",
+            "category": "transport",
+            "emoji": "🚗",
+            "title": "Trajet Aller / Retour (Covoiturage ou Train)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Départ → Charleroi",
+            "details": ["Carburant + péages (si voiture) ou billets SNCB à renseigner"],
+            "link": "https://www.belgiantrain.be/fr",
+            "linkText": "Horaires & tarifs SNCB",
+            "isOption": false
+          },
+          {
+            "id": "crl-tr-2",
+            "category": "transport",
+            "emoji": "🚌",
+            "title": "Déplacements locaux (TEC / Taxi / Voitures)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Charleroi et périphérie (Gosselies / Airspace)",
+            "details": ["Prévoir navettes ou voitures pour rejoindre les zones d'activités"],
+            "link": "https://www.letec.be/",
+            "linkText": "Réseau TEC Charleroi",
+            "isOption": false
+          },
+          {
+            "id": "crl-lod-1",
+            "category": "lodging",
+            "emoji": "🏨",
+            "title": "Hébergement (Hôtel / Airbnb groupe)",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Charleroi centre ou environs (2 nuits)",
+            "details": ["À réserver selon la taille finale du groupe"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d1-1",
+            "category": "day1",
+            "emoji": "🍽️",
+            "title": "Restaurant",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Établissement à choisir",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d1-2",
+            "category": "day1",
+            "emoji": "🔫",
+            "title": "Laser Game",
+            "price": 28,
+            "priceType": "per_person",
+            "location": "Adresse à ajouter",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d2-1",
+            "category": "day2",
+            "emoji": "🍽️",
+            "title": "Restaurant",
+            "price": 25,
+            "priceType": "per_person",
+            "location": "Établissement à choisir",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d2-2",
+            "category": "day2",
+            "emoji": "🥽",
+            "title": "EVA — réalité virtuelle",
+            "price": 45,
+            "priceType": "per_person",
+            "location": "Adresse à ajouter",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d2-3",
+            "category": "day2",
+            "emoji": "🪂",
+            "title": "Simulateur de chute",
+            "price": 60,
+            "priceType": "per_person",
+            "location": "Airspace Indoor Skydiving (Gosselies)",
+            "details": ["🕒 Horaire à définir"],
+            "link": "https://shop.airspace.be/adultes",
+            "linkText": "Site Airspace",
+            "isOption": false
+          },
+          {
+            "id": "crl-d2-4",
+            "category": "day2",
+            "emoji": "🪓",
+            "title": "Lancer de hache",
+            "price": 49,
+            "priceType": "per_person",
+            "location": "À prévoir dans une ville à déterminer",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d2-5",
+            "category": "day2",
+            "emoji": "🍴",
+            "title": "Restaurant / soirée",
+            "price": 30,
+            "priceType": "per_person",
+            "location": "Établissement à choisir",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          },
+          {
+            "id": "crl-d3-1",
+            "category": "day3",
+            "emoji": "🍳",
+            "title": "Restaurant",
+            "price": null,
+            "priceType": "per_person",
+            "location": "Établissement à choisir",
+            "details": ["🕒 Horaire à définir"],
+            "link": "",
+            "linkText": "",
+            "isOption": false
+          }
+        ]
+      }
+    }
+  }
+  </script>
+
   <script>
-    const tabs = document.querySelectorAll('.tab');
-    const cities = document.querySelectorAll('.city');
-    tabs.forEach(tab => tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.toggle('active', t === tab));
-      cities.forEach(city => city.classList.toggle('hidden', city.id !== tab.dataset.city));
-    }));
+    const STORAGE_KEY = 'evg_planner_state_v1';
+
+    const SECTIONS_META = [
+      { key: 'transport', badge: 'Transport', title: 'Trajets & déplacements', addLabel: '+ Ajouter un transport' },
+      { key: 'lodging', badge: 'Logement', title: 'Hébergement', addLabel: '+ Ajouter un hébergement' },
+      { key: 'day1', badge: 'Jour 1', title: 'Vendredi — Arrivée & mise en jambes', addLabel: '+ Ajouter au Jour 1' },
+      { key: 'day2', badge: 'Jour 2', title: 'Samedi — Activités & soirée', addLabel: '+ Ajouter au Jour 2' },
+      { key: 'day3', badge: 'Jour 3', title: 'Dimanche — Dernier repas & retour', addLabel: '+ Ajouter au Jour 3' }
+    ];
+
+    function getDefaultState() {
+      const raw = document.getElementById('initial-data').textContent;
+      return JSON.parse(raw);
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) { console.warn('Erreur lecture localStorage', e); }
+      return getDefaultState();
+    }
+
+    let state = loadState();
+    let activeCity = 'bruxelles';
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { console.warn('Erreur sauvegarde localStorage', e); }
+    }
+
+    function formatEuro(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0 €';
+      const rounded = Math.round(val * 100) / 100;
+      return (Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(2).replace('.', ',')) + ' €';
+    }
+
+    function getPerPersonCost(item, participants) {
+      if (item.price === null || item.price === undefined || item.price === '') return null;
+      const num = parseFloat(item.price);
+      if (isNaN(num)) return null;
+      return item.priceType === 'total_group' ? (num / Math.max(1, participants)) : num;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function render() {
+      const city = state.cities[activeCity];
+      const participants = Math.max(1, parseInt(state.participants, 10) || 1);
+      const includeOptions = !!state.includeOptions;
+
+      document.getElementById('participantsCount').value = participants;
+      document.getElementById('includeOptions').checked = includeOptions;
+      document.getElementById('cityNotice').textContent = city.notice;
+
+      // Calculs budgétaires
+      let totalPerPerson = 0;
+      let transportPerPerson = 0;
+      let activitiesLodgingPerPerson = 0;
+      let pricedCount = 0;
+      let unpricedCount = 0;
+
+      city.items.forEach(item => {
+        const isExcluded = item.isOption && !includeOptions;
+        const unitCost = getPerPersonCost(item, participants);
+
+        if (unitCost !== null) {
+          if (!isExcluded) {
+            totalPerPerson += unitCost;
+            pricedCount++;
+            if (item.category === 'transport') {
+              transportPerPerson += unitCost;
+            } else {
+              activitiesLodgingPerPerson += unitCost;
+            }
+          }
+        } else {
+          if (!isExcluded) unpricedCount++;
+        }
+      });
+
+      const totalGroup = totalPerPerson * participants;
+
+      // Rendu des KPIs
+      document.getElementById('summaryCards').innerHTML = `
+        <div class="metric">
+          <small>Budget estimé / personne</small>
+          <strong class="highlight">${formatEuro(totalPerPerson)}</strong>
+          <div class="sub-metric">Total groupe (${participants} pers.) : <b>${formatEuro(totalGroup)}</b></div>
+        </div>
+        <div class="metric">
+          <small>Dont Transport / pers.</small>
+          <strong>${formatEuro(transportPerPerson)}</strong>
+          <div class="sub-metric">Activités & logement : <b>${formatEuro(activitiesLodgingPerPerson)}</b></div>
+        </div>
+        <div class="metric">
+          <small>Éléments chiffrés</small>
+          <strong>${pricedCount} / ${pricedCount + unpricedCount}</strong>
+          <div class="sub-metric">${unpricedCount > 0 ? unpricedCount + ' élément(s) à chiffrer' : 'Tout est chiffré !'}</div>
+        </div>
+        <div class="metric">
+          <small>Destination active</small>
+          <strong>${escapeHtml(city.name)}</strong>
+          <div class="sub-metric">${includeOptions ? 'Options incluses' : 'Hors options'}</div>
+        </div>
+      `;
+
+      // Rendu des sections
+      const container = document.getElementById('cityContent');
+      container.innerHTML = '';
+
+      SECTIONS_META.forEach(sec => {
+        const items = city.items.filter(i => i.category === sec.key);
+        let sectionCostPerPerson = 0;
+        items.forEach(item => {
+          if (item.isOption && !includeOptions) return;
+          const c = getPerPersonCost(item, participants);
+          if (c !== null) sectionCostPerPerson += c;
+        });
+
+        const sectionEl = document.createElement('section');
+        sectionEl.className = 'day';
+
+        const cardsHtml = items.length === 0
+          ? `<div style="background:white;border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px;">Aucun élément dans cette section. Cliquez sur « ${sec.addLabel} » pour en créer un.</div>`
+          : items.map(item => renderCard(item, participants, includeOptions)).join('');
+
+        sectionEl.innerHTML = `
+          <div class="day-head">
+            <div class="day-title-group">
+              <span class="day-badge">${sec.badge}</span>
+              <h2>${sec.title}</h2>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div class="day-subtotal">Sous-total : <span>${formatEuro(sectionCostPerPerson)} / pers.</span></div>
+              <button class="btn btn-sm" onclick="openAddModal('${sec.key}')">${sec.addLabel}</button>
+            </div>
+          </div>
+          <div class="cards ${items.length === 0 ? 'single-col' : ''}">
+            ${cardsHtml}
+          </div>
+        `;
+        container.appendChild(sectionEl);
+      });
+    }
+
+    function renderCard(item, participants, includeOptions) {
+      const unitCost = getPerPersonCost(item, participants);
+      const isExcluded = item.isOption && !includeOptions;
+
+      let priceDisplay = '<span class="price tbd">À définir</span>';
+      if (unitCost !== null) {
+        if (item.priceType === 'total_group') {
+          priceDisplay = `<span class="price" title="Total groupe : ${formatEuro(item.price)}">${formatEuro(unitCost)} / pers.</span>`;
+        } else {
+          priceDisplay = `<span class="price">${formatEuro(unitCost)} / pers.</span>`;
+        }
+      }
+
+      const emojiClass = item.category === 'transport' ? 'emoji transport' : (item.category === 'lodging' ? 'emoji lodging' : 'emoji');
+
+      const detailsHtml = (item.details || [])
+        .filter(d => d && d.trim() !== '')
+        .map(d => `<div>${escapeHtml(d)}</div>`)
+        .join('');
+
+      const linkHtml = item.link
+        ? `<div>🔗 <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.linkText || 'Voir le lien')}</a></div>`
+        : '';
+
+      const tags = [];
+      if (item.isOption) tags.push('<span class="tag option">OPTION</span>');
+      if (item.priceType === 'total_group' && unitCost !== null) {
+        tags.push(`<span class="tag group-price">Forfait groupe : ${formatEuro(item.price)}</span>`);
+      }
+
+      return `
+        <article class="activity ${isExcluded ? 'excluded' : ''}">
+          <div class="${emojiClass}">${escapeHtml(item.emoji || '📌')}</div>
+          <div>
+            <div class="topline">
+              <h3>${escapeHtml(item.title)}</h3>
+              ${priceDisplay}
+            </div>
+            <div class="meta">
+              ${item.location ? `<div>📍 ${escapeHtml(item.location)}</div>` : ''}
+              ${detailsHtml}
+              ${linkHtml}
+            </div>
+            ${tags.length ? `<div class="tags-row">${tags.join('')}</div>` : ''}
+            <div class="card-actions">
+              <button class="btn btn-sm" onclick="openEditModal('${item.id}')">✏️ Modifier</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">🗑️ Supprimer</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    // Gestion Modale
+    const modal = document.getElementById('itemModal');
+    const form = document.getElementById('itemForm');
+
+    window.openAddModal = function(defaultCategory = 'day1') {
+      document.getElementById('modalTitle').textContent = 'Ajouter un élément (' + state.cities[activeCity].name + ')';
+      document.getElementById('editId').value = '';
+      document.getElementById('fieldCategory').value = defaultCategory;
+      document.getElementById('fieldEmoji').value = defaultCategory === 'transport' ? '🚆' : (defaultCategory === 'lodging' ? '🏨' : '🎯');
+      document.getElementById('fieldTitle').value = '';
+      document.getElementById('fieldPrice').value = '';
+      document.getElementById('fieldPriceType').value = 'per_person';
+      document.getElementById('fieldLocation').value = '';
+      document.getElementById('fieldDetails').value = '';
+      document.getElementById('fieldLink').value = '';
+      document.getElementById('fieldLinkText').value = '';
+      document.getElementById('fieldIsOption').checked = false;
+      modal.classList.remove('hidden');
+      document.getElementById('fieldTitle').focus();
+    };
+
+    window.openEditModal = function(id) {
+      const item = state.cities[activeCity].items.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('modalTitle').textContent = 'Modifier l’élément';
+      document.getElementById('editId').value = item.id;
+      document.getElementById('fieldCategory').value = item.category;
+      document.getElementById('fieldEmoji').value = item.emoji || '📌';
+      document.getElementById('fieldTitle').value = item.title || '';
+      document.getElementById('fieldPrice').value = (item.price !== null && item.price !== undefined) ? item.price : '';
+      document.getElementById('fieldPriceType').value = item.priceType || 'per_person';
+      document.getElementById('fieldLocation').value = item.location || '';
+      document.getElementById('fieldDetails').value = (item.details || []).join('\n');
+      document.getElementById('fieldLink').value = item.link || '';
+      document.getElementById('fieldLinkText').value = item.linkText || '';
+      document.getElementById('fieldIsOption').checked = !!item.isOption;
+      modal.classList.remove('hidden');
+    };
+
+    window.deleteItem = function(id) {
+      const item = state.cities[activeCity].items.find(i => i.id === id);
+      if (!item) return;
+      if (confirm(`Supprimer « ${item.title} » ?`)) {
+        state.cities[activeCity].items = state.cities[activeCity].items.filter(i => i.id !== id);
+        saveState();
+        render();
+      }
+    };
+
+    function closeModal() {
+      modal.classList.add('hidden');
+    }
+
+    document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('editId').value;
+      const priceRaw = document.getElementById('fieldPrice').value.trim();
+      const priceVal = priceRaw === '' ? null : parseFloat(priceRaw);
+
+      const newItemData = {
+        id: editId || ('item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
+        category: document.getElementById('fieldCategory').value,
+        emoji: document.getElementById('fieldEmoji').value.trim() || '📌',
+        title: document.getElementById('fieldTitle').value.trim(),
+        price: isNaN(priceVal) ? null : priceVal,
+        priceType: document.getElementById('fieldPriceType').value,
+        location: document.getElementById('fieldLocation').value.trim(),
+        details: document.getElementById('fieldDetails').value.split('\n').map(s => s.trim()).filter(Boolean),
+        link: document.getElementById('fieldLink').value.trim(),
+        linkText: document.getElementById('fieldLinkText').value.trim(),
+        isOption: document.getElementById('fieldIsOption').checked
+      };
+
+      const list = state.cities[activeCity].items;
+      if (editId) {
+        const idx = list.findIndex(i => i.id === editId);
+        if (idx !== -1) list[idx] = newItemData;
+      } else {
+        list.push(newItemData);
+      }
+
+      saveState();
+      closeModal();
+      render();
+    });
+
+    // Événements globaux
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeCity = tab.dataset.city;
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+        render();
+      });
+    });
+
+    document.getElementById('participantsCount').addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (!isNaN(val) && val >= 1) {
+        state.participants = val;
+        saveState();
+        render();
+      }
+    });
+
+    document.getElementById('includeOptions').addEventListener('change', (e) => {
+      state.includeOptions = e.target.checked;
+      saveState();
+      render();
+    });
+
+    document.getElementById('btnAddGlobal').addEventListener('click', () => openAddModal('day1'));
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (confirm('Réinitialiser toutes les données aux valeurs par défaut ? Vos modifications non exportées seront perdues.')) {
+        localStorage.removeItem(STORAGE_KEY);
+        state = getDefaultState();
+        render();
+      }
+    });
+
+    // Export d'un fichier HTML autonome avec l'état actuel intégré
+    document.getElementById('btnExportHtml').addEventListener('click', () => {
+      const clone = document.documentElement.cloneNode(true);
+      // Nettoyer le contenu dynamique avant export
+      clone.querySelector('#summaryCards').innerHTML = '';
+      clone.querySelector('#cityContent').innerHTML = '';
+      clone.querySelector('#itemModal').classList.add('hidden');
+      // Injecter l'état actuel dans la balise JSON
+      clone.querySelector('#initial-data').textContent = JSON.stringify(state, null, 2);
+
+      const blob = new Blob(['<!doctype html>\n' + clone.outerHTML], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'evg-planning-budget.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Premier rendu
+    render();
   </script>
 </body>
 </html>
