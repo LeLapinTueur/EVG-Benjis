@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a2d">
+  <title>EVG — Bruxelles ou Charleroi</title>
+  <style>
+    :root{--ink:#172238;--muted:#667085;--navy:#101a2d;--yellow:#ffc928;--paper:#f5f6f8;--line:#e5e8ee;--white:#fff;--green:#16794b}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .hero{background:linear-gradient(120deg,#101a2d,#253b5c);color:white;padding:44px 22px 38px}
+    .wrap{max-width:1120px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:800;color:var(--yellow)}
+    h1{font-size:clamp(34px,6vw,58px);line-height:1;margin:10px 0}.hero p{color:#d8dfeb;margin:12px 0 0;font-size:17px}
+    main{max-width:1120px;margin:-18px auto 60px;padding:0 18px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tab{border:1px solid var(--line);background:white;color:var(--ink);border-radius:999px;padding:11px 18px;font-weight:800;cursor:pointer}.tab.active{background:var(--yellow);border-color:var(--yellow)}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}.metric{background:white;border:1px solid var(--line);border-radius:16px;padding:16px}.metric small{display:block;color:var(--muted);font-weight:700}.metric strong{display:block;font-size:27px;margin-top:3px}
+    .notice{font-size:13px;color:var(--muted);margin:0 0 22px}
+    .day{margin:22px 0}.day-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}.day-head h2{font-size:21px;margin:0}.day-head span{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .activity{background:white;border:1px solid var(--line);border-radius:16px;padding:17px;display:grid;grid-template-columns:48px 1fr;gap:13px;min-width:0}
+    .emoji{width:46px;height:46px;border-radius:13px;background:#fff4c9;display:grid;place-items:center;font-size:23px}
+    .activity h3{margin:0;font-size:17px}.price{font-weight:900;color:var(--green);white-space:nowrap}.topline{display:flex;justify-content:space-between;gap:10px;align-items:start}
+    .meta{display:grid;gap:5px;margin-top:10px;color:var(--muted);font-size:13px}.meta a{color:#245a9a;text-decoration:none}.meta a:hover{text-decoration:underline}
+    .placeholder{color:#98a2b3;font-style:italic}.tag{display:inline-block;background:#eef1f5;color:#596579;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:800;margin-top:8px}
+    .footer{background:var(--navy);color:#dbe2ed;border-radius:16px;padding:18px;margin-top:26px;font-size:13px}.footer strong{color:white}
+    .hidden{display:none!important}
+    @media(max-width:680px){.summary{grid-template-columns:1fr 1fr}.summary .metric:last-child{grid-column:1/-1}.cards{grid-template-columns:1fr}.hero{padding-top:34px}}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">Le week-end du futur marié</div>
+      <h1>EVG</h1>
+      <p>Deux destinations, trois jours, un week-end mémorable.</p>
+    </div>
+  </header>
+  <main>
+    <nav class="tabs" aria-label="Choisir une destination">
+      <button class="tab active" data-city="bruxelles">🇧🇪 Bruxelles</button>
+      <button class="tab" data-city="charleroi">🇧🇪 Charleroi</button>
+    </nav>
+
+    <section id="bruxelles" class="city">
+      <div class="summary">
+        <div class="metric"><small>Budget connu / personne</small><strong>215 €</strong></div>
+        <div class="metric"><small>Activités chiffrées</small><strong>6</strong></div>
+        <div class="metric"><small>À compléter</small><strong>Repas & soirée</strong></div>
+      </div>
+      <p class="notice">Estimation provisoire : comprend les activités chiffrées, dont le simulateur de chute en option. Hors repas non chiffrés, transport, hébergement et club.</p>
+      <article class="activity" style="margin:0 0 18px;grid-template-columns:48px 1fr"><div class="emoji">🏨</div><div><div class="topline"><h3>Hébergement — MEININGER Hotels</h3><span class="price">À chiffrer</span></div><div class="meta"><div>📍 Hôtel et dates à sélectionner</div><div>🔗 <a href="https://book.meininger-hotels.com/reservations/stay" target="_blank" rel="noopener">Consulter les disponibilités / réserver</a></div></div></div></article>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 1</span><h2>Vendredi — Arrivée & mise en jambes</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🚗</div><div><div class="topline"><h3>Déplacement</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Trajet d'environ 7 km en voiture ou ligne 5</span></div><div>ℹ️ Point de départ et destination à préciser</div></div></div></article>
+          <article class="activity"><div class="emoji">🔫</div><div><div class="topline"><h3>Laser Game</h3><span class="price">26 € / pers.</span></div><div class="meta"><div>📍 Shopping Carrefour Saint-Michel, entrée parking en face du 1 rue de l’Escadron, 1040 Etterbeek</div><div>⏱️ Partie : 20 min (dont 15 min de jeu)</div><div>🕒 Arrivée conseillée 15 min avant</div><div>🔗 <a href="https://www.spacefungame.com/laser-games-2/" target="_blank" rel="noopener">Site & réservation Space Fun Game</a></div></div></div></article>
+        </div>
+      </section>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 2</span><h2>Samedi — Activités & soirée</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Déjeuner au Fin de Siècle</h3><span class="price">25 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://www.findesiecle.be/" target="_blank" rel="noopener">Site de Fin de Siècle</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🕹️</div><div><div class="topline"><h3>Futurist Game</h3><span class="price">45 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://futuristgames.be/" target="_blank" rel="noopener">Site Futurist Games</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🧩</div><div><div class="topline"><h3>Prison Island</h3><span class="price">40 € / pers.</span></div><div class="meta"><div>📍 Adresse à confirmer</div><div>🕒 Horaire à définir</div><div>🔗 <a href="https://www.prison-island.be/activities/prisonisland/" target="_blank" rel="noopener">Activité & réservation Prison Island</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🪓</div><div><div class="topline"><h3>Lancer de hache</h3><span class="price">49 € / pers.</span></div><div class="meta"><div>📍 37 rue des Alexiens, 1000 Bruxelles</div><div>⏱️ Session de 60 min · dès 21 € selon le site</div><div>🕒 Samedi : 10h45–23h</div><div>🔗 <a href="https://woodcutter.world/en/brussels" target="_blank" rel="noopener">Site & réservation WoodCutter</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🍻</div><div><div class="topline"><h3>La Porte Noire</h3><span class="price">30 € / pers.</span></div><div class="meta"><div>📍 Rue des Alexiens 67, 1000 Bruxelles</div><div>🕒 Vendredi et samedi : 18h–3h</div><div>🔗 <a href="https://www.laportenoire.be/" target="_blank" rel="noopener">Site de La Porte Noire</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🌙</div><div><div class="topline"><h3>Club de strip-tease</h3><span class="price">À définir</span></div><div class="meta"><div>📍 Établissement à choisir</div><div>ℹ️ Budget et conditions à confirmer</div></div></div></article>
+        </div>
+      </section>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 3</span><h2>Dimanche — Dernier repas & option</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🍣</div><div><div class="topline"><h3>Restaurant — Teppanyaki ?</h3><span class="price">À définir</span></div><div class="meta"><div>📍 Rue Marché aux Poulets 32, 1000 Bruxelles</div><div>🍱 Teppanyaki proposé · horaires : 12h–14h30 et 18h–22h30</div><div>🔗 <a href="https://www.restaurant-kabuki.be/" target="_blank" rel="noopener">Site & réservation Kabuki</a></div></div></div></article>
+          <article class="activity"><div class="emoji">🪂</div><div><div class="topline"><h3>Simulateur de chute</h3><span class="price">60 € / pers.</span></div><div class="meta"><div>📍 Airspace — adresse à confirmer</div><div>ℹ️ Activité optionnelle · tarif initial noté : 60 € / pers.</div><div>🔗 <a href="https://shop.airspace.be/adultes" target="_blank" rel="noopener">Offres adultes & réservation</a></div></div><span class="tag">OPTION</span></div></article>
+        </div>
+      </section>
+    </section>
+
+    <section id="charleroi" class="city hidden">
+      <div class="summary">
+        <div class="metric"><small>Budget connu / personne</small><strong>237 €</strong></div>
+        <div class="metric"><small>Activités chiffrées</small><strong>5</strong></div>
+        <div class="metric"><small>À compléter</small><strong>Restaurants & lieux</strong></div>
+      </div>
+      <p class="notice">Estimation provisoire : comprend les activités chiffrées. Hors restaurants du vendredi et du dimanche, transport et hébergement.</p>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 1</span><h2>Vendredi — Arrivée & soirée</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Restaurant</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
+          <article class="activity"><div class="emoji">🔫</div><div><div class="topline"><h3>Laser Game</h3><span class="price">28 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Adresse à ajouter</span></div><div>🕒 Horaire à définir</div><div>🔗 <span class="placeholder">Lien de réservation à ajouter</span></div></div></div></article>
+        </div>
+      </section>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 2</span><h2>Samedi — Activités</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🍽️</div><div><div class="topline"><h3>Restaurant</h3><span class="price">25 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
+          <article class="activity"><div class="emoji">🥽</div><div><div class="topline"><h3>EVA — réalité virtuelle</h3><span class="price">45 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Adresse à ajouter</span></div><div>🕒 Horaire à définir</div><div>🔗 <span class="placeholder">Lien de réservation à ajouter</span></div></div></div></article>
+          <article class="activity"><div class="emoji">🪂</div><div><div class="topline"><h3>Simulateur de chute</h3><span class="price">60 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Lieu à confirmer</span></div><div>🕒 Horaire à définir</div></div></div></article>
+          <article class="activity"><div class="emoji">🪓</div><div><div class="topline"><h3>Lancer de hache</h3><span class="price">49 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">À prévoir dans une ville à déterminer</span></div><div>🕒 Horaire à définir</div></div></div></article>
+          <article class="activity"><div class="emoji">🍴</div><div><div class="topline"><h3>Restaurant / soirée</h3><span class="price">30 € / pers.</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
+        </div>
+      </section>
+
+      <section class="day">
+        <div class="day-head"><span>Jour 3</span><h2>Dimanche — Retour au calme</h2></div>
+        <div class="cards">
+          <article class="activity"><div class="emoji">🍳</div><div><div class="topline"><h3>Restaurant</h3><span class="price">À définir</span></div><div class="meta"><div>📍 <span class="placeholder">Établissement à choisir</span></div><div>🕒 Horaire à définir</div></div></div></article>
+        </div>
+      </section>
+    </section>
+
+    <div class="footer"><strong>À retenir :</strong> les budgets sont indicatifs et seront recalculés lorsque les lieux, horaires, repas et options seront confirmés. Les adresses, liens et horaires affichés comme « à définir » sont des champs à compléter.</div>
+  </main>
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const cities = document.querySelectorAll('.city');
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      cities.forEach(city => city.classList.toggle('hidden', city.id !== tab.dataset.city));
+    }));
+  </script>
+</body>
+</html>
