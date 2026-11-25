@@ -108,6 +108,48 @@
     document.body.appendChild(d);
   }
 
+  // ---- fichiers : préparation avant envoi, conversion à la lecture ----
+  const FILE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'message/rfc822'];
+  const EXT_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf', txt: 'text/plain', eml: 'message/rfc822' };
+  const MAX_FILE_BYTES = 3500000;
+
+  function bytesToB64(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function b64ToBlob(b64, mime) {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+  // File -> { name, mime, size, b64 } ; réduit les grosses images ; lève une erreur lisible sinon
+  async function prepareFile(file) {
+    const ext = ((file.name || '').split('.').pop() || '').toLowerCase();
+    if (/hei[cf]/.test(file.type || '') || ext === 'heic' || ext === 'heif') {
+      throw new Error('Le format HEIC n\'est pas pris en charge : enregistrez la photo en JPEG ou PNG.');
+    }
+    let mime = FILE_TYPES.includes(file.type) ? file.type : (EXT_TYPES[ext] || file.type);
+    if (!FILE_TYPES.includes(mime)) throw new Error('Type de fichier non pris en charge (images, PDF, texte ou e-mail .eml).');
+    let blob = file, name = file.name || 'justificatif';
+    if (mime.startsWith('image/') && mime !== 'image/gif' && file.size > 1500000) {
+      try {
+        const bmp = await createImageBitmap(file);
+        const k = Math.min(1, 2200 / Math.max(bmp.width, bmp.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
+        const out = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.88));
+        if (out) { blob = out; mime = 'image/jpeg'; name = name.replace(/\.[^.]+$/, '') + '.jpg'; }
+      } catch (e) { /* on tente l'original */ }
+    }
+    if (blob.size > MAX_FILE_BYTES) throw new Error('« ' + name + ' » est trop lourd (3,5 Mo maximum).');
+    return { name, mime, size: blob.size, b64: bytesToB64(await blob.arrayBuffer()) };
+  }
+
   // ---- fenêtre « Réglages » d'un site (réservée à l'administrateur) ----
   // site = { slug, title }. Depuis l'accueil comme depuis le site lui-même.
   function manage(site, onClose) {
@@ -278,6 +320,15 @@
       location.replace(hubUrl(slug, 'expired'));
     }
 
+    // Justificatifs (réservés aux personnes connectées par mot de passe ; écriture = admin)
+    conn.files = {
+      list: async () => (await rpc('file_list', { p_slug: slug, p_token: token })) || [],
+      get: async (id) => { const r = await rpc('file_get', { p_slug: slug, p_token: token, p_id: id }); return r && r[0]; },
+      add: (ref, f) => rpc('file_add', { p_slug: slug, p_token: token, p_ref: ref, p_name: f.name, p_mime: f.mime, p_b64: f.b64 }),
+      remove: (id) => rpc('file_delete', { p_slug: slug, p_token: token, p_id: id }),
+      removeRefs: (ref) => rpc('file_delete_refs', { p_slug: slug, p_token: token, p_ref: ref })
+    };
+
     // Enregistrement automatique (admin) : appelé après chaque modification
     conn.save = function (getData) {
       if (!conn.isAdmin) return;
@@ -332,5 +383,5 @@
     return conn;
   }
 
-  window.Hub = { configured, rpc, getSession, setSession, clearSession, allSessions, login, claim, logout, connect, manage, esc };
+  window.Hub = { configured, rpc, getSession, setSession, clearSession, allSessions, login, claim, logout, connect, manage, esc, prepareFile, b64ToBlob };
 })();
