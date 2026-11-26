@@ -66,7 +66,7 @@
       <div class="tools">
         <input type="search" id="q" placeholder="Rechercher un invité…">
         <select id="filter"><option value="free">Sans chambre</option><option value="all">Tous</option><option value="placed">Avec chambre</option></select>
-        <div class="addrow adm"><input type="text" id="newName" maxlength="80" placeholder="Ajouter un invité (aussi au plan de table)"><button class="btn" id="newBtn" type="button">＋</button></div>
+        <div class="note" style="font-size:13px;color:var(--mut)">Les invités se gèrent dans le site <a href="/invites/">Invités</a>.</div>
       </div>
       <div class="glist" id="glist"></div>
     </aside>
@@ -111,7 +111,7 @@
 
   async function loadGuests() {
     try {
-      const rows = await Hub.rpc('guests_list', { p_slug: SLUG, p_token: token });
+      const rows = await Hub.rpc('invites_list', { p_slug: SLUG, p_token: token });
       guests = (rows || []).map(r => ({ id: r.id, name: r.name }));
       render();
     } catch (e) { toast('Liste des invités indisponible : ' + e.message); }
@@ -170,7 +170,7 @@
                        .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     $('gcount').textContent = '(' + (guests.length - placed) + ' sans chambre)';
     const gl = $('glist'); gl.replaceChildren(...list.map(g => guestRow(g, false)));
-    if (!list.length) gl.innerHTML = '<div class="empty">' + (!guests.length ? 'Aucun invité : ajoutez-en dans le plan de table (ou ici).' : f === 'free' && !q ? 'Tout le monde a une chambre 🎉' : 'Aucun résultat.') + '</div>';
+    if (!list.length) gl.innerHTML = '<div class="empty">' + (!guests.length ? 'Aucun invité : ajoutez-en dans le site Invités.' : f === 'free' && !q ? 'Tout le monde a une chambre 🎉' : 'Aucun résultat.') + '</div>';
     // chambres
     const box = $('rooms'); box.replaceChildren();
     $('noRooms').hidden = data.rooms.length > 0;
@@ -229,19 +229,6 @@
   }
   $('addRoom').onclick = () => roomDialog(null);
 
-  // ---------- ajout d'un invité (créé aussi dans le plan de table) ----------
-  async function addGuest() {
-    const v = $('newName').value.trim(); if (!v) return;
-    $('newBtn').disabled = true;
-    try {
-      const added = await Hub.rpc('guests_add', { p_slug: SLUG, p_token: token, p_names: v.split(/\n/).map(s => s.trim()).filter(Boolean) });
-      $('newName').value = '';
-      toast(added && added.length ? added.length + ' invité(s) ajouté(s) ici et dans le plan de table.' : 'Cet invité existe déjà.');
-      await loadGuests();
-    } catch (e) { toast(e.message); } finally { $('newBtn').disabled = false; }
-  }
-  $('newBtn').onclick = addGuest;
-  $('newName').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addGuest(); } });
   $('q').addEventListener('input', render); $('filter').addEventListener('change', render);
 
   render();
