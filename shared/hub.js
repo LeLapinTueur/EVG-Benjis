@@ -346,19 +346,22 @@
         }
       }, 700);
     };
+    conn.pending = () => !!timer;      // modification locale pas encore enregistrée
     window.addEventListener('beforeunload', (e) => { if (timer) { e.preventDefault(); e.returnValue = ''; } });
 
     // Mise à jour automatique pour les lecteurs
     conn.poll = function (cb, ms) {
       setInterval(async () => {
-        if (document.hidden) return;
+        if (document.hidden || timer) return;
         try {
           const rs = await fetchSite(token);
           if (!rs || !rs.length) {                 // session expirée, ou consultation libre coupée
             if (token) return sessionLost();
             return location.replace(hubUrl(slug));
           }
-          if (rs[0].updated_at !== conn.updatedAt) { conn.updatedAt = rs[0].updated_at; cb(rs[0].data || {}); }
+          if (rs[0].updated_at !== conn.updatedAt) {
+            if (cb(rs[0].data || {}) !== false) conn.updatedAt = rs[0].updated_at;   // cb renvoie false = « pas maintenant », on réessaie
+          }
         } catch (e) { /* réseau : on réessaiera */ }
       }, ms || 30000);
     };
