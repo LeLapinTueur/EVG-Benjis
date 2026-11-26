@@ -1354,7 +1354,13 @@ function lockUi() {
   apply(hubConn.data);
   document.body.classList.remove('booting');
   if (READONLY) hubConn.poll(apply);
-  else if (!Array.isArray(hubConn.data.tables)) toast('Base vide : cliquez sur « Importer » pour reprendre votre fichier .json');
+  else hubConn.poll(d => {        // admin : reprend les invités ajoutés depuis « Chambres », sans déranger une saisie en cours
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a && a.isContentEditable) return false;
+    if (!Array.isArray(d.tables)) return;
+    apply(d);
+  });
+  if (!READONLY && !Array.isArray(hubConn.data.tables)) toast('Base vide : cliquez sur « Importer » pour reprendre votre fichier .json');
 })();
 </script>
 </body>
