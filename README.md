@@ -35,3 +35,7 @@ Dans Supabase (SQL Editor) : le site redevient « à configurer » et vous chois
 update public.sites set admin_hash = null where slug = 'evg';
 delete from public.site_sessions where slug = 'evg';
 ```
+
+## Site « Photos » (dépôt + galerie, stockage Google Drive)
+Fichiers : `photos/index.html`, `api/photos.js` (relais Vercel), `outils/get-refresh-token.js`.
+Mise en route complète : `outils/GUIDE-GOOGLE.md`.

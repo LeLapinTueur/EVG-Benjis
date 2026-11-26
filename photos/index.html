@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Photos du mariage</title>
+<style>
+  :root { --ink:#2b2433; --mut:#7a7385; --acc:#b0566b; --acc2:#8f3f54; --bg:#faf6f3; --card:#fff; --line:#eadfe0; }
+  * { box-sizing: border-box; } [hidden] { display:none !important; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  body.booting main { visibility:hidden; }
+  main { max-width:1000px; margin:0 auto; padding:18px 14px 80px; }
+  h1 { font:600 28px/1.2 Georgia,serif; margin:8px 0 4px; text-align:center; }
+  .welcome { text-align:center; color:var(--mut); margin:0 auto 18px; max-width:560px; white-space:pre-line; }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:18px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input[type=text] { flex:1; min-width:160px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font:inherit; }
+  .btn { background:var(--acc); color:#fff; border:0; border-radius:12px; padding:12px 18px; font:600 16px inherit; font-family:inherit; cursor:pointer; }
+  .btn:hover { background:var(--acc2); } .btn.ghost { background:#fff; color:var(--acc2); border:1px solid var(--line); }
+  .btn.big { width:100%; padding:16px; font-size:18px; }
+  .btn[disabled] { opacity:.5; cursor:default; }
+  .closed { text-align:center; color:var(--mut); padding:10px; }
+  .queue { margin-top:12px; display:grid; gap:8px; }
+  .qi { display:flex; align-items:center; gap:10px; font-size:14px; }
+  .qi .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .qi progress { width:110px; height:8px; } .qi .st { min-width:70px; text-align:right; color:var(--mut); }
+  .qi.err .st { color:#b3261e; } .qi.ok .st { color:#2e7d32; }
+  .qi button { border:0; background:none; color:var(--acc2); cursor:pointer; font:inherit; text-decoration:underline; }
+  .bar { display:flex; justify-content:space-between; align-items:center; margin:0 2px 10px; color:var(--mut); font-size:14px; gap:8px; flex-wrap:wrap; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:6px; }
+  .th { position:relative; aspect-ratio:1; background:#ece5e3; border-radius:8px; overflow:hidden; cursor:pointer; border:0; padding:0; }
+  .th img { width:100%; height:100%; object-fit:cover; display:block; }
+  .th .vid { position:absolute; right:6px; bottom:6px; background:rgba(0,0,0,.6); color:#fff; border-radius:6px; padding:1px 6px; font-size:12px; }
+  .th .ph { position:absolute; inset:0; display:grid; place-items:center; color:#b9aeb0; font-size:26px; }
+  .empty { text-align:center; color:var(--mut); padding:40px 10px; }
+  #lb { position:fixed; inset:0; background:rgba(15,10,18,.94); z-index:90; display:none; flex-direction:column; }
+  #lb.on { display:flex; }
+  #lb .top { display:flex; gap:10px; align-items:center; padding:10px 14px; color:#fff; font-size:14px; }
+  #lb .top .grow { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #lb .top button, #lb .top a { background:rgba(255,255,255,.14); color:#fff; border:0; border-radius:8px; padding:7px 12px; cursor:pointer; font:inherit; text-decoration:none; }
+  #lb .stage { flex:1; display:grid; place-items:center; min-height:0; padding:0 8px 12px; position:relative; }
+  #lb img { max-width:100%; max-height:100%; object-fit:contain; }
+  #lb .note { color:#d9cfd2; text-align:center; padding:20px; }
+  #lb .nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.16); color:#fff; border:0; width:44px; height:64px; border-radius:10px; font-size:26px; cursor:pointer; }
+  #lb .prev { left:6px; } #lb .next { right:6px; }
+  .set { display:grid; gap:10px; } .set textarea { width:100%; min-height:70px; padding:10px; border:1px solid var(--line); border-radius:10px; font:inherit; }
+  .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#2b2433; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; }
+</style>
+</head>
+<body class="booting">
+<main>
+  <h1>📸 Photos du mariage</h1>
+  <p class="welcome" id="welcome"></p>
+
+  <section class="box" id="upBox">
+    <div class="row" style="margin-bottom:12px">
+      <label for="who" style="color:var(--mut)">Votre prénom :</label>
+      <input type="text" id="who" maxlength="40" placeholder="ex. Camille (facultatif)" autocomplete="given-name">
+    </div>
+    <div id="upOpen">
+      <button class="btn big" id="pick" type="button">📤 Ajouter mes photos et vidéos</button>
+      <input type="file" id="file" accept="image/*,video/*" multiple hidden>
+      <div class="queue" id="queue"></div>
+    </div>
+    <div class="closed" id="upClosed" hidden>Les dépôts sont fermés pour le moment. Vous pouvez toujours regarder la galerie.</div>
+  </section>
+
+  <section class="box set" id="admBox" hidden>
+    <strong>🛠️ Réglages (administrateur)</strong>
+    <label><input type="checkbox" id="optOpen"> Dépôts ouverts aux invités</label>
+    <label for="optMsg" style="color:var(--mut)">Message d'accueil affiché aux invités</label>
+    <textarea id="optMsg" maxlength="400" placeholder="Merci d'être là ! Déposez ici vos plus belles photos de la journée."></textarea>
+    <div class="row"><a class="btn ghost" id="drvLink" target="_blank" rel="noopener" style="text-decoration:none">📁 Ouvrir le dossier dans Google Drive</a></div>
+  </section>
+
+  <div class="bar"><span id="count"></span><button class="btn ghost" id="refresh" type="button" style="padding:6px 12px;font-size:14px">🔄 Actualiser</button></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>Aucune photo pour l'instant. Soyez le premier ou la première !</div>
+  <div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost" id="more" type="button" hidden>Voir plus</button></div>
+</main>
+
+<div id="lb" role="dialog" aria-modal="true">
+  <div class="top"><span class="grow" id="lbInfo"></span><a id="lbDrive" target="_blank" rel="noopener" hidden>Drive ↗</a><button id="lbDel" hidden>🗑️ Supprimer</button><button id="lbClose">✕ Fermer</button></div>
+  <div class="stage" id="lbStage"><button class="nav prev" id="lbPrev" aria-label="Précédente">‹</button><button class="nav next" id="lbNext" aria-label="Suivante">›</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/shared/config.js"></script>
+<script src="/shared/hub.js"></script>
+<script>
+(async function () {
+  const SLUG = 'photos', API = '/api/photos';
+  const hub = await Hub.connect(SLUG);
+  hub.mountBar();
+  document.body.classList.remove('booting');
+  const $ = (id) => document.getElementById(id);
+  const ses = Hub.getSession(SLUG);
+  const token = ses ? ses.token : null;
+  const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500); };
+
+  async function api(body, binary) {
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token }, body)) });
+    if (binary && r.ok) return r.blob();
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) { Hub.clearSession(SLUG); alert(j.error || 'Session expirée'); location.reload(); throw new Error('401'); }
+    if (!r.ok) throw new Error(j.error || ('Erreur ' + r.status));
+    return j;
+  }
+
+  // ---------- accueil / réglages ----------
+  $('welcome').textContent = hub.data.welcome || 'Merci d\'être là ! Déposez ici vos photos et vidéos de la journée : elles sont rangées dans notre album et visibles ci-dessous.';
+  const who = $('who'); try { who.value = localStorage.getItem('photos_who') || ''; } catch (e) {}
+  who.addEventListener('input', () => { try { localStorage.setItem('photos_who', who.value); } catch (e) {} });
+  function applyOpen(open) { $('upOpen').hidden = !open && !hub.isAdmin; $('upClosed').hidden = open || hub.isAdmin; }
+  if (hub.isAdmin) {
+    $('admBox').hidden = false;
+    $('optOpen').checked = hub.data.uploadsOpen !== false; $('optMsg').value = hub.data.welcome || '';
+    const saveSet = () => { hub.data = { uploadsOpen: $('optOpen').checked, welcome: $('optMsg').value.trim() }; hub.save(() => hub.data); $('welcome').textContent = hub.data.welcome || $('welcome').textContent; };
+    $('optOpen').addEventListener('change', saveSet); $('optMsg').addEventListener('change', saveSet);
+  }
+
+  // ---------- galerie ----------
+  let items = [], nextToken = null, totalLoaded = 0;
+  const grid = $('grid');
+  const urlCache = new Map();
+  const queue = []; let active = 0;
+  function fetchThumb(id, size) {
+    const key = id + ':' + size;
+    if (urlCache.has(key)) return urlCache.get(key);
+    const p = new Promise((resolve, reject) => { queue.push({ id, size, resolve, reject }); pump(); });
+    urlCache.set(key, p); p.catch(() => urlCache.delete(key));
+    return p;
+  }
+  function pump() {
+    while (active < 6 && queue.length) {
+      const j = queue.shift(); active++;
+      api({ action: 'thumb', id: j.id, size: j.size }, true).then(b => j.resolve(URL.createObjectURL(b)), j.reject).finally(() => { active--; pump(); });
+    }
+  }
+  const io = new IntersectionObserver((es) => {
+    es.forEach(e => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      const el = e.target, id = el.dataset.id;
+      fetchThumb(id, 400).then(u => { const im = new Image(); im.alt = ''; im.src = u; el.querySelector('.ph').replaceWith(im); }).catch(() => { el.querySelector('.ph').textContent = '…'; });
+    });
+  }, { rootMargin: '300px' });
+
+  function cell(it) {
+    const b = document.createElement('button');
+    b.className = 'th'; b.type = 'button'; b.dataset.id = it.id;
+    b.innerHTML = '<span class="ph">🖼️</span>' + (it.mime.startsWith('video/') ? '<span class="vid">▶ vidéo</span>' : '');
+    b.addEventListener('click', () => openLb(items.findIndex(x => x.id === it.id)));
+    io.observe(b); return b;
+  }
+  function paint() {
+    grid.replaceChildren(...items.map(cell));
+    $('empty').hidden = items.length > 0;
+    $('count').textContent = items.length ? items.length + ' photo' + (items.length > 1 ? 's' : '') + '/vidéo' + (items.length > 1 ? 's' : '') + ' chargée' + (items.length > 1 ? 's' : '') : '';
+    $('more').hidden = !nextToken;
+  }
+  async function load(reset) {
+    const j = await api({ action: 'list', pageToken: reset ? null : nextToken });
+    if (reset) {   // on garde les pages déjà chargées, on ajoute seulement les nouveautés en tête
+      const known = new Set(items.map(x => x.id));
+      const fresh = j.items.filter(x => !known.has(x.id));
+      if (!items.length) { items = j.items; nextToken = j.nextPageToken; } else items = fresh.concat(items);
+    } else { items = items.concat(j.items); nextToken = j.nextPageToken; }
+    applyOpen(j.uploadsOpen);
+    if (j.folderUrl) $('drvLink').href = j.folderUrl;
+    paint();
+  }
+  $('more').onclick = () => load(false).catch(e => toast(e.message));
+  $('refresh').onclick = () => load(true).catch(e => toast(e.message));
+  try { await load(true); } catch (e) { toast(e.message); $('empty').hidden = false; $('empty').textContent = e.message; }
+  setInterval(() => { if (!document.hidden && !active_uploads) load(true).catch(() => {}); }, 60000);
+
+  // ---------- dépôt ----------
+  let active_uploads = 0;
+  $('pick').onclick = () => $('file').click();
+  $('file').onchange = () => { [...$('file').files].forEach(enqueueUpload); $('file').value = ''; };
+  const upQ = []; let upRun = 0;
+  function enqueueUpload(file) {
+    const row = document.createElement('div'); row.className = 'qi';
+    row.innerHTML = '<span class="nm"></span><progress max="100" value="0"></progress><span class="st">En attente</span>';
+    row.querySelector('.nm').textContent = file.name;
+    $('queue').prepend(row);
+    upQ.push({ file, row }); runUp();
+  }
+  function runUp() {
+    while (upRun < 2 && upQ.length) {
+      const j = upQ.shift(); upRun++; active_uploads++;
+      doUpload(j).finally(() => { upRun--; active_uploads--; runUp(); if (!upQ.length && !upRun) load(true).catch(() => {}); });
+    }
+  }
+  async function doUpload({ file, row }) {
+    const st = row.querySelector('.st'), pr = row.querySelector('progress');
+    row.classList.remove('err');
+    try {
+      st.textContent = 'Préparation…';
+      const mime = file.type || (/\.(heic|heif)$/i.test(file.name) ? 'image/heic' : '');
+      const init = await api({ action: 'init-upload', name: file.name, mime, size: file.size, by: who.value });
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open('PUT', init.url);
+        x.setRequestHeader('Content-Type', mime);
+        x.upload.onprogress = (e) => { if (e.lengthComputable) { pr.value = e.loaded / e.total * 100; st.textContent = Math.round(pr.value) + ' %'; } };
+        x.onload = () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error('Envoi refusé (' + x.status + ')'));
+        x.onerror = () => reject(new Error('Connexion perdue'));
+        x.send(file);
+      });
+      pr.value = 100; st.textContent = '✓ Envoyé'; row.classList.add('ok');
+    } catch (e) {
+      row.classList.add('err'); st.innerHTML = '';
+      const b = document.createElement('button'); b.textContent = 'Réessayer'; b.title = e.message;
+      b.onclick = () => { upQ.push({ file, row }); st.textContent = 'En attente'; runUp(); };
+      st.append(b); toast(e.message);
+    }
+  }
+
+  // ---------- visionneuse ----------
+  let cur = -1;
+  async function openLb(i) {
+    if (i < 0 || i >= items.length) return;
+    cur = i; const it = items[i];
+    $('lb').classList.add('on');
+    $('lbInfo').textContent = (it.by ? it.by + ' · ' : '') + new Date(it.created).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) + '  (' + (i + 1) + '/' + items.length + ')';
+    $('lbDel').hidden = !hub.isAdmin;
+    $('lbDrive').hidden = !it.link; if (it.link) $('lbDrive').href = it.link;
+    const stage = $('lbStage'); stage.querySelectorAll('img,.note').forEach(n => n.remove());
+    const isVid = it.mime.startsWith('video/');
+    const mark = document.createElement('div'); mark.className = 'note'; mark.textContent = 'Chargement…'; stage.append(mark);
+    try {
+      const u = await fetchThumb(it.id, 1600);
+      if (cur !== i) return;
+      mark.remove();
+      const im = new Image(); im.src = u; im.alt = ''; stage.append(im);
+      if (isVid) { const n = document.createElement('div'); n.className = 'note'; n.textContent = '🎬 Vidéo : aperçu seulement.' + (it.link ? ' Lecture complète via le lien Drive.' : ' L\'original est dans l\'album des mariés.'); stage.append(n); }
+    } catch (e) { if (cur === i) mark.textContent = isVid ? '🎬 Vidéo (aperçu indisponible)' : 'Aperçu indisponible pour le moment.'; }
+    // précharge la suivante
+    if (items[i + 1] && !items[i + 1].mime.startsWith('video/')) fetchThumb(items[i + 1].id, 1600).catch(() => {});
+  }
+  const closeLb = () => { $('lb').classList.remove('on'); cur = -1; };
+  $('lbClose').onclick = closeLb;
+  $('lbPrev').onclick = () => openLb(cur - 1);
+  $('lbNext').onclick = () => { if (cur === items.length - 1 && nextToken) load(false).then(() => openLb(cur + 1)); else openLb(cur + 1); };
+  document.addEventListener('keydown', (e) => {
+    if (cur < 0) return;
+    if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') $('lbPrev').click(); else if (e.key === 'ArrowRight') $('lbNext').click();
+  });
+  $('lbDel').onclick = async () => {
+    const it = items[cur]; if (!it || !confirm('Supprimer cette photo ? (elle ira dans la corbeille de Google Drive)')) return;
+    try { await api({ action: 'delete', id: it.id }); items.splice(cur, 1); closeLb(); paint(); toast('Supprimée'); } catch (e) { toast(e.message); }
+  };
+})();
+</script>
+</body>
+</html>

@@ -29,6 +29,21 @@ create table if not exists public.site_sessions (
 );
 create index if not exists site_sessions_slug_idx on public.site_sessions (slug);
 
+-- Justificatifs (confirmations, QR codes, PDF…) rattachés à un élément d'un site
+create table if not exists public.site_files (
+  id         uuid primary key default gen_random_uuid(),
+  slug       text not null references public.sites(slug) on delete cascade on update cascade,
+  ref        text not null,                 -- ex. 'bruxelles/bxl-tr-1' (destination/élément)
+  name       text not null,
+  mime       text not null,
+  size       int  not null,
+  content    bytea not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists site_files_slug_ref_idx on public.site_files (slug, ref);
+alter table public.site_files enable row level security;
+revoke all on public.site_files from anon, authenticated;
+
 -- Consultation libre (sans mot de passe) : réservée aux sites où public_read_allowed = true.
 -- L'administrateur d'un site autorisé peut l'activer / la couper depuis l'accueil.
 do $$
@@ -51,7 +66,8 @@ revoke all on public.sites, public.site_sessions from anon, authenticated;
 -- ---------- Vos sites (ajoutez une ligne pour chaque nouveau bouton) -----
 insert into public.sites (slug, title, emoji, description, sort_order, public_read_allowed) values
   ('evg',           'EVG',            '🎉', 'Planning et budget du week-end',        10, false),
-  ('plan-de-table', 'Plan de table',  '💍', 'Invités, tables, menus, DJ et traiteur', 20, true)
+  ('plan-de-table', 'Plan de table',  '💍', 'Invités, tables, menus, DJ et traiteur', 20, true),
+  ('photos',        'Photos',         '📸', 'Dépôt et galerie des photos du mariage',  30, false)
 on conflict (slug) do nothing;
 
 -- ---------- Reprise de l'ancien planning EVG (si l'ancienne table existe) --
@@ -238,6 +254,79 @@ begin
   update public.sites set public_read = p_public where slug = p_slug;
 end $$;
 
+-- ---------- Justificatifs --------------------------------------------------
+-- Lecture : toute personne connectée avec un mot de passe (admin ou lecteur), jamais le public.
+-- Écriture / suppression : administrateur uniquement.
+create or replace function public._site_member(p_slug text, p_token uuid)
+returns text
+language sql stable security definer set search_path = public as $$
+  select ss.role from public.site_sessions ss
+   where p_token is not null and ss.token = p_token and ss.slug = p_slug and ss.expires_at > now();
+$$;
+
+create or replace function public.file_list(p_slug text, p_token uuid)
+returns table (id uuid, ref text, name text, mime text, size int, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if public._site_member(p_slug, p_token) is null then raise exception 'Session invalide'; end if;
+  return query
+    select f.id, f.ref, f.name, f.mime, f.size, f.created_at
+      from public.site_files f where f.slug = p_slug order by f.created_at;
+end $$;
+
+create or replace function public.file_get(p_slug text, p_token uuid, p_id uuid)
+returns table (name text, mime text, b64 text)
+language plpgsql stable security definer set search_path = public, extensions as $$
+begin
+  if public._site_member(p_slug, p_token) is null then raise exception 'Session invalide'; end if;
+  return query
+    select f.name, f.mime, replace(encode(f.content, 'base64'), E'\n', '')
+      from public.site_files f where f.id = p_id and f.slug = p_slug;
+end $$;
+
+create or replace function public.file_add(p_slug text, p_token uuid, p_ref text, p_name text, p_mime text, p_b64 text)
+returns uuid
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_bytes bytea; v_id uuid;
+begin
+  if public._site_member(p_slug, p_token) is distinct from 'admin' then raise exception 'Session invalide'; end if;
+  if p_mime not in ('image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'message/rfc822') then
+    raise exception 'Type de fichier non autorisé';
+  end if;
+  if coalesce(p_ref, '') = '' or length(p_ref) > 200 or coalesce(p_name, '') = '' or length(p_name) > 200 then
+    raise exception 'Référence ou nom invalide';
+  end if;
+  v_bytes := decode(p_b64, 'base64');
+  if length(v_bytes) > 4000000 then raise exception 'Fichier trop lourd (4 Mo maximum)'; end if;
+  if (select coalesce(sum(f.size), 0) from public.site_files f where f.slug = p_slug) + length(v_bytes) > 150000000 then
+    raise exception 'Espace de stockage plein (150 Mo)';
+  end if;
+  insert into public.site_files (slug, ref, name, mime, size, content)
+  values (p_slug, p_ref, p_name, p_mime, length(v_bytes), v_bytes)
+  returning site_files.id into v_id;
+  return v_id;
+end $$;
+
+create or replace function public.file_delete(p_slug text, p_token uuid, p_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if public._site_member(p_slug, p_token) is distinct from 'admin' then raise exception 'Session invalide'; end if;
+  delete from public.site_files where id = p_id and slug = p_slug;
+end $$;
+
+-- Supprime les fichiers d'un élément (p_ref exact) ou d'une destination entière (p_ref terminé par « / »)
+create or replace function public.file_delete_refs(p_slug text, p_token uuid, p_ref text)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if public._site_member(p_slug, p_token) is distinct from 'admin' then raise exception 'Session invalide'; end if;
+  if coalesce(p_ref, '') = '' then return; end if;
+  delete from public.site_files
+   where slug = p_slug
+     and (ref = p_ref or (right(p_ref, 1) = '/' and left(ref, length(p_ref)) = p_ref));
+end $$;
+
 -- ---------- Déconnexion ---------------------------------------------------
 create or replace function public.site_logout(p_token uuid)
 returns void
@@ -246,18 +335,22 @@ language sql security definer set search_path = public as $$
 $$;
 
 -- ---------- Droits ---------------------------------------------------------
-revoke all on function public._site_role(text, uuid) from public, anon, authenticated;
+revoke all on function public._site_role(text, uuid), public._site_member(text, uuid) from public, anon, authenticated;
 revoke all on function
   public.list_sites(), public.site_claim(text, text), public.site_login(text, text),
   public.site_get(text, uuid), public.site_save(text, uuid, jsonb),
   public.site_set_password(text, uuid, text, text), public.site_logout(uuid),
-  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean)
+  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean),
+  public.file_list(text, uuid), public.file_get(text, uuid, uuid), public.file_add(text, uuid, text, text, text, text),
+  public.file_delete(text, uuid, uuid), public.file_delete_refs(text, uuid, text)
   from public;
 grant execute on function
   public.list_sites(), public.site_claim(text, text), public.site_login(text, text),
   public.site_get(text, uuid), public.site_save(text, uuid, jsonb),
   public.site_set_password(text, uuid, text, text), public.site_logout(uuid),
-  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean)
+  public.site_settings(text, uuid), public.site_set_public(text, uuid, boolean),
+  public.file_list(text, uuid), public.file_get(text, uuid, uuid), public.file_add(text, uuid, text, text, text, text),
+  public.file_delete(text, uuid, uuid), public.file_delete_refs(text, uuid, text)
   to anon, authenticated;
 
 -- =====================================================================
