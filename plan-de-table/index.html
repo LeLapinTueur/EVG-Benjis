@@ -180,7 +180,7 @@ table.guest-menus tr:hover td{background:#fafcf9}
 body.booting > *:not(.hubbar):not(script){visibility:hidden}
 body.readonly #addTable,body.readonly #addItem,body.readonly #importLabel,body.readonly #resetBtn,
 body.readonly #guestForm,body.readonly .menu-types-bar,body.readonly .del-guest,body.readonly .rm-menu,
-body.readonly .chip .x,body.readonly #detail button,body.readonly #detail label.btn,body.readonly .hint{display:none!important}
+body.readonly .chip .x,body .del-guest,body.readonly #detail button,body.readonly #detail label.btn,body.readonly .hint{display:none!important}
 body.readonly h1{outline:none;border-bottom:0}
 body.readonly input:disabled,body.readonly select:disabled,body.readonly textarea:disabled{opacity:1;color:inherit;-webkit-text-fill-color:currentColor;background:transparent;cursor:default}
 </style>
@@ -239,13 +239,10 @@ body.readonly input:disabled,body.readonly select:disabled,body.readonly textare
     <h2>Invités</h2>
     <p class="count" id="count"></p>
     <div class="progress"><i id="bar"></i></div>
-    <form id="guestForm">
-      <input type="text" id="guestName" placeholder="Prénom Nom" aria-label="Nom de l'invité" autocomplete="off">
-      <button class="primary" type="submit">Ajouter</button>
-    </form>
+    <p class="hint" style="margin:0 0 10px">Les invités se gèrent dans le site <a href="/invites/">Invités</a> : ils apparaissent ici automatiquement.</p>
+    <form id="guestForm" hidden style="display:none"><input type="text" id="guestName"><button type="submit"></button></form>
     <input type="search" id="search" placeholder="Rechercher un invité" aria-label="Rechercher" style="margin-bottom:10px">
     <div id="guestList"></div>
-    <p class="hint">Astuce : collez plusieurs noms séparés par des virgules ou des retours à la ligne pour les ajouter d'un coup.</p>
   </aside>
   <section>
     <div class="room-head"><h2>La salle</h2><span class="count" id="seatInfo"></span></div>
@@ -864,7 +861,7 @@ function chip(g, inTable) {
     if (e.target.closest('.x')) {
       hideGuestTip();
       if (inTable) assign(g.id, null);
-      else { state.guests = state.guests.filter(x => x.id !== g.id); save(); render(); }
+      else toast('Pour supprimer un invité, utilisez le site Invités.');
       return;
     }
     selected = selected === g.id ? null : g.id; render();
@@ -998,10 +995,7 @@ function renderMenusView() {
       toast(`Menu de ${g.name} : ${g.menu}`);
     };
     tr.querySelector('.del-guest').onclick = () => {
-      state.guests = state.guests.filter(x => x.id !== g.id);
-      if (selected === g.id) selected = null;
-      save();
-      render();
+      toast('Pour supprimer un invité, utilisez le site Invités.');
     };
     tbody.appendChild(tr);
   });
@@ -1344,6 +1338,8 @@ function lockUi() {
   title.contentEditable = READONLY ? 'false' : 'true';
   if (READONLY) { lockObserver = new MutationObserver(lockUi); lockObserver.observe(document.body, { childList: true, subtree: true }); }
   hubConn.mountBar();
+  let lastTyped = 0;
+  document.addEventListener('input', () => { lastTyped = Date.now(); }, true);
   const apply = d => {
     state = (d && Array.isArray(d.tables)) ? d : emptyState();
     migrate();
@@ -1355,8 +1351,7 @@ function lockUi() {
   document.body.classList.remove('booting');
   if (READONLY) hubConn.poll(apply);
   else hubConn.poll(d => {        // admin : reprend les invités ajoutés depuis « Chambres », sans déranger une saisie en cours
-    const a = document.activeElement;
-    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a && a.isContentEditable) return false;
+    if (Date.now() - lastTyped < 4000) return false;     // quelqu'un est en train de saisir : on réessaie au prochain contrôle
     if (!Array.isArray(d.tables)) return;
     apply(d);
   });
