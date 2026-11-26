@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Invités</title>
+<style>
+  :root { --ink:#1f2a3c; --mut:#6b7587; --acc:#3d6fb6; --acc2:#2c5391; --bg:#f3f5f9; --card:#fff; --line:#dde3ee; --ok:#2e7d32; --bad:#b3261e; }
+  * { box-sizing:border-box; } [hidden] { display:none !important; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  body.booting main { visibility:hidden; }
+  main { max-width:1150px; margin:0 auto; padding:14px; }
+  .head { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .head h1 { font-size:22px; margin:0; flex:1; }
+  .stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:6px 12px; font-size:13px; color:var(--mut); }
+  .stat b { color:var(--ink); font-size:16px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:14px; }
+  .tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input[type=text], input[type=search], select, textarea { padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  textarea { width:100%; min-height:110px; }
+  .grow { flex:1; min-width:150px; }
+  .btn { background:var(--acc); color:#fff; border:0; border-radius:9px; padding:8px 14px; font:600 14px inherit; font-family:inherit; cursor:pointer; }
+  .btn:hover { background:var(--acc2); } .btn.ghost { background:#fff; color:var(--acc2); border:1px solid var(--line); } .btn.danger { background:#fff; color:var(--bad); border:1px solid #efc4c0; }
+  .btn.sm { padding:3px 8px; font-size:13px; }
+  .wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--card); }
+  table { border-collapse:collapse; width:100%; min-width:680px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eef1f6; vertical-align:middle; }
+  th { background:#f7f9fd; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--mut); position:sticky; top:0; }
+  td.nm { font-weight:600; } td.act { white-space:nowrap; text-align:right; }
+  .pill { display:inline-block; border-radius:99px; padding:1px 9px; font-size:13px; background:#eaf0fa; color:var(--acc2); }
+  .pill.none { background:#f3eeee; color:#9a8f90; } .pill.menu { background:#eef6ee; color:#2e6b31; }
+  .note { color:var(--mut); font-size:13px; }
+  .empty { text-align:center; color:var(--mut); padding:30px 10px; }
+  .links { font-size:13px; color:var(--mut); } .links a { color:var(--acc2); }
+  .ovl { position:fixed; inset:0; background:rgba(20,30,50,.5); display:grid; place-items:center; padding:16px; z-index:120; }
+  .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:420px; display:grid; gap:10px; }
+  .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .act { display:flex; gap:8px; justify-content:flex-end; }
+  .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
+  body.ro .adm { display:none !important; }
+</style>
+</head>
+<body class="booting">
+<main>
+  <div class="head">
+    <h1>👥 Invités</h1>
+    <button class="btn adm" id="addOne" type="button">＋ Ajouter un invité</button>
+    <button class="btn ghost adm" id="addMany" type="button">📋 Coller une liste</button>
+    <button class="btn ghost" id="csv" type="button">⬇️ Exporter (CSV)</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="panel">
+    <div class="tools">
+      <input type="search" class="grow" id="q" placeholder="Rechercher (nom, groupe, table, menu, chambre…)">
+      <select id="filter">
+        <option value="all">Tous</option><option value="notable">Sans table</option><option value="noroom">Sans chambre</option>
+        <option value="nomenu">Menu non défini</option>
+      </select>
+    </div>
+    <p class="links" style="margin:8px 0 0">La <b>table</b> et le <b>menu</b> se choisissent dans <a href="/plan-de-table/">Plan de table</a>, la <b>chambre</b> dans <a href="/chambres/">Chambres</a> ; ils s'affichent ici automatiquement.</p>
+  </div>
+  <div class="wrap"><table>
+    <thead><tr><th>Nom</th><th>Groupe</th><th>Table</th><th>Menu</th><th>Chambre</th><th>Note</th><th class="adm"></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <div class="empty" id="empty" hidden></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/shared/config.js"></script>
+<script src="/shared/hub.js"></script>
+<script>
+(async function () {
+  const SLUG = 'invites';
+  const hub = await Hub.connect(SLUG);
+  hub.mountBar();
+  const ADMIN = hub.isAdmin;
+  document.body.classList.toggle('ro', !ADMIN);
+  document.body.classList.remove('booting');
+  const $ = (id) => document.getElementById(id), esc = Hub.esc;
+  const ses = Hub.getSession(SLUG), token = ses ? ses.token : null;
+  const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500); };
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const norm = (s) => String(s || '').trim().toLowerCase();
+
+  let rows = [];       // [{id,name,grp,note,tbl,menu,room}] — vue d'ensemble (table/menu/chambre viennent des autres sites)
+  const mine = () => (Array.isArray(hub.data.guests) ? hub.data.guests : (hub.data.guests = []));
+
+  async function refresh() {
+    try {
+      rows = (await Hub.rpc('invites_overview', { p_slug: SLUG, p_token: token })) || [];
+      render();
+    } catch (e) { toast('Chargement impossible : ' + e.message); }
+  }
+  const saveGuests = () => { hub.save(() => ({ guests: mine() })); setTimeout(refresh, 1800); };
+
+  function render() {
+    const placed = rows.filter(r => r.tbl).length, roomed = rows.filter(r => r.room).length, menus = rows.filter(r => r.menu && r.menu !== 'Non défini').length;
+    $('stats').innerHTML = '<div class="stat"><b>' + rows.length + '</b> invités</div>' +
+      '<div class="stat"><b>' + placed + '</b> avec une table</div><div class="stat"><b>' + menus + '</b> avec un menu</div><div class="stat"><b>' + roomed + '</b> avec une chambre</div>';
+    const q = norm($('q').value), f = $('filter').value;
+    const list = rows.filter(r => (!q || [r.name, r.grp, r.tbl, r.menu, r.room, r.note].some(v => norm(v).includes(q))) &&
+      (f === 'all' || (f === 'notable' && !r.tbl) || (f === 'noroom' && !r.room) || (f === 'nomenu' && (!r.menu || r.menu === 'Non défini'))));
+    const none = '<span class="pill none">—</span>';
+    $('rows').innerHTML = list.map(r =>
+      '<tr><td class="nm">' + esc(r.name) + '</td><td>' + (r.grp ? esc(r.grp) : '') + '</td>' +
+      '<td>' + (r.tbl ? '<span class="pill">' + esc(r.tbl) + '</span>' : none) + '</td>' +
+      '<td>' + (r.menu && r.menu !== 'Non défini' ? '<span class="pill menu">' + esc(r.menu) + '</span>' : none) + '</td>' +
+      '<td>' + (r.room ? '<span class="pill">' + esc(r.room) + '</span>' : none) + '</td>' +
+      '<td class="note">' + esc(r.note) + '</td>' +
+      '<td class="act adm"><button class="btn ghost sm" data-e="' + esc(r.id) + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + esc(r.id) + '" title="Supprimer">🗑️</button></td></tr>').join('');
+    const em = $('empty');
+    em.hidden = list.length > 0;
+    em.textContent = !rows.length ? (ADMIN ? 'Aucun invité. Cliquez sur « Ajouter un invité » ou « Coller une liste ».' : 'Aucun invité pour l\'instant.') : 'Aucun résultat.';
+    $('rows').querySelectorAll('[data-e]').forEach(b => b.onclick = () => guestDialog(b.dataset.e));
+    $('rows').querySelectorAll('[data-d]').forEach(b => b.onclick = () => del(b.dataset.d));
+  }
+
+  function groups() { return [...new Set(mine().map(g => (g.group || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')); }
+  function dialog(html) {
+    const o = document.createElement('div'); o.className = 'ovl';
+    o.innerHTML = '<form class="dlg">' + html + '</form>'; document.body.append(o);
+    o.querySelector('[data-x]').onclick = () => o.remove();
+    return o;
+  }
+  const dl = () => '<datalist id="grps">' + groups().map(g => '<option value="' + esc(g) + '">').join('') + '</datalist>';
+
+  function guestDialog(id) {
+    const g = id ? mine().find(x => x.id === id) : null;
+    if (id && !g) return;
+    const o = dialog('<strong>' + (g ? 'Modifier l\'invité' : 'Nouvel invité') + '</strong>' +
+      '<label>Nom<input type="text" id="gn" maxlength="80" required></label>' +
+      '<label>Groupe (famille, amis, collègues…)<input type="text" id="gg" maxlength="40" list="grps"></label>' + dl() +
+      '<label>Note (allergie, besoin particulier…)<input type="text" id="gt" maxlength="200"></label>' +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Enregistrer</button></div>');
+    const $$ = (i) => o.querySelector('#' + i);
+    if (g) { $$('gn').value = g.name; $$('gg').value = g.group || ''; $$('gt').value = g.note || ''; }
+    o.querySelector('form').onsubmit = (e) => {
+      e.preventDefault();
+      const name = $$('gn').value.trim(); if (!name) return;
+      if (mine().some(x => x.id !== (g && g.id) && norm(x.name) === norm(name))) { toast('« ' + name + ' » existe déjà.'); return; }
+      const rec = { id: g ? g.id : uid(), name, group: $$('gg').value.trim(), note: $$('gt').value.trim() };
+      if (g) mine()[mine().findIndex(x => x.id === g.id)] = rec; else mine().push(rec);
+      const r = rows.find(x => x.id === rec.id);
+      if (r) { r.name = name; r.grp = rec.group; r.note = rec.note; } else rows.push({ id: rec.id, name, grp: rec.group, note: rec.note, tbl: null, menu: null, room: null });
+      o.remove(); saveGuests(); render();
+    };
+    $$('gn').focus();
+  }
+  function manyDialog() {
+    const o = dialog('<strong>Coller une liste d\'invités</strong><label>Un invité par ligne (ou séparés par des virgules / points-virgules)<textarea id="mt" placeholder="Camille Dupont&#10;Jean Martin&#10;…"></textarea></label>' +
+      '<label>Groupe pour tous (facultatif)<input type="text" id="mg" maxlength="40" list="grps"></label>' + dl() +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Ajouter</button></div>');
+    o.querySelector('form').onsubmit = (e) => {
+      e.preventDefault();
+      const names = o.querySelector('#mt').value.split(/[\n;,]+/).map(s => s.trim()).filter(Boolean);
+      const grp = o.querySelector('#mg').value.trim(), have = new Set(mine().map(g => norm(g.name)));
+      let added = 0, dup = 0;
+      names.forEach(n => { if (have.has(norm(n))) { dup++; return; } have.add(norm(n)); const rec = { id: uid(), name: n.slice(0, 80), group: grp, note: '' }; mine().push(rec); rows.push({ id: rec.id, name: rec.name, grp, note: '', tbl: null, menu: null, room: null }); added++; });
+      o.remove(); if (added) { saveGuests(); render(); }
+      toast(added + ' invité(s) ajouté(s)' + (dup ? ' · ' + dup + ' doublon(s) ignoré(s)' : ''));
+    };
+    o.querySelector('#mt').focus();
+  }
+  function del(id) {
+    const g = mine().find(x => x.id === id); if (!g) return;
+    const r = rows.find(x => x.id === id);
+    const extra = r && (r.tbl || r.room) ? '\n\nIl sera aussi retiré de ' + [r.tbl && 'sa table', r.room && 'sa chambre'].filter(Boolean).join(' et ') + '.' : '';
+    if (!confirm('Supprimer « ' + g.name + ' » ?' + extra)) return;
+    hub.data.guests = mine().filter(x => x.id !== id); rows = rows.filter(x => x.id !== id);
+    saveGuests(); render();
+  }
+  function exportCsv() {
+    const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const lines = [['Nom', 'Groupe', 'Table', 'Menu', 'Chambre', 'Note'].map(q).join(';')]
+      .concat(rows.map(r => [r.name, r.grp, r.tbl, r.menu && r.menu !== 'Non défini' ? r.menu : '', r.room, r.note].map(q).join(';')));
+    const b = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'invites.csv'; document.body.append(a); a.click(); a.remove();
+  }
+
+  $('addOne').onclick = () => guestDialog(null);
+  $('addMany').onclick = manyDialog;
+  $('csv').onclick = exportCsv;
+  $('q').addEventListener('input', render); $('filter').addEventListener('change', render);
+  await refresh();
+  setInterval(() => { if (!document.hidden && !hub.pending()) refresh(); }, 30000);
+})();
+</script>
+</body>
+</html>
