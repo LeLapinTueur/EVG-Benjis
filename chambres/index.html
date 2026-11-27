@@ -40,20 +40,24 @@
   .rh { display:flex; align-items:flex-start; gap:6px; } .rh .t { flex:1; font-weight:700; font-size:16px; overflow-wrap:anywhere; }
   .meta { font-size:13px; color:var(--mut); display:flex; gap:10px; flex-wrap:wrap; }
   .cap { font-weight:700; } .cap.full { color:var(--ok); }
-  .floor { background:#f1ebe3; border-radius:12px; padding:10px; display:grid; gap:10px; background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.025) 0 2px,transparent 2px 28px); }
-  .bedwrap { display:grid; gap:3px; } .bedlabel { font-size:11px; color:#8c7a68; text-transform:uppercase; letter-spacing:.05em; }
-  .bed { border:3px solid var(--wood); border-radius:12px; background:#fbf7f1; padding:6px; display:grid; gap:6px; box-shadow:0 2px 0 rgba(0,0,0,.08); }
-  .bed.double { grid-template-columns:1fr 1fr; }
-  .bed.bunk { border-left-width:8px; border-right-width:8px; }
-  .bed.air { border:2px dashed #5b9bd5; background:#e8f3fc; border-radius:22px; }
-  .slot { position:relative; min-height:52px; border-radius:9px; background:#fff; border:1px dashed #cfc3b4; padding:16px 6px 5px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; color:#a39889; }
-  .slot::before { content:""; position:absolute; top:4px; left:50%; transform:translateX(-50%); width:46%; height:8px; background:#fff; border:1px solid #dcd2c4; border-radius:6px; }
-  .slot.over { border-color:var(--acc); background:#eef3fb; } .slot.taken { border-style:solid; border-color:#c9d6ea; background:#f3f7fd; color:var(--ink); }
-  .slot .lbl { position:absolute; right:6px; top:3px; font-size:10px; color:#a39889; }
-  .p { display:flex; align-items:center; gap:4px; width:100%; cursor:grab; user-select:none; font-weight:600; }
-  .p .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .p.ro { cursor:default; }
-  .p button { border:0; background:none; color:var(--mut); cursor:pointer; font-size:14px; padding:0 2px; }
-  .p.dragging { opacity:.4; }
+  .floor { background:#efe6da; border-radius:12px; padding:14px 10px; display:flex; flex-wrap:wrap; gap:18px 16px; justify-content:center; align-items:flex-start;
+           background-image:repeating-linear-gradient(90deg,rgba(120,90,60,.07) 0 2px,transparent 2px 34px),repeating-linear-gradient(0deg,rgba(120,90,60,.04) 0 1px,transparent 1px 60px); box-shadow:inset 0 0 0 1px rgba(120,90,60,.15); }
+  .bedwrap { display:grid; gap:4px; justify-items:center; } .bedlabel { font-size:11px; color:#8c7a68; text-transform:uppercase; letter-spacing:.05em; }
+  .bed { position:relative; filter:drop-shadow(0 5px 6px rgba(70,45,20,.28)); }
+  .bed svg { display:block; width:100%; height:auto; }
+  .bed.single, .bed.air { width:122px; } .bed.double { width:204px; } .bed.bunk { width:150px; }
+  .slot { position:absolute; border-radius:10px; }
+  .slot:not(.taken) { border:2px dashed rgba(90,70,50,.35); background:rgba(255,255,255,.28); }
+  .slot:not(.taken)::after { content:"libre"; position:absolute; left:50%; top:62%; transform:translate(-50%,-50%); font-size:12px; color:rgba(70,55,40,.65); text-shadow:0 0 4px #fff; }
+  .bed.bunk .slot:not(.taken)::after { left:70%; top:50%; }
+  .slot.over { border-color:var(--acc); background:rgba(61,111,182,.28); border-style:solid; }
+  .p { position:absolute; inset:0; cursor:grab; user-select:none; } .p.ro { cursor:default; } .p.dragging { opacity:.4; }
+  .av { position:absolute; top:7px; left:50%; transform:translateX(-50%); width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:#fff; font:700 12px system-ui; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); }
+  .tag { position:absolute; top:60%; left:50%; transform:translate(-50%,-50%); max-width:94%; background:rgba(255,255,255,.94); border-radius:99px; padding:2px 8px; font-size:12px; font-weight:700; box-shadow:0 1px 3px rgba(0,0,0,.25); display:flex; gap:4px; align-items:center; white-space:nowrap; }
+  .tag .nm { overflow:hidden; text-overflow:ellipsis; max-width:84px; } .tag button { border:0; background:none; color:var(--mut); cursor:pointer; font-size:13px; padding:0; line-height:1; }
+  .bed.bunk .av { top:50%; left:6px; transform:translateY(-50%); width:26px; height:26px; font-size:11px; }
+  .bed.bunk .tag { top:50%; left:72%; max-width:56%; padding:2px 6px; font-size:11px; }
+  .bed.bunk .tag .nm { max-width:40px; }
   .nobeds { color:var(--mut); font-size:13px; text-align:center; padding:12px; }
   .ovl { position:fixed; inset:0; background:rgba(20,30,50,.5); display:grid; place-items:center; padding:16px; z-index:120; }
   .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:400px; display:grid; gap:10px; }
@@ -227,21 +231,54 @@
     } else if (r) { const s = document.createElement('span'); s.style.cssText = 'color:var(--mut);font-size:12px'; s.textContent = r.name; d.append(s); }
     return d;
   }
-  function bedEl(b) {
-    const T = TYPES[b.type];
+  // ----- illustrations (SVG dessinés ici, aucune image externe) -----
+  const DUVET = ['#8fb39a', '#d99aa0', '#8eaed3', '#d8bd8a', '#b3a0cc'];
+  const pillow = (x, y, w, h) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="10" fill="#fff" stroke="#d6cdbf" stroke-width="1.5"/><rect x="' + (x + 6) + '" y="' + (y + 6) + '" width="' + (w - 12) + '" height="' + (h - 12) + '" rx="7" fill="none" stroke="#ebe4d8"/>';
+  const duvet = (x, y, w, h, c) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="9" fill="' + c + '"/><rect x="' + x + '" y="' + y + '" width="' + w + '" height="20" rx="9" fill="#fff" opacity=".38"/>' +
+      '<path d="M' + (x + 8) + ' ' + (y + 34) + 'H' + (x + w - 8) + '" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-dasharray="5 6"/>';
+  const FRAME = '#b48b5e', FRAME_D = '#8a6542';
+  const ART = {
+    single: { vw: 120, vh: 200, slots: [[8, 18, 104, 172]], svg: (c) =>
+      '<rect x="2" y="2" width="116" height="196" rx="13" fill="' + FRAME + '" stroke="' + FRAME_D + '" stroke-width="2"/><rect x="0" y="0" width="120" height="16" rx="8" fill="' + FRAME_D + '"/>' +
+      '<rect x="9" y="17" width="102" height="175" rx="8" fill="#fbf8f2" stroke="#e5dccd"/>' + pillow(24, 24, 72, 36) + duvet(9, 72, 102, 120, c) },
+    double: { vw: 200, vh: 200, slots: [[8, 18, 90, 172], [102, 18, 90, 172]], svg: (c) =>
+      '<rect x="2" y="2" width="196" height="196" rx="13" fill="' + FRAME + '" stroke="' + FRAME_D + '" stroke-width="2"/><rect x="0" y="0" width="200" height="16" rx="8" fill="' + FRAME_D + '"/>' +
+      '<rect x="9" y="17" width="182" height="175" rx="8" fill="#fbf8f2" stroke="#e5dccd"/>' + pillow(17, 24, 76, 36) + pillow(107, 24, 76, 36) + duvet(9, 72, 182, 120, c) +
+      '<path d="M100 66V190" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>' },
+    air: { vw: 120, vh: 200, slots: [[12, 20, 96, 170]], svg: () =>
+      '<rect x="3" y="3" width="114" height="194" rx="38" fill="#5aa2d8" stroke="#3a80b8" stroke-width="2"/><rect x="12" y="12" width="96" height="176" rx="30" fill="#8ec6ee"/>' +
+      [58, 92, 126, 160].map(y => '<rect x="12" y="' + y + '" width="96" height="6" rx="3" fill="#5aa2d8" opacity=".85"/>').join('') +
+      '<rect x="30" y="22" width="60" height="26" rx="13" fill="#bfe0f6" stroke="#5aa2d8" stroke-width="2"/>' },
+    bunk: { vw: 160, vh: 200, slots: [[16, 24, 110, 62], [16, 112, 110, 62]], svg: (c, c2) =>
+      '<rect x="4" y="4" width="12" height="194" rx="4" fill="' + FRAME_D + '"/><rect x="126" y="4" width="12" height="194" rx="4" fill="' + FRAME_D + '"/>' +
+      '<rect x="14" y="84" width="114" height="9" rx="3" fill="' + FRAME + '"/><rect x="14" y="172" width="114" height="9" rx="3" fill="' + FRAME + '"/><rect x="4" y="4" width="134" height="9" rx="4" fill="' + FRAME + '"/>' +
+      '<rect x="16" y="26" width="110" height="58" rx="7" fill="#fbf8f2" stroke="#e5dccd"/><rect x="62" y="26" width="64" height="58" rx="7" fill="' + c + '"/><rect x="20" y="32" width="36" height="46" rx="10" fill="#fff" stroke="#d6cdbf"/>' +
+      '<rect x="16" y="114" width="110" height="58" rx="7" fill="#fbf8f2" stroke="#e5dccd"/><rect x="62" y="114" width="64" height="58" rx="7" fill="' + c2 + '"/><rect x="20" y="120" width="36" height="46" rx="10" fill="#fff" stroke="#d6cdbf"/>' +
+      '<rect x="144" y="20" width="4" height="172" rx="2" fill="' + FRAME_D + '"/><rect x="154" y="20" width="4" height="172" rx="2" fill="' + FRAME_D + '"/>' +
+      [34, 58, 82, 106, 130, 154, 178].map(y => '<rect x="146" y="' + y + '" width="10" height="3" fill="' + FRAME + '"/>').join('') }
+  };
+  const AVC = ['#c0576b', '#4f7fb8', '#5b9a6e', '#b0813a', '#7c64b0', '#3f9aa0'];
+  const initials = (n) => n.trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+  const avColor = (n) => AVC[[...n].reduce((a, c) => a + c.charCodeAt(0), 0) % AVC.length];
+  function bedEl(b, idx) {
+    const T = TYPES[b.type], A = ART[b.type];
     const wrap = document.createElement('div'); wrap.className = 'bedwrap';
     wrap.innerHTML = '<div class="bedlabel">' + T.label + '</div>';
     const bed = document.createElement('div'); bed.className = 'bed ' + b.type;
+    const c = DUVET[idx % DUVET.length], c2 = DUVET[(idx + 2) % DUVET.length];
+    bed.innerHTML = '<svg viewBox="0 0 ' + A.vw + ' ' + A.vh + '" aria-hidden="true">' + A.svg(c, c2) + '</svg>';
     for (let i = 0; i < T.places; i++) {
-      const k = b.id + ':' + i, g = whoAt(k);
+      const k = b.id + ':' + i, g = whoAt(k), [x, y, w, h] = A.slots[i];
       const sl = document.createElement('div'); sl.className = 'slot' + (g ? ' taken' : '');
-      if (b.type === 'bunk') sl.insertAdjacentHTML('afterbegin', '<span class="lbl">' + (i === 0 ? 'haut' : 'bas') + '</span>');
+      sl.style.cssText = 'left:' + x / A.vw * 100 + '%;top:' + y / A.vh * 100 + '%;width:' + w / A.vw * 100 + '%;height:' + h / A.vh * 100 + '%';
+      sl.title = b.type === 'bunk' ? (i === 0 ? 'Couchette du haut' : 'Couchette du bas') : T.label;
       if (g) {
         const p = document.createElement('div'); p.className = 'p' + (ADMIN ? '' : ' ro');
-        p.innerHTML = '<span class="nm" title="' + esc(g.name) + '">' + esc(g.name) + '</span>' + (ADMIN ? '<button type="button" title="Retirer">✕</button>' : '');
+        p.innerHTML = '<span class="av" style="background:' + avColor(g.name) + '">' + esc(initials(g.name)) + '</span>' +
+          '<span class="tag"><span class="nm" title="' + esc(g.name) + '">' + esc(g.name) + '</span>' + (ADMIN ? '<button type="button" title="Retirer">✕</button>' : '') + '</span>';
         if (ADMIN) { wireDrag(p, g.id); p.querySelector('button').onclick = () => unplace(g.id); }
         sl.append(p);
-      } else sl.append(document.createTextNode(ADMIN ? 'libre' : '—'));
+      }
       if (ADMIN) wireDrop(sl, (gid) => placeAt(gid, k), true);
       bed.append(sl);
     }
@@ -272,7 +309,7 @@
         '<div class="meta"><span class="cap ' + (full ? 'full' : '') + '">' + n + '/' + cap + ' place' + (cap > 1 ? 's' : '') + '</span>' +
         cnt.map(([t, c]) => '<span>' + c + ' ' + (c > 1 ? TYPES[t].plural : TYPES[t].one) + '</span>').join('') + '</div>';
       const fl = document.createElement('div'); fl.className = 'floor';
-      r.beds.forEach(b => fl.append(bedEl(b)));
+      r.beds.forEach((b, i) => fl.append(bedEl(b, i)));
       if (!r.beds.length) fl.innerHTML = '<div class="nobeds">Aucun couchage : modifiez la chambre pour en ajouter.</div>';
       el.append(fl);
       if (ADMIN) {
