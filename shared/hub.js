@@ -252,7 +252,7 @@
         f.addEventListener('submit', (e) => {
           e.preventDefault(); show('');
           const [a, c] = f.querySelectorAll('input');
-          if (a.value.length < 6) return show('6 caractères minimum.', 'err');
+          if (a.value.length < 8) return show('8 caractères minimum.', 'err');
           if (a.value !== c.value) return show('Les deux saisies sont différentes.', 'err');
           apply(f.dataset.role, a.value);
         });
