@@ -38,6 +38,15 @@
   .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:420px; display:grid; gap:10px; }
   .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .act { display:flex; gap:8px; justify-content:flex-end; }
   .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+  .seg button { border:0; background:#fff; padding:7px 12px; font:inherit; cursor:pointer; color:var(--mut); }
+  .seg button.on { background:var(--acc); color:#fff; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; display:grid; gap:6px; align-content:start; }
+  .card .t { font-weight:700; font-size:16px; display:flex; gap:6px; align-items:flex-start; } .card .t span { flex:1; overflow-wrap:anywhere; }
+  .card .ln { display:flex; gap:8px; align-items:center; font-size:13px; color:var(--mut); } .card .ln em { font-style:normal; min-width:58px; }
+  .gh { margin:16px 2px 8px; font-weight:700; color:var(--ink); display:flex; gap:8px; align-items:baseline; } .gh small { color:var(--mut); font-weight:400; }
+  tr.gh td { background:#eef2f9; font-weight:700; }
   body.ro .adm { display:none !important; }
 </style>
 </head>
@@ -57,13 +66,19 @@
         <option value="all">Tous</option><option value="notable">Sans table</option><option value="noroom">Sans chambre</option>
         <option value="nomenu">Menu non défini</option>
       </select>
+      <select id="group" title="Regrouper par">
+        <option value="">Sans regroupement</option><option value="grp">Regrouper par groupe</option>
+        <option value="tbl">Regrouper par table</option><option value="room">Regrouper par chambre</option>
+      </select>
+      <span class="seg" id="view"><button type="button" data-v="list" class="on">☰ Liste</button><button type="button" data-v="cards">▦ Cartes</button></span>
     </div>
     <p class="links" style="margin:8px 0 0">La <b>table</b> et le <b>menu</b> se choisissent dans <a href="/plan-de-table/">Plan de table</a>, la <b>chambre</b> dans <a href="/chambres/">Chambres</a> ; ils s'affichent ici automatiquement.</p>
   </div>
-  <div class="wrap"><table>
+  <div class="wrap" id="listWrap"><table>
     <thead><tr><th>Nom</th><th>Groupe</th><th>Table</th><th>Menu</th><th>Chambre</th><th>Note</th><th class="adm"></th></tr></thead>
     <tbody id="rows"></tbody>
   </table></div>
+  <div id="cardsBox" hidden></div>
   <div class="empty" id="empty" hidden></div>
 </main>
 <div class="toast" id="toast"></div>
@@ -103,18 +118,35 @@
     const list = rows.filter(r => (!q || [r.name, r.grp, r.tbl, r.menu, r.room, r.note].some(v => norm(v).includes(q))) &&
       (f === 'all' || (f === 'notable' && !r.tbl) || (f === 'noroom' && !r.room) || (f === 'nomenu' && (!r.menu || r.menu === 'Non défini'))));
     const none = '<span class="pill none">—</span>';
-    $('rows').innerHTML = list.map(r =>
-      '<tr><td class="nm">' + esc(r.name) + '</td><td>' + (r.grp ? esc(r.grp) : '') + '</td>' +
-      '<td>' + (r.tbl ? '<span class="pill">' + esc(r.tbl) + '</span>' : none) + '</td>' +
-      '<td>' + (r.menu && r.menu !== 'Non défini' ? '<span class="pill menu">' + esc(r.menu) + '</span>' : none) + '</td>' +
-      '<td>' + (r.room ? '<span class="pill">' + esc(r.room) + '</span>' : none) + '</td>' +
-      '<td class="note">' + esc(r.note) + '</td>' +
-      '<td class="act adm"><button class="btn ghost sm" data-e="' + esc(r.id) + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + esc(r.id) + '" title="Supprimer">🗑️</button></td></tr>').join('');
+    const pill = (v, c) => v ? '<span class="pill ' + (c || '') + '">' + esc(v) + '</span>' : none;
+    const menuOf = (r) => r.menu && r.menu !== 'Non défini' ? r.menu : '';
+    const gk = $('group').value, view = $('view').querySelector('.on').dataset.v;
+    const label = { grp: 'Sans groupe', tbl: 'Sans table', room: 'Sans chambre' }[gk];
+    const keyOf = (r) => (gk === 'grp' ? r.grp : gk === 'tbl' ? r.tbl : gk === 'room' ? r.room : '') || '';
+    const buckets = [];                       // [{name, items}]
+    if (!gk) buckets.push({ name: null, items: list });
+    else {
+      const m = new Map(); list.forEach(r => { const k = keyOf(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); });
+      [...m.keys()].sort((a, b) => !a ? 1 : !b ? -1 : a.localeCompare(b, 'fr', { numeric: true })).forEach(k => buckets.push({ name: k || label, items: m.get(k) }));
+    }
+    const acts = (r) => '<button class="btn ghost sm" data-e="' + esc(r.id) + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + esc(r.id) + '" title="Supprimer">🗑️</button>';
+    $('listWrap').hidden = view !== 'list'; $('cardsBox').hidden = view !== 'cards';
+    if (view === 'list') {
+      $('rows').innerHTML = buckets.map(bk => (bk.name !== null ? '<tr class="gh"><td colspan="7">' + esc(bk.name) + ' <small>(' + bk.items.length + ')</small></td></tr>' : '') +
+        bk.items.map(r => '<tr><td class="nm">' + esc(r.name) + '</td><td>' + esc(r.grp) + '</td><td>' + pill(r.tbl) + '</td><td>' + pill(menuOf(r), 'menu') + '</td><td>' + pill(r.room) + '</td>' +
+          '<td class="note">' + esc(r.note) + '</td><td class="act adm">' + acts(r) + '</td></tr>').join('')).join('');
+    } else {
+      $('cardsBox').innerHTML = buckets.map(bk => (bk.name !== null ? '<div class="gh">' + esc(bk.name) + ' <small>(' + bk.items.length + ')</small></div>' : '') +
+        '<div class="cards">' + bk.items.map(r => '<div class="card"><div class="t"><span>' + esc(r.name) + '</span><span class="adm" style="flex:none;white-space:nowrap">' + acts(r) + '</span></div>' +
+          (r.grp ? '<div class="ln"><em>Groupe</em>' + esc(r.grp) + '</div>' : '') +
+          '<div class="ln"><em>Table</em>' + pill(r.tbl) + '</div><div class="ln"><em>Menu</em>' + pill(menuOf(r), 'menu') + '</div><div class="ln"><em>Chambre</em>' + pill(r.room) + '</div>' +
+          (r.note ? '<div class="note">📝 ' + esc(r.note) + '</div>' : '') + '</div>').join('') + '</div>').join('');
+    }
     const em = $('empty');
     em.hidden = list.length > 0;
     em.textContent = !rows.length ? (ADMIN ? 'Aucun invité. Cliquez sur « Ajouter un invité » ou « Coller une liste ».' : 'Aucun invité pour l\'instant.') : 'Aucun résultat.';
-    $('rows').querySelectorAll('[data-e]').forEach(b => b.onclick = () => guestDialog(b.dataset.e));
-    $('rows').querySelectorAll('[data-d]').forEach(b => b.onclick = () => del(b.dataset.d));
+    document.querySelectorAll('#rows [data-e], #cardsBox [data-e]').forEach(b => b.onclick = () => guestDialog(b.dataset.e));
+    document.querySelectorAll('#rows [data-d], #cardsBox [data-d]').forEach(b => b.onclick = () => del(b.dataset.d));
   }
 
   function groups() { return [...new Set(mine().map(g => (g.group || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr')); }
@@ -183,6 +215,13 @@
   $('addMany').onclick = manyDialog;
   $('csv').onclick = exportCsv;
   $('q').addEventListener('input', render); $('filter').addEventListener('change', render);
+  // affichage (liste / cartes) et regroupement mémorisés sur cet appareil
+  const pref = (() => { try { return JSON.parse(localStorage.getItem('invites_view') || '{}'); } catch (e) { return {}; } })();
+  const savePref = () => { try { localStorage.setItem('invites_view', JSON.stringify({ v: $('view').querySelector('.on').dataset.v, g: $('group').value })); } catch (e) {} };
+  const setView = (v) => { $('view').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); };
+  if (pref.v) setView(pref.v); if (pref.g) $('group').value = pref.g;
+  $('view').querySelectorAll('button').forEach(b => b.onclick = () => { setView(b.dataset.v); savePref(); render(); });
+  $('group').addEventListener('change', () => { savePref(); render(); });
   await refresh();
   setInterval(() => { if (!document.hidden && !hub.pending()) refresh(); }, 30000);
 })();
