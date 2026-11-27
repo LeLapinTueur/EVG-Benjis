@@ -73,6 +73,9 @@
   #recap .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; } #recap h3 { margin:0 0 6px; font-size:14px; }
   #recap .big { font-size:15px; margin-bottom:10px; } #recap .big b { font-size:20px; } #recap .warn { color:var(--bad); font-weight:600; } #recap .okk { color:var(--ok); font-weight:600; }
   #recap ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; } #recap li { display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid #eef1f6; padding:3px 0; } #recap li span:last-child { color:var(--mut); text-align:right; }
+  .occ { display:grid; gap:5px; align-content:start; }
+  .g button.x { border:0; background:none; color:var(--mut); cursor:pointer; font-size:14px; padding:0 2px; }
+  .freeslot { border:1px dashed var(--line); border-radius:8px; padding:5px 8px; color:#a9b1bf; font-size:13px; text-align:center; }
   body.ro .adm { display:none !important; }
 </style>
 </head>
@@ -81,6 +84,7 @@
   <div class="head">
     <h1>🛏️ Chambres</h1>
     <div class="stats" id="stats"></div>
+    <span class="seg" id="modeBar" title="Affichage des chambres"><button type="button" data-m="detail">🛏️ Avec lits</button><button type="button" data-m="simple">📋 Simple</button></span>
     <span class="seg" id="roomFilter"><button type="button" data-f="all" class="on">Toutes les chambres</button><button type="button" data-f="free" id="freeBtn">Places libres</button></span>
     <button class="btn ghost" id="recapBtn" type="button">📊 Récapitulatif</button>
     <button class="btn adm" id="addRoom" type="button">＋ Ajouter une chambre</button>
@@ -133,55 +137,79 @@
   // data = { rooms:[{id,name,beds:[{id,type}]}], assign:{invitéId: chambreId}, seat:{invitéId: "litId:n"} }
   let data = { rooms: [], assign: {}, seat: {} };
   let guests = [];
-  function migrate(d) {
+  // ----- modèle -----
+  // data = { mode:'detail'|'simple', rooms:[{id,name, beds:[{id,type}] (mode lits) | cap (mode simple)}], assign:{invité: chambre}, seat:{invité: "lit:n"} }
+  const bedsCap = (r) => (r.beds || []).reduce((a, b) => a + TYPES[b.type].places, 0);
+  const seatKeys = (r) => (r.beds || []).flatMap(b => Array.from({ length: TYPES[b.type].places }, (_, i) => b.id + ':' + i));
+  function validSeat(D, gid) {           // la place du lit existe-t-elle, dans la chambre où l'invité est affecté ?
+    const r = D.rooms.find(x => x.id === D.assign[gid]); const k = D.seat[gid];
+    return !!(r && k && seatKeys(r).includes(k));
+  }
+  function reconcileBeds(D, r) {          // passe une chambre en « mode lits » : crée / ajuste les lits d'après son nombre de places
     let changed = false;
-    const out = { rooms: Array.isArray(d && d.rooms) ? d.rooms : [], assign: (d && d.assign && typeof d.assign === 'object') ? d.assign : {}, seat: (d && d.seat && typeof d.seat === 'object') ? d.seat : {} };
-    out.rooms.forEach(r => {
-      if (Array.isArray(r.beds)) return;
-      changed = true;                                   // ancien format : places / lits simples / lits doubles
-      const beds = [];
-      for (let i = 0; i < (+r.double || 0); i++) beds.push({ id: uid(), type: 'double' });
-      for (let i = 0; i < (+r.single || 0); i++) beds.push({ id: uid(), type: 'single' });
-      let have = beds.reduce((a, b) => a + TYPES[b.type].places, 0);
-      while (have < (+r.cap || 0)) { beds.push({ id: uid(), type: 'air' }); have++; }
-      r.beds = beds; delete r.cap; delete r.single; delete r.double;
-    });
-    // invités déjà affectés à une chambre mais sans lit : on les installe sur les premières places libres
-    const taken = new Set(Object.values(out.seat));
-    Object.keys(out.assign).forEach(gid => {
-      if (out.seat[gid]) return;
-      const r = out.rooms.find(x => x.id === out.assign[gid]); if (!r) return;
-      for (const b of r.beds) for (let i = 0; i < TYPES[b.type].places; i++) {
-        const k = b.id + ':' + i;
-        if (!taken.has(k)) { out.seat[gid] = k; taken.add(k); changed = true; return; }
+    const used = new Set(Object.values(D.seat));
+    const occN = Object.values(D.assign).filter(x => x === r.id).length;
+    if (!Array.isArray(r.beds)) {
+      changed = true; const beds = [];
+      if (r.single || r.double) {         // ancien format : lits simples / doubles
+        for (let i = 0; i < (+r.double || 0); i++) beds.push({ id: uid(), type: 'double' });
+        for (let i = 0; i < (+r.single || 0); i++) beds.push({ id: uid(), type: 'single' });
+      } else { const c = Math.max(1, +r.cap || 1); for (let i = 0; i < Math.floor(c / 2); i++) beds.push({ id: uid(), type: 'double' }); if (c % 2) beds.push({ id: uid(), type: 'single' }); }
+      r.beds = beds;
+    }
+    if (r.cap != null) {
+      let have = bedsCap(r); const want = Math.max(1, +r.cap || 1);
+      while (have < want) { r.beds.push({ id: uid(), type: 'single' }); have++; changed = true; }
+      for (let i = r.beds.length - 1; i >= 0 && have > Math.max(want, occN); i--) {   // trop de lits : on retire des lits vides seulement
+        const b = r.beds[i], n = TYPES[b.type].places;
+        const empty = Array.from({ length: n }, (_, j) => !used.has(b.id + ':' + j)).every(Boolean);
+        if (empty && have - n >= Math.max(want, occN)) { r.beds.splice(i, 1); have -= n; changed = true; }
       }
+    }
+    delete r.cap; delete r.single; delete r.double;
+    return changed;
+  }
+  function ensureSeats(D) {               // chaque invité affecté à une chambre doit avoir une place dans un lit
+    let changed = false;
+    Object.keys(D.assign).forEach(gid => { if (!D.rooms.some(r => r.id === D.assign[gid])) { delete D.assign[gid]; delete D.seat[gid]; changed = true; } });
+    Object.keys(D.seat).forEach(gid => { if (!validSeat(D, gid)) { delete D.seat[gid]; changed = true; } });
+    const taken = new Set(Object.values(D.seat));
+    Object.keys(D.assign).forEach(gid => {
+      if (D.seat[gid]) return;
+      const r = D.rooms.find(x => x.id === D.assign[gid]);
+      const k = seatKeys(r).find(x => !taken.has(x));
+      if (k) { D.seat[gid] = k; taken.add(k); } else delete D.assign[gid];
+      changed = true;
     });
-    return { out, changed };
+    return changed;
+  }
+  function migrate(d) {
+    const D = { mode: d && d.mode === 'simple' ? 'simple' : 'detail', rooms: Array.isArray(d && d.rooms) ? d.rooms : [],
+                assign: (d && d.assign && typeof d.assign === 'object') ? d.assign : {}, seat: (d && d.seat && typeof d.seat === 'object') ? d.seat : {} };
+    let changed = false;
+    if (D.mode === 'detail') { D.rooms.forEach(r => { if (reconcileBeds(D, r)) changed = true; }); if (ensureSeats(D)) changed = true; }
+    else D.rooms.forEach(r => { if (r.cap == null) { r.cap = Math.max(1, bedsCap(r) || +r.cap || 1); changed = true; } });
+    return { out: D, changed };
   }
   function load(d) { data = migrate(d).out; }
   { const m = migrate(hub.data); data = m.out; if (m.changed && ADMIN) setTimeout(() => save(), 0); }
+  const SIMPLE = () => data.mode === 'simple';
 
-  function clean() {   // ne garde que des affectations cohérentes (chambre et lit existants)
-    const rooms = new Map(data.rooms.map(r => [r.id, r]));
-    const assign = {}, seat = {};
-    Object.keys(data.assign).forEach(g => {
-      const r = rooms.get(data.assign[g]); if (!r) return;
-      const k = data.seat[g]; if (!k) return;
-      const [bid, n] = k.split(':'); const b = r.beds.find(x => x.id === bid);
-      if (!b || !(+n < TYPES[b.type].places)) return;
-      assign[g] = r.id; seat[g] = k;
-    });
-    data.assign = assign; data.seat = seat;
+  function clean() {   // ne garde que des affectations cohérentes (chambre et, en mode lits, lit existant)
+    Object.keys(data.assign).forEach(g => { if (!data.rooms.some(r => r.id === data.assign[g])) { delete data.assign[g]; delete data.seat[g]; } });
+    Object.keys(data.seat).forEach(g => { if (!data.assign[g] || !validSeat(data, g)) delete data.seat[g]; });
+    if (!SIMPLE()) ensureSeats(data);
   }
   const save = () => { if (!ADMIN) return; clean(); hub.save(() => data); };
 
   const gById = (id) => guests.find(g => g.id === id);
-  const capOf = (r) => r.beds.reduce((a, b) => a + TYPES[b.type].places, 0);
-  const seatsOf = (r) => r.beds.flatMap(b => Array.from({ length: TYPES[b.type].places }, (_, i) => b.id + ':' + i));
+  const capOf = (r) => SIMPLE() ? Math.max(0, +r.cap || 0) : bedsCap(r);
+  const seatsOf = (r) => seatKeys(r);
   const whoAt = (k) => guests.find(g => data.seat[g.id] === k);
-  const occ = (rid) => guests.filter(g => data.assign[g.id] === rid && data.seat[g.id]);
+  const occ = (rid) => guests.filter(g => data.assign[g.id] === rid && (SIMPLE() || data.seat[g.id]));
+  const isPlaced = (gid) => !!roomOf(gid) && (SIMPLE() || !!data.seat[gid]);
   const roomOf = (gid) => data.assign[gid] && data.rooms.find(r => r.id === data.assign[gid]);
-  const roomOfSeat = (k) => data.rooms.find(r => r.beds.some(b => b.id === k.split(':')[0]));
+  const roomOfSeat = (k) => data.rooms.find(r => (r.beds || []).some(b => b.id === k.split(':')[0]));
   const freeSeat = (r) => seatsOf(r).find(k => !whoAt(k));
 
   async function loadGuests() {
@@ -209,6 +237,11 @@
   function placeInRoom(gid, rid) {        // « dans cette chambre » : première place libre
     if (!ADMIN) return;
     const r = data.rooms.find(x => x.id === rid); if (!r) return;
+    if (SIMPLE()) {
+      if (data.assign[gid] === rid) return;
+      if (occ(rid).length >= capOf(r)) { toast('« ' + r.name + ' » est complète (' + capOf(r) + ' place' + (capOf(r) > 1 ? 's' : '') + ').'); return; }
+      data.assign[gid] = rid; delete data.seat[gid]; save(); render(); return;
+    }
     if (data.assign[gid] === rid && data.seat[gid]) return;
     const k = freeSeat(r);
     if (!k) { toast('« ' + r.name + ' » est complète (' + capOf(r) + ' place' + (capOf(r) > 1 ? 's' : '') + ').'); return; }
@@ -297,14 +330,15 @@
     wrap.append(bed); return wrap;
   }
   function render() {
-    const placed = guests.filter(g => roomOf(g.id) && data.seat[g.id]).length;
+    const placed = guests.filter(g => isPlaced(g.id)).length;
     const places = data.rooms.reduce((a, r) => a + capOf(r), 0);
-    const nb = data.rooms.reduce((a, r) => a + r.beds.length, 0);
+    const nb = SIMPLE() ? 0 : data.rooms.reduce((a, r) => a + r.beds.length, 0);
+    $('modeBar').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === data.mode); b.disabled = !ADMIN && b.dataset.m !== data.mode; });
     $('stats').innerHTML =
       '<div class="stat"><b>' + placed + '/' + guests.length + '</b> invités placés</div>' +
-      '<div class="stat"><b>' + data.rooms.length + '</b> chambres · <b>' + nb + '</b> couchages · <b>' + places + '</b> places</div>';
+      '<div class="stat"><b>' + data.rooms.length + '</b> chambres · ' + (SIMPLE() ? '' : '<b>' + nb + '</b> couchages · ') + '<b>' + places + '</b> places</div>';
     const q = $('q').value.trim().toLowerCase(), f = $('filter').value;
-    const list = guests.filter(g => g.name.toLowerCase().includes(q) && (f === 'all' || (f === 'free') === !roomOf(g.id)))
+    const list = guests.filter(g => g.name.toLowerCase().includes(q) && (f === 'all' || (f === 'free') === !isPlaced(g.id)))
                        .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     $('gcount').textContent = '(' + (guests.length - placed) + ' sans chambre)';
     const gl = $('glist'); gl.replaceChildren(...list.map(guestRow));
@@ -320,16 +354,28 @@
     data.rooms.filter(r => roomFilter === 'all' || freeIn(r) > 0).forEach(r => {
       const n = occ(r.id).length, cap = capOf(r), full = cap > 0 && n >= cap;
       const el = document.createElement('div'); el.className = 'room' + (full ? ' full' : '');
-      const cnt = TYPE_ORDER.map(t => [t, r.beds.filter(b => b.type === t).length]).filter(x => x[1]);
+      const cnt = SIMPLE() ? [] : TYPE_ORDER.map(t => [t, r.beds.filter(b => b.type === t).length]).filter(x => x[1]);
       el.innerHTML =
         '<div class="rh"><span class="t">' + esc(r.name) + '</span>' +
         (ADMIN ? '<button class="btn ghost sm" data-e title="Modifier">✏️</button><button class="btn danger sm" data-d title="Supprimer">🗑️</button>' : '') + '</div>' +
         '<div class="meta"><span class="cap ' + (full ? 'full' : '') + '">' + n + '/' + cap + ' place' + (cap > 1 ? 's' : '') + '</span>' +
         cnt.map(([t, c]) => '<span>' + c + ' ' + (c > 1 ? TYPES[t].plural : TYPES[t].one) + '</span>').join('') + '</div>';
-      const fl = document.createElement('div'); fl.className = 'floor';
-      r.beds.forEach((b, i) => fl.append(bedEl(b, i)));
-      if (!r.beds.length) fl.innerHTML = '<div class="nobeds">Aucun couchage : modifiez la chambre pour en ajouter.</div>';
-      el.append(fl);
+      if (SIMPLE()) {                       // version simple : la chambre contient simplement ses occupants
+        const oc = document.createElement('div'); oc.className = 'occ';
+        occ(r.id).sort((a, b) => a.name.localeCompare(b.name, 'fr')).forEach(g => {
+          const d = document.createElement('div'); d.className = 'g' + (ADMIN ? '' : ' ro');
+          d.innerHTML = '<span class="nm" title="' + esc(g.name) + '">' + esc(g.name) + '</span>' + (ADMIN ? '<button type="button" class="x" title="Retirer">✕</button>' : '');
+          if (ADMIN) { wireDrag(d, g.id); d.querySelector('.x').onclick = () => unplace(g.id); }
+          oc.append(d);
+        });
+        for (let i = n; i < cap; i++) { const f = document.createElement('div'); f.className = 'freeslot'; f.textContent = 'place libre'; oc.append(f); }
+        el.append(oc);
+      } else {
+        const fl = document.createElement('div'); fl.className = 'floor';
+        r.beds.forEach((b, i) => fl.append(bedEl(b, i)));
+        if (!r.beds.length) fl.innerHTML = '<div class="nobeds">Aucun couchage : modifiez la chambre pour en ajouter.</div>';
+        el.append(fl);
+      }
       if (ADMIN) {
         wireDrop(el, (gid) => placeInRoom(gid, r.id), false);
         el.querySelector('[data-e]').onclick = () => roomDialog(r);
@@ -345,25 +391,25 @@
 
   // ---------- places libres : filtre + récapitulatif ----------
   let roomFilter = 'all', recapOpen = false;
-  const freeIn = (r) => seatsOf(r).filter(k => !whoAt(k)).length;
+  const freeIn = (r) => SIMPLE() ? Math.max(0, capOf(r) - occ(r.id).length) : seatsOf(r).filter(k => !whoAt(k)).length;
   function renderRecap() {
     const box = $('recap'); box.hidden = !recapOpen; if (!recapOpen) return;
-    const rows = TYPE_ORDER.map(t => {
+    const rows = SIMPLE() ? [] : TYPE_ORDER.map(t => {
       const beds = data.rooms.flatMap(r => r.beds.filter(b => b.type === t));
       const seatsFree = beds.map(b => Array.from({ length: TYPES[t].places }, (_, i) => !whoAt(b.id + ':' + i)).filter(Boolean).length);
       return { t, total: beds.length, whole: seatsFree.filter(n => n === TYPES[t].places).length, partial: seatsFree.filter(n => n > 0 && n < TYPES[t].places).length, places: seatsFree.reduce((a, b) => a + b, 0) };
     }).filter(x => x.total);
     const free = data.rooms.reduce((a, r) => a + freeIn(r), 0), total = data.rooms.reduce((a, r) => a + capOf(r), 0);
-    const unplaced = guests.filter(g => !(roomOf(g.id) && data.seat[g.id])).length;
+    const unplaced = guests.filter(g => !isPlaced(g.id)).length;
     const plural = (n, a, b) => n + ' ' + (n > 1 ? b : a);
     const verdict = unplaced > free ? '<span class="warn">⚠️ Il manque ' + plural(unplaced - free, 'place', 'places') + ' pour loger tout le monde.</span>' :
       '<span class="okk">✓ Assez de places pour les ' + unplaced + ' invité(s) sans chambre.</span>';
     box.innerHTML = '<div class="big"><b>' + free + '</b> place' + (free > 1 ? 's' : '') + ' libre' + (free > 1 ? 's' : '') + ' sur ' + total + ' · ' + plural(unplaced, 'invité sans chambre', 'invités sans chambre') + '<br>' + verdict + '</div>' +
-      '<div class="grid"><div><h3>Par type de couchage</h3><table><tr><th>Type</th><th class="n">Total</th><th class="n">Entièrement libres</th><th class="n">Places libres</th></tr>' +
+      '<div class="grid">' + (SIMPLE() ? '' : '<div><h3>Par type de couchage</h3><table><tr><th>Type</th><th class="n">Total</th><th class="n">Entièrement libres</th><th class="n">Places libres</th></tr>' +
       rows.map(x => '<tr><td>' + TYPES[x.t].label + '</td><td class="n">' + x.total + '</td><td class="n">' + x.whole + (x.partial ? ' <small style="color:var(--mut)">(+' + x.partial + ' à moitié)</small>' : '') + '</td><td class="n"><b>' + x.places + '</b></td></tr>').join('') +
-      (rows.length ? '' : '<tr><td colspan="4" class="empty">Aucun couchage.</td></tr>') + '</table></div>' +
+      (rows.length ? '' : '<tr><td colspan="4" class="empty">Aucun couchage.</td></tr>') + '</table></div>') +
       '<div><h3>Chambres avec de la place</h3><ul>' + (data.rooms.filter(r => freeIn(r) > 0).map(r => {
-        const det = TYPE_ORDER.map(t => {
+        const det = SIMPLE() ? '' : TYPE_ORDER.map(t => {
           const per = r.beds.filter(x => x.type === t).map(x => Array.from({ length: TYPES[t].places }, (_, i) => !whoAt(x.id + ':' + i)).filter(Boolean).length);
           const whole = per.filter(n => n === TYPES[t].places).length, part = per.filter(n => n > 0 && n < TYPES[t].places).length;
           if (t === 'bunk') { const n = per.reduce((a, b) => a + b, 0); return n ? n + ' couchette' + (n > 1 ? 's' : '') : ''; }
@@ -371,16 +417,51 @@
           const h = part ? part + ' ' + TYPES[t].one + (part > 1 ? 's' : '') + ' à moitié' : '';
           return [w, h].filter(Boolean).join(' + ');
         }).filter(Boolean).join(', ');
-        return '<li><span>' + esc(r.name) + '</span><span><b>' + freeIn(r) + '</b> libre' + (freeIn(r) > 1 ? 's' : '') + ' <small>(' + det + ')</small></span></li>';
+        return '<li><span>' + esc(r.name) + '</span><span><b>' + freeIn(r) + '</b> libre' + (freeIn(r) > 1 ? 's' : '') + (det ? ' <small>(' + det + ')</small>' : '') + '</span></li>';
       }).join('') || '<li><span>Toutes les chambres sont complètes 🎉</span></li>') + '</ul></div></div>';
   }
+  function switchMode(m) {
+    if (!ADMIN || m === data.mode) return;
+    if (m === 'detail') {
+      const before = Object.keys(data.assign).length;
+      data.rooms.forEach(r => reconcileBeds(data, r)); data.mode = 'detail'; ensureSeats(data);
+      const lost = before - Object.keys(data.assign).length;
+      toast('Mode « avec lits » : les lits ont été créés d\'après le nombre de places' + (lost ? ' (' + lost + ' invité(s) sans place ont été retirés)' : '') + '. Vous pouvez les modifier avec ✏️.');
+    } else {
+      data.rooms.forEach(r => { r.cap = Math.max(1, bedsCap(r) || +r.cap || 1); }); data.mode = 'simple';
+      toast('Mode simple : on place les invités dans les chambres, sans choisir de lit. Vos lits sont conservés.');
+    }
+    save(); render();
+  }
+  $('modeBar').querySelectorAll('button').forEach(b => b.onclick = () => switchMode(b.dataset.m));
   $('roomFilter').querySelectorAll('button').forEach(b => b.onclick = () => { roomFilter = b.dataset.f; render(); });
   $('recapBtn').onclick = () => { recapOpen = !recapOpen; $('recapBtn').classList.toggle('danger', false); render(); };
 
   if (ADMIN) wireDrop($('glist'), (gid) => unplace(gid), false);
 
   // ---------- chambre : ajout / modification ----------
+  function simpleRoomDialog(r) {
+    const isNew = !r;
+    const o = document.createElement('div'); o.className = 'ovl';
+    o.innerHTML = '<form class="dlg"><strong>' + (isNew ? 'Nouvelle chambre' : 'Modifier la chambre') + '</strong>' +
+      '<label>Nom<input type="text" id="fn" maxlength="60" required></label>' +
+      '<label>Nombre de places<input type="number" id="fc" min="1" max="30" required></label>' +
+      '<div class="act"><button type="button" class="btn ghost" id="fx">Annuler</button><button class="btn">Enregistrer</button></div></form>';
+    document.body.append(o);
+    const $$ = (id) => o.querySelector('#' + id);
+    $$('fn').value = r ? r.name : 'Chambre ' + (data.rooms.length + 1); $$('fc').value = r ? capOf(r) : 2;
+    $$('fx').onclick = () => o.remove();
+    o.querySelector('form').onsubmit = (e) => {
+      e.preventDefault();
+      const cap = Math.max(1, Math.min(30, parseInt($$('fc').value, 10) || 1)), name = $$('fn').value.trim() || 'Chambre';
+      if (r && occ(r.id).length > cap) { toast('Il y a déjà ' + occ(r.id).length + ' invités dans cette chambre : retirez-en d\'abord.'); return; }
+      if (isNew) data.rooms.push({ id: uid(), name, cap }); else { r.name = name; r.cap = cap; }
+      o.remove(); save(); render();
+    };
+    $$('fn').focus(); $$('fn').select();
+  }
   function roomDialog(r) {
+    if (SIMPLE()) return simpleRoomDialog(r);
     const isNew = !r;
     const cur = {}; TYPE_ORDER.forEach(t => cur[t] = r ? r.beds.filter(b => b.type === t).length : (t === 'double' ? 1 : 0));
     const o = document.createElement('div'); o.className = 'ovl';
