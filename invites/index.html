@@ -57,6 +57,7 @@
     <button class="btn adm" id="addOne" type="button">＋ Ajouter un invité</button>
     <button class="btn ghost adm" id="addMany" type="button">📋 Coller une liste</button>
     <button class="btn ghost" id="csv" type="button">⬇️ Exporter (CSV)</button>
+    <button class="btn ghost" id="print" type="button">🖨️ Imprimer</button>
   </div>
   <div class="stats" id="stats"></div>
   <div class="panel">
@@ -85,6 +86,7 @@
 
 <script src="/shared/config.js"></script>
 <script src="/shared/hub.js"></script>
+<script src="/shared/print.js"></script>
 <script>
 (async function () {
   const SLUG = 'invites';
@@ -99,6 +101,7 @@
   const uid = () => Math.random().toString(36).slice(2, 9);
   const norm = (s) => String(s || '').trim().toLowerCase();
 
+  let cur = { buckets: [], count: 0, gk: '' };   // dernière vue affichée (pour l'impression)
   let rows = [];       // [{id,name,grp,note,tbl,menu,room}] — vue d'ensemble (table/menu/chambre viennent des autres sites)
   const mine = () => (Array.isArray(hub.data.guests) ? hub.data.guests : (hub.data.guests = []));
 
@@ -129,6 +132,7 @@
       const m = new Map(); list.forEach(r => { const k = keyOf(r); if (!m.has(k)) m.set(k, []); m.get(k).push(r); });
       [...m.keys()].sort((a, b) => !a ? 1 : !b ? -1 : a.localeCompare(b, 'fr', { numeric: true })).forEach(k => buckets.push({ name: k || label, items: m.get(k) }));
     }
+    cur = { buckets, count: list.length, gk };
     const acts = (r) => '<button class="btn ghost sm" data-e="' + esc(r.id) + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + esc(r.id) + '" title="Supprimer">🗑️</button>';
     $('listWrap').hidden = view !== 'list'; $('cardsBox').hidden = view !== 'cards';
     if (view === 'list') {
@@ -203,6 +207,17 @@
     hub.data.guests = mine().filter(x => x.id !== id); rows = rows.filter(x => x.id !== id);
     saveGuests(); render();
   }
+  function printList() {
+    const menuOf = (r) => r.menu && r.menu !== 'Non défini' ? r.menu : '';
+    const cols = [['Nom', 'nm'], ['Groupe', 'grp'], ['Table', 'tbl'], ['Menu', 'menu'], ['Chambre', 'room'], ['Note', 'note']];
+    const body = '<table><thead><tr><th class="c">✓</th>' + cols.map(c => '<th>' + c[0] + '</th>').join('') + '</tr></thead><tbody>' +
+      cur.buckets.map(bk => (bk.name !== null ? '<tr class="gh"><td colspan="7">' + esc(bk.name) + ' (' + bk.items.length + ')</td></tr>' : '') +
+        bk.items.map(r => '<tr><td class="c">☐</td><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.grp) + '</td><td>' + esc(r.tbl) + '</td><td>' + esc(menuOf(r)) + '</td><td>' + esc(r.room) + '</td><td>' + esc(r.note) + '</td></tr>').join('')).join('') +
+      '</tbody></table>';
+    const flt = [$('q').value.trim() && 'recherche « ' + $('q').value.trim() + ' »', $('filter').value !== 'all' && $('filter').selectedOptions[0].textContent].filter(Boolean).join(' · ');
+    if (!cur.count) { toast('Aucun invité à imprimer.'); return; }
+    if (!PrintSheet.open({ title: 'Liste des invités', subtitle: cur.count + ' invité(s)' + (flt ? ' · ' + flt : ''), body })) toast('Autorisez les fenêtres pop-up pour imprimer.');
+  }
   function exportCsv() {
     const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
     const lines = [['Nom', 'Groupe', 'Table', 'Menu', 'Chambre', 'Note'].map(q).join(';')]
@@ -214,6 +229,7 @@
   $('addOne').onclick = () => guestDialog(null);
   $('addMany').onclick = manyDialog;
   $('csv').onclick = exportCsv;
+  $('print').onclick = printList;
   $('q').addEventListener('input', render); $('filter').addEventListener('change', render);
   // affichage (liste / cartes) et regroupement mémorisés sur cet appareil
   const pref = (() => { try { return JSON.parse(localStorage.getItem('invites_view') || '{}'); } catch (e) { return {}; } })();
