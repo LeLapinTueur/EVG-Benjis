@@ -39,3 +39,26 @@ delete from public.site_sessions where slug = 'evg';
 ## Site « Photos » (dépôt + galerie, stockage Google Drive)
 Fichiers : `photos/index.html`, `api/photos.js` (relais Vercel), `outils/get-refresh-token.js`.
 Mise en route complète : `outils/GUIDE-GOOGLE.md`.
+
+## Site « Chambres » (attribution des chambres aux invités)
+Fichier : `chambres/index.html`. Les invités viennent du plan de table (fonctions SQL `guests_list` / `guests_add`).
+Un invité ajouté dans Chambres est aussi ajouté au plan de table (sans table) ; la suppression d'un invité se fait uniquement dans le plan de table.
+
+## Site « Invités » (liste de référence)
+Fichier : `invites/index.html`. C'est ici que l'on ajoute / modifie / supprime les invités. « Plan de table » et « Chambres » en reprennent la liste
+(synchronisation côté base : voir `_reconcile_plan` dans `supabase-setup.sql`). La table et le menu se choisissent dans Plan de table, la chambre dans Chambres ;
+Invités les affiche. Au premier lancement du SQL, les invités déjà présents dans le plan de table sont repris automatiquement.
+
+## Chambres : deux modes
+« Avec lits » (lits dessinés, une place par couchage) et « Simple » (nom de chambre + nombre de places, on place les invités sans choisir de lit).
+Le mode est enregistré avec les chambres (visible par tous) ; on passe de l'un à l'autre sans perdre les données (les lits sont conservés en mode simple).
+
+## EVG : récap en vignettes
+Par défaut, la page affiche une vignette par section (transport, hébergement, jours 1-3) : résumé, sous-total, réservations. Un clic ouvre le détail ;
+« Tout afficher » rétablit l'ancienne page complète. On peut ajouter un élément depuis une vignette (« + Ajouter ») ou depuis la journée ouverte.
+
+## Sécurité : où sont les secrets ?
+- **Mots de passe des sites** : jamais dans le code. Ils sont enregistrés dans Supabase sous forme de hachage (bcrypt) ; on ne peut pas les relire, seulement les remplacer (⚙️ sur la carte, ou SQL). 8 caractères minimum pour un nouveau mot de passe.
+- **`shared/config.js`** : contient seulement l'URL Supabase et la clé *publique* (prévue pour être visible). Jamais la clé « service_role » / « secret ».
+- **Google (Photos)** : `GOOGLE_*` uniquement dans les variables d'environnement Vercel, jamais sur GitHub. Le fichier `client.json` téléchargé chez Google est ignoré par `.gitignore` : ne le publiez pas.
+- Protection contre les essais : 5 mots de passe faux = site bloqué 10 minutes.

@@ -1,0 +1,8 @@
+# Ne jamais mettre ces fichiers sur GitHub : ils contiennent des secrets
+client.json
+client_secret*.json
+*.secret
+.env
+.env.*
+.vercel
+node_modules/

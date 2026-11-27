@@ -127,7 +127,7 @@
       const first = !s.configured;
       $('mTitle').textContent = (first ? '⚙️ ' : '🔒 ') + s.title;
       $('mDesc').textContent = first
-        ? 'Première utilisation : choisissez le mot de passe administrateur (6 caractères minimum). Vous pourrez ensuite créer un mot de passe « lecteur » depuis le site.'
+        ? 'Première utilisation : choisissez le mot de passe administrateur (8 caractères minimum). Vous pourrez ensuite créer un mot de passe « lecteur » depuis le site.'
         : 'Saisissez le mot de passe de cet espace.';
       $('pw2Wrap').style.display = first ? '' : 'none';
       $('pw').autocomplete = first ? 'new-password' : 'current-password';
@@ -151,7 +151,7 @@
       const fail = (t) => { m.className = 'msg'; m.textContent = t; };
       if (!pw) return fail('Saisissez le mot de passe.');
       if (!s.configured) {
-        if (pw.length < 6) return fail('6 caractères minimum.');
+        if (pw.length < 8) return fail('8 caractères minimum.');
         if (pw !== $('pw2').value) return fail('Les deux saisies sont différentes.');
       }
       const btn = $('submit'); btn.disabled = true; m.textContent = '';
