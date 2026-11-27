@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Infos du mariage</title>
+<style>
+  :root { --ink:#1f2a3c; --mut:#6b7587; --acc:#3d6fb6; --acc2:#2c5391; --bg:#f3f5f9; --card:#fff; --line:#dde3ee; --bad:#b3261e; --gold:#b8935a; }
+  * { box-sizing:border-box; } [hidden] { display:none !important; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  body.booting main { visibility:hidden; }
+  main { max-width:920px; margin:0 auto; padding:14px; display:grid; gap:14px; }
+  .hero { background:linear-gradient(135deg,#2b3550,#4a5b86); color:#fff; border-radius:18px; padding:30px 22px; text-align:center; position:relative; }
+  .hero .kick { font-size:13px; letter-spacing:.14em; text-transform:uppercase; opacity:.8; }
+  .hero h1 { margin:6px 0 4px; font:700 clamp(26px,6vw,40px)/1.15 Georgia,"Times New Roman",serif; }
+  .hero .date { font-size:18px; margin-top:10px; text-transform:capitalize; }
+  .hero .cd { display:inline-block; margin-top:10px; background:rgba(255,255,255,.16); border-radius:99px; padding:4px 14px; font-weight:600; }
+  .hero .venue { margin-top:14px; font-size:16px; } .hero .venue small { display:block; opacity:.85; font-size:14px; }
+  .hero .acts { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .hero .edit { position:absolute; top:10px; right:10px; }
+  .hero .empty { opacity:.85; margin:10px 0 0; }
+  .btn { background:var(--acc); color:#fff; border:0; border-radius:9px; padding:8px 14px; font:600 14px inherit; font-family:inherit; cursor:pointer; text-decoration:none; display:inline-block; }
+  .btn:hover { background:var(--acc2); } .btn.ghost { background:#fff; color:var(--acc2); border:1px solid var(--line); } .btn.danger { background:#fff; color:var(--bad); border:1px solid #efc4c0; }
+  .btn.light { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.5); } .btn.light:hover { background:rgba(255,255,255,.3); }
+  .btn.sm { padding:4px 9px; font-size:13px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .panel h2 { font-size:16px; margin:0 0 10px; display:flex; gap:8px; align-items:center; } .panel h2 span { flex:1; }
+  .fp { text-align:center; } .fp img { max-width:100%; max-height:70vh; border-radius:10px; box-shadow:0 4px 18px rgba(0,0,0,.18); cursor:zoom-in; }
+  .fp .pdf { padding:22px; border:1px dashed var(--line); border-radius:12px; color:var(--mut); }
+  .fp .row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px; }
+  .blk { border-top:1px solid #eef1f6; padding:10px 0; } .blk:first-of-type { border-top:0; padding-top:0; }
+  .blk h3 { margin:0 0 4px; font-size:15px; display:flex; gap:6px; align-items:center; } .blk h3 span { flex:1; }
+  .blk p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; } .blk a { color:var(--acc2); }
+  .muted { color:var(--mut); font-size:14px; }
+  .ovl { position:fixed; inset:0; background:rgba(20,30,50,.5); display:grid; place-items:center; padding:16px; z-index:120; overflow:auto; }
+  .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:460px; display:grid; gap:10px; }
+  .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .act { display:flex; gap:8px; justify-content:flex-end; }
+  .dlg .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  input[type=text], input[type=date], input[type=time], textarea { padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; width:100%; }
+  textarea { min-height:110px; resize:vertical; }
+  .zoom { position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:130; display:grid; place-items:center; padding:14px; cursor:zoom-out; } .zoom img { max-width:100%; max-height:100%; }
+  .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
+  body.ro .adm { display:none !important; }
+</style>
+</head>
+<body class="booting">
+<main>
+  <section class="hero" id="hero"></section>
+  <section class="panel" id="fpPanel" hidden>
+    <h2><span>💌 Faire-part</span><span class="adm" style="flex:none"><button class="btn ghost sm" id="fpUp" type="button">📎 Ajouter / remplacer</button> <button class="btn danger sm" id="fpDel" type="button" hidden>🗑️</button></span></h2>
+    <div class="fp" id="fpBox"></div>
+    <input type="file" id="fpFile" accept="image/png,image/jpeg,image/webp,application/pdf" hidden>
+  </section>
+  <section class="panel">
+    <h2><span>ℹ️ Informations pratiques</span><button class="btn ghost sm adm" id="addBlk" type="button" style="flex:none">＋ Ajouter un bloc</button></h2>
+    <div id="blocks"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/shared/config.js"></script>
+<script src="/shared/hub.js"></script>
+<script>
+(async function () {
+  const SLUG = 'infos';
+  const hub = await Hub.connect(SLUG);
+  hub.mountBar();
+  const ADMIN = hub.isAdmin;
+  document.body.classList.toggle('ro', !ADMIN);
+  document.body.classList.remove('booting');
+  const $ = (id) => document.getElementById(id), esc = Hub.esc;
+  const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500); };
+  const uid = () => Math.random().toString(36).slice(2, 8);
+  const norm = (d) => ({ names: String((d && d.names) || ''), date: String((d && d.date) || ''), time: String((d && d.time) || ''), venue: String((d && d.venue) || ''),
+    address: String((d && d.address) || ''), fairepart: d && d.fairepart && d.fairepart.id ? d.fairepart : null,
+    blocks: Array.isArray(d && d.blocks) ? d.blocks.filter(b => b && b.id) : [] });
+  let data = norm(hub.data);
+  const save = () => { if (ADMIN) hub.save(() => data); };
+  let dialogOpen = false;
+
+  // ---------- haut de page ----------
+  const parseDate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  function countdown(d) {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const n = Math.round((d - t) / 86400000);
+    return n > 1 ? 'J-' + n + ' · dans ' + n + ' jours' : n === 1 ? 'C\'est demain !' : n === 0 ? 'C\'est aujourd\'hui 🎉' : 'Il y a ' + (-n) + ' jour' + (n < -1 ? 's' : '');
+  }
+  const mapsUrl = () => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([data.venue, data.address].filter(Boolean).join(', '));
+  function renderHero() {
+    const d = parseDate(data.date);
+    const dateTxt = d ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + (data.time ? ' · ' + data.time.replace(':', 'h') : '') : '';
+    const has = data.names || d || data.venue || data.address;
+    $('hero').innerHTML = (ADMIN ? '<button class="btn light sm edit" id="editHero" type="button">✏️ Modifier</button>' : '') +
+      '<div class="kick">Nous nous marions</div><h1>' + (esc(data.names) || 'Notre mariage') + '</h1>' +
+      (d ? '<div class="date">' + esc(dateTxt) + '</div><div class="cd">' + esc(countdown(d)) + '</div>' : '') +
+      (data.venue || data.address ? '<div class="venue">📍 ' + esc(data.venue || data.address) + (data.venue && data.address ? '<small>' + esc(data.address) + '</small>' : '') + '</div>' : '') +
+      (data.venue || data.address || d ? '<div class="acts">' + (data.venue || data.address ? '<a class="btn light" id="route" target="_blank" rel="noopener" href="' + esc(mapsUrl()) + '">🗺️ Itinéraire</a>' : '') +
+        (d ? '<button class="btn light" id="ics" type="button">📅 Ajouter à mon agenda</button>' : '') + '</div>' : '') +
+      (!has ? '<p class="empty">' + (ADMIN ? 'Cliquez sur « Modifier » pour indiquer la date et le lieu.' : 'Les informations arrivent bientôt.') + '</p>' : '');
+    if ($('editHero')) $('editHero').onclick = heroDialog;
+    if ($('ics')) $('ics').onclick = downloadIcs;
+  }
+  function downloadIcs() {
+    const d = parseDate(data.date); if (!d) return;
+    const p2 = (n) => String(n).padStart(2, '0'), ymd = (x) => x.getFullYear() + p2(x.getMonth() + 1) + p2(x.getDate());
+    const e = (s) => String(s).replace(/[\;,]/g, (c) => '\\' + c).replace(/\n/g, '\\n');
+    let start, end;
+    if (data.time && /^\d{2}:\d{2}$/.test(data.time)) { const h = data.time.replace(':', ''); start = 'DTSTART:' + ymd(d) + 'T' + h + '00'; end = 'DTEND:' + ymd(d) + 'T' + p2(Math.min(23, +data.time.slice(0, 2) + 6)) + data.time.slice(3) + '00'; }
+    else { const n = new Date(d); n.setDate(n.getDate() + 1); start = 'DTSTART;VALUE=DATE:' + ymd(d); end = 'DTEND;VALUE=DATE:' + ymd(n); }
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mariage//FR', 'BEGIN:VEVENT', 'UID:mariage-' + data.date + '@hub', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]|\.\d+/g, ''), start, end,
+      'SUMMARY:' + e('Mariage' + (data.names ? ' ' + data.names : '')), 'LOCATION:' + e([data.venue, data.address].filter(Boolean).join(', ')), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })); a.download = 'mariage.ics'; document.body.append(a); a.click(); a.remove();
+  }
+  function dialog(html) {
+    const o = document.createElement('div'); o.className = 'ovl'; o.innerHTML = '<form class="dlg">' + html + '</form>'; document.body.append(o);
+    dialogOpen = true; const close = () => { o.remove(); dialogOpen = false; };
+    o.querySelector('[data-x]').onclick = close; o.close = close; return o;
+  }
+  function heroDialog() {
+    const o = dialog('<strong>Date et lieu</strong><label>Noms des mariés<input type="text" id="hn" maxlength="80" placeholder="Camille & Thomas"></label>' +
+      '<div class="two"><label>Date<input type="date" id="hd"></label><label>Heure<input type="time" id="ht"></label></div>' +
+      '<label>Nom du lieu<input type="text" id="hv" maxlength="100" placeholder="Domaine des Roses"></label>' +
+      '<label>Adresse<input type="text" id="ha" maxlength="200" placeholder="12 chemin des Vignes, 33000 Bordeaux"></label>' +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Enregistrer</button></div>');
+    const g = (i) => o.querySelector('#' + i);
+    g('hn').value = data.names; g('hd').value = data.date; g('ht').value = data.time; g('hv').value = data.venue; g('ha').value = data.address;
+    o.querySelector('form').onsubmit = (e) => { e.preventDefault();
+      data.names = g('hn').value.trim(); data.date = g('hd').value; data.time = g('ht').value; data.venue = g('hv').value.trim(); data.address = g('ha').value.trim();
+      o.close(); save(); renderHero(); };
+    g('hn').focus();
+  }
+
+  // ---------- faire-part ----------
+  let fpUrl = null, fpMeta = null;
+  async function renderFp() {
+    const f = data.fairepart;
+    $('fpPanel').hidden = !f && !ADMIN; $('fpDel').hidden = !f;
+    if (!f) { $('fpBox').innerHTML = '<p class="muted">' + (ADMIN ? 'Ajoutez votre faire-part (image JPG/PNG ou PDF, 4 Mo maximum).' : '') + '</p>'; fpMeta = null; return; }
+    if (fpMeta === f.id) return;
+    fpMeta = f.id; $('fpBox').innerHTML = '<p class="muted">Chargement…</p>';
+    try {
+      const r = await hub.files.get(f.id); if (!r) throw new Error('Fichier introuvable.');
+      if (fpUrl) URL.revokeObjectURL(fpUrl);
+      fpUrl = URL.createObjectURL(Hub.b64ToBlob(r.b64, r.mime));
+      $('fpBox').innerHTML = r.mime.startsWith('image/')
+        ? '<img id="fpImg" alt="Faire-part" src="' + fpUrl + '"><div class="row"><a class="btn ghost sm" href="' + fpUrl + '" download="' + esc(r.name) + '">⬇️ Télécharger</a></div>'
+        : '<div class="pdf">📄 ' + esc(r.name) + '</div><div class="row"><a class="btn sm" target="_blank" rel="noopener" href="' + fpUrl + '">Ouvrir le PDF</a> <a class="btn ghost sm" href="' + fpUrl + '" download="' + esc(r.name) + '">⬇️ Télécharger</a></div>';
+      const im = $('fpImg'); if (im) im.onclick = () => { const z = document.createElement('div'); z.className = 'zoom'; z.innerHTML = '<img src="' + fpUrl + '" alt="">'; z.onclick = () => z.remove(); document.body.append(z); };
+    } catch (e) { fpMeta = null; $('fpBox').innerHTML = '<p class="muted">⚠️ ' + esc(e.message) + '</p>'; }
+  }
+  $('fpUp').onclick = () => $('fpFile').click();
+  $('fpFile').onchange = async () => {
+    const file = $('fpFile').files[0]; $('fpFile').value = ''; if (!file) return;
+    try {
+      toast('⏳ Envoi du faire-part…');
+      const f = await Hub.prepareFile(file);
+      if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.mime)) throw new Error('Choisissez une image (JPG, PNG, WebP) ou un PDF.');
+      const id = await hub.files.add('fairepart', f);
+      const old = data.fairepart;
+      data.fairepart = { id, name: f.name, mime: f.mime }; save(); fpMeta = null; await renderFp();
+      if (old && old.id) { try { await hub.files.remove(old.id); } catch (e) {} }
+      toast('✅ Faire-part enregistré.');
+    } catch (e) { toast('⚠️ ' + e.message); }
+  };
+  $('fpDel').onclick = async () => {
+    if (!data.fairepart || !confirm('Retirer le faire-part ?')) return;
+    const old = data.fairepart; data.fairepart = null; save(); fpMeta = null; await renderFp();
+    try { await hub.files.remove(old.id); } catch (e) {}
+  };
+
+  // ---------- blocs d'informations ----------
+  const linkify = (t) => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  function renderBlocks() {
+    $('blocks').innerHTML = data.blocks.length ? data.blocks.map((b, i) => '<div class="blk"><h3><span>' + esc(b.title || 'Sans titre') + '</span>' +
+      (ADMIN ? '<span class="adm" style="flex:none"><button class="btn ghost sm" data-up="' + i + '"' + (i === 0 ? ' disabled' : '') + ' title="Monter">↑</button> <button class="btn ghost sm" data-dn="' + i + '"' + (i === data.blocks.length - 1 ? ' disabled' : '') + ' title="Descendre">↓</button> ' +
+        '<button class="btn ghost sm" data-e="' + i + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + i + '" title="Supprimer">🗑️</button></span>' : '') +
+      '</h3><p>' + linkify(b.text || '') + '</p></div>').join('')
+      : '<p class="muted">' + (ADMIN ? 'Ajoutez des blocs : accès, hébergement, dress code, programme de la journée…' : 'Aucune information pour l\'instant.') + '</p>';
+    document.querySelectorAll('#blocks [data-e]').forEach(b => b.onclick = () => blockDialog(+b.dataset.e));
+    document.querySelectorAll('#blocks [data-d]').forEach(b => b.onclick = () => { const i = +b.dataset.d; if (confirm('Supprimer « ' + (data.blocks[i].title || 'ce bloc') + ' » ?')) { data.blocks.splice(i, 1); save(); renderBlocks(); } });
+    const mv = (i, k) => { const a = data.blocks; [a[i], a[i + k]] = [a[i + k], a[i]]; save(); renderBlocks(); };
+    document.querySelectorAll('#blocks [data-up]').forEach(b => b.onclick = () => mv(+b.dataset.up, -1));
+    document.querySelectorAll('#blocks [data-dn]').forEach(b => b.onclick = () => mv(+b.dataset.dn, 1));
+  }
+  function blockDialog(i) {
+    const b = i == null ? null : data.blocks[i];
+    const o = dialog('<strong>' + (b ? 'Modifier le bloc' : 'Nouveau bloc') + '</strong><label>Titre<input type="text" id="bt" maxlength="80" list="bs" placeholder="Accès, Hébergement, Dress code…"></label>' +
+      '<datalist id="bs"><option value="Accès et parking"><option value="Hébergement"><option value="Dress code"><option value="Programme de la journée"><option value="Cadeaux"><option value="Contact"></datalist>' +
+      '<label>Texte (les liens https:// deviennent cliquables)<textarea id="bx" maxlength="3000"></textarea></label>' +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Enregistrer</button></div>');
+    const g = (id) => o.querySelector('#' + id);
+    if (b) { g('bt').value = b.title || ''; g('bx').value = b.text || ''; }
+    o.querySelector('form').onsubmit = (e) => { e.preventDefault();
+      const rec = { id: b ? b.id : uid(), title: g('bt').value.trim(), text: g('bx').value.trim() };
+      if (!rec.title && !rec.text) return;
+      if (b) data.blocks[i] = rec; else data.blocks.push(rec);
+      o.close(); save(); renderBlocks(); };
+    g('bt').focus();
+  }
+  $('addBlk').onclick = () => blockDialog(null);
+
+  renderHero(); renderBlocks(); await renderFp();
+  hub.poll((d) => { if (ADMIN && dialogOpen) return false; data = norm(d); renderHero(); renderBlocks(); renderFp(); });
+  setInterval(() => { if (!document.hidden) renderHero(); }, 3600000);
+})();
+</script>
+</body>
+</html>
