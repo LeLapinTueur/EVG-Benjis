@@ -265,6 +265,32 @@
     }
     .day-subtotal span { color: var(--green); font-weight: 800; }
 
+    /* Vue récapitulative : vignettes */
+    .viewbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0 14px; }
+    .viewbar .grow { flex:1; }
+    .seg { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; }
+    .seg button { border:0; background:#fff; padding:8px 13px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; color:var(--muted); }
+    .seg button.on { background:var(--blue, #2f5fa8); color:#fff; }
+    .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-bottom:26px; }
+    .tile { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px; cursor:pointer; text-align:left; transition:transform .12s, box-shadow .12s; position:relative; }
+    .tile:hover, .tile:focus-visible { transform:translateY(-2px); box-shadow:0 8px 22px rgba(20,35,60,.12); outline:none; }
+    .tile .t-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .tile h3 { margin:0; font-size:17px; line-height:1.25; }
+    .tile .t-sub { font-size:13px; color:var(--muted); margin-top:-6px; }
+    .tile .t-cost { font-size:14px; font-weight:800; color:var(--green); }
+    .tile { min-width:0; }
+    .tile ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; align-content:start; font-size:14px; flex:1; min-width:0; }
+    .tile li { display:flex; gap:7px; align-items:baseline; min-width:0; } .tile li .e { flex:none; } .tile li .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tile li.off { opacity:.45; text-decoration:line-through; } .tile li .ok { color:var(--green); font-size:12px; }
+    .tile .more { font-size:13px; color:var(--muted); }
+    .tile .t-empty { color:var(--muted); font-size:14px; flex:1; }
+    .tile .t-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid var(--line); padding-top:10px; font-size:13px; color:var(--muted); }
+    .tile .t-bar { height:5px; background:#e9edf4; border-radius:99px; overflow:hidden; flex:1; } .tile .t-bar span { display:block; height:100%; background:var(--green); }
+    .tile.done { border-color:#b7dcc0; }
+    .crumbs { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 4px; }
+    .crumbs .chip { border:1px solid var(--line); background:#fff; border-radius:99px; padding:6px 12px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); }
+    .crumbs .chip.on { background:#e9edf4; color:#1f2a3c; border-color:#c6d0e0; }
+
     /* Cards */
     .cards {
       display: grid;
@@ -1431,6 +1457,9 @@
       nav.appendChild(add);
     }
 
+    let evgView = (() => { try { return localStorage.getItem('evg_view') || 'tiles'; } catch (e) { return 'tiles'; } })();
+    function setEvgView(v) { evgView = v; try { localStorage.setItem('evg_view', v); } catch (e) {} render(); document.getElementById('cityContent').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    window.setEvgView = setEvgView;
     function render() {
       if (!activeCity || !hasOwn(state.cities, activeCity)) activeCity = state.cityOrder[0];
       renderTabs();
@@ -1539,49 +1568,86 @@
       const baseDate = parseIsoDate(state.startDate);
       const defaultWeekdays = ['Vendredi', 'Samedi', 'Dimanche'];
 
-      SECTIONS_META.forEach(sec => {
+      // ----- données de chaque section (jour / transport / hébergement) -----
+      const info = SECTIONS_META.map(sec => {
         const items = city.items.filter(i => i.category === sec.key);
-        let sectionCostPerPerson = 0;
-        items.forEach(item => {
-          if (!isItemIncluded(item, includeOptions)) return;
-          const c = getPerPersonCost(item, participants);
-          if (c !== null) sectionCostPerPerson += c;
-        });
-
-        let sectionHeading = sec.title;
+        let cost = 0;
+        items.forEach(item => { if (!isItemIncluded(item, includeOptions)) return; const c = getPerPersonCost(item, participants); if (c !== null) cost += c; });
+        let heading = sec.title, dateLabel = '';
         if (sec.dayOffset !== null) {
-          if (baseDate) {
-            const d = addDays(baseDate, sec.dayOffset);
-            sectionHeading = `${formatFrenchDate(d, false)} — ${sec.title}`;
-          } else {
-            sectionHeading = `${defaultWeekdays[sec.dayOffset]} — ${sec.title}`;
-          }
+          if (baseDate) { dateLabel = formatFrenchDate(addDays(baseDate, sec.dayOffset), false); heading = `${dateLabel} — ${sec.title}`; }
+          else { dateLabel = defaultWeekdays[sec.dayOffset]; heading = `${dateLabel} — ${sec.title}`; }
         }
+        const bookable = items.filter(i => isItemIncluded(i, includeOptions));
+        return { sec, items, cost, heading, dateLabel, booked: bookable.filter(i => i.booked).length, bookableN: bookable.length };
+      });
+      if (evgView !== 'tiles' && evgView !== 'all' && !info.some(x => x.sec.key === evgView)) evgView = 'tiles';
 
-        const sectionEl = document.createElement('section');
-        sectionEl.className = 'day';
+      // barre : vignettes / tout afficher + ajout global
+      const bar = document.createElement('div');
+      bar.className = 'viewbar';
+      bar.innerHTML = `<div class="seg"><button type="button" data-v="tiles" class="${evgView === 'tiles' || (evgView !== 'all') ? 'on' : ''}">▦ Récap par jour</button><button type="button" data-v="all" class="${evgView === 'all' ? 'on' : ''}">☰ Tout afficher</button></div><span class="grow"></span>` +
+        ``;
+      container.appendChild(bar);
+      bar.querySelectorAll('[data-v]').forEach(b => b.onclick = () => setEvgView(b.dataset.v));
 
+      const sectionHtml = (x) => {
+        const { sec, items, cost, heading } = x;
         const cardsHtml = items.length === 0
           ? `<div style="background:white;border:1px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);font-size:14px;">Aucun élément dans cette section. Cliquez sur « ${sec.addLabel} » pour en créer un.</div>`
           : items.map(item => renderCard(item, participants, includeOptions)).join('');
-
-        sectionEl.innerHTML = `
+        return `
           <div class="day-head">
             <div class="day-title-group">
               <span class="day-badge">${sec.badge}</span>
-              <h2>${escapeHtml(sectionHeading)}</h2>
+              <h2>${escapeHtml(heading)}</h2>
             </div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <div class="day-subtotal">Sous-total actif : <span>${formatEuro(sectionCostPerPerson)} / pers.</span></div>
-              <button class="btn btn-sm" onclick="openAddModal('${sec.key}')">${sec.addLabel}</button>
+              <div class="day-subtotal">Sous-total actif : <span>${formatEuro(cost)} / pers.</span></div>
+              <button class="btn btn-sm admin-only" onclick="openAddModal('${sec.key}')">${sec.addLabel}</button>
             </div>
           </div>
-          <div class="cards ${items.length === 0 ? 'single-col' : ''}">
-            ${cardsHtml}
-          </div>
-        `;
-        container.appendChild(sectionEl);
+          <div class="cards ${items.length === 0 ? 'single-col' : ''}">${cardsHtml}</div>`;
+      };
+
+      if (evgView === 'all') {                       // ancienne vue : tout sur la même page
+        info.forEach(x => { const el = document.createElement('section'); el.className = 'day'; el.innerHTML = sectionHtml(x); container.appendChild(el); });
+        return;
+      }
+      if (evgView !== 'tiles') {                     // détail d'une section
+        const x = info.find(i => i.sec.key === evgView);
+        const nav = document.createElement('div'); nav.className = 'crumbs';
+        nav.innerHTML = `<button type="button" class="chip" data-v="tiles">← Récap</button>` +
+          info.map(i => `<button type="button" class="chip ${i.sec.key === evgView ? 'on' : ''}" data-v="${i.sec.key}">${escapeHtml(i.sec.badge)} <small>(${i.items.length})</small></button>`).join('');
+        container.appendChild(nav);
+        nav.querySelectorAll('[data-v]').forEach(b => b.onclick = () => setEvgView(b.dataset.v));
+        const el = document.createElement('section'); el.className = 'day'; el.innerHTML = sectionHtml(x); container.appendChild(el);
+        return;
+      }
+      // vue récap : une vignette par section
+      const grid = document.createElement('div'); grid.className = 'tiles';
+      info.forEach(x => {
+        const { sec, items, cost, heading, booked, bookableN } = x;
+        const shown = items.slice(0, 4);
+        const t = document.createElement('div');
+        t.className = 'tile' + (bookableN && booked === bookableN ? ' done' : '');
+        t.tabIndex = 0; t.setAttribute('role', 'button'); t.setAttribute('aria-label', 'Ouvrir : ' + heading);
+        t.innerHTML = `
+          <div class="t-top"><span class="day-badge">${sec.badge}</span><span class="t-cost">${formatEuro(cost)} / pers.</span></div>
+          <h3>${escapeHtml(sec.dayOffset !== null && x.dateLabel ? x.dateLabel : sec.title)}</h3>
+          <div class="t-sub">${escapeHtml(sec.dayOffset !== null ? sec.title : '')}</div>
+          ${items.length ? `<ul>${shown.map(i => `<li class="${i.enabled === false ? 'off' : ''}"><span class="e">${escapeHtml(i.emoji || '📌')}</span><span class="n">${escapeHtml(i.title)}</span>${i.booked ? '<span class="ok">✅</span>' : ''}</li>`).join('')}${items.length > shown.length ? `<li class="more">+ ${items.length - shown.length} autre(s)…</li>` : ''}</ul>` : '<div class="t-empty">Rien de prévu pour l\'instant.</div>'}
+          <div class="t-foot">
+            ${bookableN ? `<div class="t-bar" title="${booked} / ${bookableN} réservé(s)"><span style="width:${Math.round(booked / bookableN * 100)}%"></span></div><span>✅ ${booked}/${bookableN}</span>` : `<span>${items.length} élément(s)</span>`}
+            <button type="button" class="btn btn-sm admin-only" data-add="${sec.key}">＋ Ajouter</button>
+          </div>`;
+        const open = () => setEvgView(sec.key);
+        t.addEventListener('click', (e) => { if (e.target.closest('[data-add]')) return; open(); });
+        t.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('[data-add]')) { e.preventDefault(); open(); } });
+        const ab = t.querySelector('[data-add]'); if (ab) ab.onclick = (e) => { e.stopPropagation(); openAddModal(sec.key); };
+        grid.appendChild(t);
       });
+      container.appendChild(grid);
     }
 
     function renderCard(item, participants, includeOptions) {
@@ -2147,7 +2213,7 @@
       render();
     });
 
-    document.getElementById('btnAddGlobal').addEventListener('click', () => openAddModal('day1'));
+    document.getElementById('btnAddGlobal').addEventListener('click', () => openAddModal(evgView !== 'tiles' && evgView !== 'all' ? evgView : 'day1'));
 
     // --- Extraction automatique depuis un lien (API Gemini + fallback proxy/URL) ---
     if (!state.apiConfig) {
