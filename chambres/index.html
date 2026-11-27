@@ -87,6 +87,7 @@
     <span class="seg" id="modeBar" title="Affichage des chambres"><button type="button" data-m="detail">🛏️ Avec lits</button><button type="button" data-m="simple">📋 Simple</button></span>
     <span class="seg" id="roomFilter"><button type="button" data-f="all" class="on">Toutes les chambres</button><button type="button" data-f="free" id="freeBtn">Places libres</button></span>
     <button class="btn ghost" id="recapBtn" type="button">📊 Récapitulatif</button>
+    <button class="btn ghost" id="printBtn" type="button">🖨️ Imprimer</button>
     <button class="btn adm" id="addRoom" type="button">＋ Ajouter une chambre</button>
   </div>
   <section class="panel" id="recap" hidden style="margin-bottom:14px"></section>
@@ -111,6 +112,7 @@
 
 <script src="/shared/config.js"></script>
 <script src="/shared/hub.js"></script>
+<script src="/shared/print.js"></script>
 <script>
 (async function () {
   const SLUG = 'chambres';
@@ -436,6 +438,33 @@
   $('modeBar').querySelectorAll('button').forEach(b => b.onclick = () => switchMode(b.dataset.m));
   $('roomFilter').querySelectorAll('button').forEach(b => b.onclick = () => { roomFilter = b.dataset.f; render(); });
   $('recapBtn').onclick = () => { recapOpen = !recapOpen; $('recapBtn').classList.toggle('danger', false); render(); };
+
+  function printRooms() {
+    if (!data.rooms.length) { toast('Aucune chambre à imprimer.'); return; }
+    const sorted = (list) => list.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    const cards = data.rooms.map(r => {
+      const cap = capOf(r), people = occ(r.id);
+      let inner;
+      if (SIMPLE()) {
+        inner = '<ol>' + sorted(people).map(g => '<li>' + esc(g.name) + '</li>').join('') + Array.from({ length: Math.max(0, cap - people.length) }, () => '<li class="free">place libre</li>').join('') + '</ol>';
+      } else {
+        inner = (r.beds || []).map(b => {
+          const n = TYPES[b.type].places;
+          const seats = Array.from({ length: n }, (_, i) => { const g = whoAt(b.id + ':' + i); return '<li' + (g ? '' : ' class="free"') + '>' + (g ? esc(g.name) : 'place libre') + '</li>'; }).join('');
+          return '<div class="bed">' + TYPES[b.type].label + '</div><ul>' + seats + '</ul>';
+        }).join('') || '<div class="free">Aucun couchage</div>';
+        const extra = people.filter(g => !seatsOf(r).includes(data.seat[g.id]));
+        if (extra.length) inner += '<ul>' + extra.map(g => '<li>' + esc(g.name) + '</li>').join('') + '</ul>';
+      }
+      return '<div class="room"><h3>' + esc(r.name) + '</h3><div class="meta">' + people.length + ' / ' + cap + ' place' + (cap > 1 ? 's' : '') + '</div>' + inner + '</div>';
+    }).join('');
+    const un = guests.filter(g => !isPlaced(g.id));
+    const body = '<div class="rooms">' + cards + '</div>' +
+      (un.length ? '<h2>Sans chambre (' + un.length + ')</h2><p>' + sorted(un).map(g => esc(g.name)).join(' · ') + '</p>' : '');
+    const placed = guests.length - un.length;
+    if (!PrintSheet.open({ title: 'Répartition des chambres', subtitle: placed + ' / ' + guests.length + ' invités placés · ' + data.rooms.length + ' chambres', body })) toast('Autorisez les fenêtres pop-up pour imprimer.');
+  }
+  $('printBtn').onclick = printRooms;
 
   if (ADMIN) wireDrop($('glist'), (gid) => unplace(gid), false);
 
