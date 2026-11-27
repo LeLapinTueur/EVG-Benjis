@@ -6,49 +6,60 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Chambres</title>
 <style>
-  :root { --ink:#1f2a3c; --mut:#6b7587; --acc:#3d6fb6; --acc2:#2c5391; --bg:#f3f5f9; --card:#fff; --line:#dde3ee; --ok:#2e7d32; --bad:#b3261e; }
+  :root { --ink:#1f2a3c; --mut:#6b7587; --acc:#3d6fb6; --acc2:#2c5391; --bg:#f3f5f9; --card:#fff; --line:#dde3ee; --ok:#2e7d32; --bad:#b3261e; --wood:#9b7653; }
   * { box-sizing:border-box; } [hidden] { display:none !important; }
   body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
   body.booting main { visibility:hidden; }
-  main { max-width:1280px; margin:0 auto; padding:14px; }
+  main { max-width:1320px; margin:0 auto; padding:14px; }
   .head { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
   .head h1 { font-size:22px; margin:0; flex:1; }
   .stats { display:flex; gap:8px; flex-wrap:wrap; }
   .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:6px 12px; font-size:13px; color:var(--mut); }
   .stat b { color:var(--ink); font-size:16px; }
-  .layout { display:grid; grid-template-columns:300px 1fr; gap:14px; align-items:start; }
+  .layout { display:grid; grid-template-columns:290px 1fr; gap:14px; align-items:start; }
   @media (max-width:820px) { .layout { grid-template-columns:1fr; } }
   .panel { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; }
   .side { position:sticky; top:56px; max-height:calc(100vh - 70px); display:flex; flex-direction:column; }
   @media (max-width:820px) { .side { position:static; max-height:none; } }
-  .side h2, .panel h2 { font-size:15px; margin:0 0 8px; }
+  .side h2 { font-size:15px; margin:0 0 8px; }
   input[type=text], input[type=number], input[type=search], select { padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; width:100%; }
   .btn { background:var(--acc); color:#fff; border:0; border-radius:9px; padding:8px 14px; font:600 14px inherit; font-family:inherit; cursor:pointer; }
   .btn:hover { background:var(--acc2); } .btn.ghost { background:#fff; color:var(--acc2); border:1px solid var(--line); } .btn.danger { background:#fff; color:var(--bad); border:1px solid #efc4c0; }
   .btn.sm { padding:4px 9px; font-size:13px; }
   .tools { display:grid; gap:6px; margin-bottom:8px; }
-  .addrow { display:flex; gap:6px; }
   .glist { overflow:auto; flex:1; min-height:80px; display:grid; gap:5px; align-content:start; padding:2px; border-radius:10px; }
   .glist.over { outline:2px dashed var(--acc); background:#eef3fb; }
   .g { display:flex; align-items:center; gap:6px; background:#f7f9fd; border:1px solid var(--line); border-radius:8px; padding:5px 8px; cursor:grab; user-select:none; }
   .g .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .g.dragging { opacity:.4; } .g.ro { cursor:default; }
-  .g select { width:auto; max-width:110px; padding:3px 4px; font-size:12px; }
+  .g select { width:auto; max-width:115px; padding:3px 4px; font-size:12px; }
   .empty { color:var(--mut); text-align:center; padding:14px 6px; font-size:14px; }
-  .rooms { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
-  .room { background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:150px; }
-  .room.over { border-color:var(--acc); background:#eef3fb; } .room.full { border-color:#b9d8bb; } .room.bad { border-color:#e8b4b0; }
+  .rooms { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; align-items:start; }
+  .room { background:var(--card); border:2px solid var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+  .room.over { border-color:var(--acc); background:#f4f8fd; } .room.full { border-color:#b9d8bb; }
   .rh { display:flex; align-items:flex-start; gap:6px; } .rh .t { flex:1; font-weight:700; font-size:16px; overflow-wrap:anywhere; }
   .meta { font-size:13px; color:var(--mut); display:flex; gap:10px; flex-wrap:wrap; }
-  .cap { font-weight:700; } .cap.full { color:var(--ok); } .cap.bad { color:var(--bad); }
-  .bar { height:6px; background:#e8edf5; border-radius:99px; overflow:hidden; } .bar i { display:block; height:100%; background:var(--acc); }
-  .occ { display:grid; gap:5px; align-content:start; flex:1; }
-  .hint { color:var(--mut); font-size:13px; text-align:center; border:1px dashed var(--line); border-radius:8px; padding:10px; }
-  .warn { color:var(--bad); font-size:12px; }
+  .cap { font-weight:700; } .cap.full { color:var(--ok); }
+  .floor { background:#f1ebe3; border-radius:12px; padding:10px; display:grid; gap:10px; background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.025) 0 2px,transparent 2px 28px); }
+  .bedwrap { display:grid; gap:3px; } .bedlabel { font-size:11px; color:#8c7a68; text-transform:uppercase; letter-spacing:.05em; }
+  .bed { border:3px solid var(--wood); border-radius:12px; background:#fbf7f1; padding:6px; display:grid; gap:6px; box-shadow:0 2px 0 rgba(0,0,0,.08); }
+  .bed.double { grid-template-columns:1fr 1fr; }
+  .bed.bunk { border-left-width:8px; border-right-width:8px; }
+  .bed.air { border:2px dashed #5b9bd5; background:#e8f3fc; border-radius:22px; }
+  .slot { position:relative; min-height:52px; border-radius:9px; background:#fff; border:1px dashed #cfc3b4; padding:16px 6px 5px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:13px; color:#a39889; }
+  .slot::before { content:""; position:absolute; top:4px; left:50%; transform:translateX(-50%); width:46%; height:8px; background:#fff; border:1px solid #dcd2c4; border-radius:6px; }
+  .slot.over { border-color:var(--acc); background:#eef3fb; } .slot.taken { border-style:solid; border-color:#c9d6ea; background:#f3f7fd; color:var(--ink); }
+  .slot .lbl { position:absolute; right:6px; top:3px; font-size:10px; color:#a39889; }
+  .p { display:flex; align-items:center; gap:4px; width:100%; cursor:grab; user-select:none; font-weight:600; }
+  .p .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .p.ro { cursor:default; }
+  .p button { border:0; background:none; color:var(--mut); cursor:pointer; font-size:14px; padding:0 2px; }
+  .p.dragging { opacity:.4; }
+  .nobeds { color:var(--mut); font-size:13px; text-align:center; padding:12px; }
   .ovl { position:fixed; inset:0; background:rgba(20,30,50,.5); display:grid; place-items:center; padding:16px; z-index:120; }
-  .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:380px; display:grid; gap:10px; }
-  .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .r3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .dlg .act { display:flex; gap:8px; justify-content:flex-end; }
+  .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:400px; display:grid; gap:10px; }
+  .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .act { display:flex; gap:8px; justify-content:flex-end; }
+  .bt { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
+  .bt small { color:var(--mut); } .step { display:flex; align-items:center; gap:8px; } .step button { width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:18px; cursor:pointer; } .step b { min-width:20px; text-align:center; }
   .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
   body.ro .adm { display:none !important; }
 </style>
@@ -92,22 +103,70 @@
   const esc = Hub.esc;
   const ses = Hub.getSession(SLUG), token = ses ? ses.token : null;
   const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500); };
-  const uid = () => 'r' + Math.random().toString(36).slice(2, 8);
+  const uid = () => Math.random().toString(36).slice(2, 8);
 
-  let data = { rooms: [], assign: {} };
-  let guests = [];                // [{id, name}] — vient du plan de table
-  function load(d) {
-    data = { rooms: Array.isArray(d && d.rooms) ? d.rooms : [], assign: (d && d.assign && typeof d.assign === 'object') ? d.assign : {} };
+  // Types de couchage : nombre de places, libellé
+  const TYPES = {
+    single: { places: 1, label: 'Lit simple', plural: 'simples', one: 'simple', hint: '1 place' },
+    double: { places: 2, label: 'Lit double', plural: 'doubles', one: 'double', hint: '2 places' },
+    bunk:   { places: 2, label: 'Lits superposés', plural: 'superposés', one: 'superposé', hint: '2 places (haut + bas)' },
+    air:    { places: 1, label: 'Matelas gonflable', plural: 'gonflables', one: 'gonflable', hint: '1 place en plus' }
+  };
+  const TYPE_ORDER = ['double', 'single', 'bunk', 'air'];
+
+  // data = { rooms:[{id,name,beds:[{id,type}]}], assign:{invitéId: chambreId}, seat:{invitéId: "litId:n"} }
+  let data = { rooms: [], assign: {}, seat: {} };
+  let guests = [];
+  function migrate(d) {
+    let changed = false;
+    const out = { rooms: Array.isArray(d && d.rooms) ? d.rooms : [], assign: (d && d.assign && typeof d.assign === 'object') ? d.assign : {}, seat: (d && d.seat && typeof d.seat === 'object') ? d.seat : {} };
+    out.rooms.forEach(r => {
+      if (Array.isArray(r.beds)) return;
+      changed = true;                                   // ancien format : places / lits simples / lits doubles
+      const beds = [];
+      for (let i = 0; i < (+r.double || 0); i++) beds.push({ id: uid(), type: 'double' });
+      for (let i = 0; i < (+r.single || 0); i++) beds.push({ id: uid(), type: 'single' });
+      let have = beds.reduce((a, b) => a + TYPES[b.type].places, 0);
+      while (have < (+r.cap || 0)) { beds.push({ id: uid(), type: 'air' }); have++; }
+      r.beds = beds; delete r.cap; delete r.single; delete r.double;
+    });
+    // invités déjà affectés à une chambre mais sans lit : on les installe sur les premières places libres
+    const taken = new Set(Object.values(out.seat));
+    Object.keys(out.assign).forEach(gid => {
+      if (out.seat[gid]) return;
+      const r = out.rooms.find(x => x.id === out.assign[gid]); if (!r) return;
+      for (const b of r.beds) for (let i = 0; i < TYPES[b.type].places; i++) {
+        const k = b.id + ':' + i;
+        if (!taken.has(k)) { out.seat[gid] = k; taken.add(k); changed = true; return; }
+      }
+    });
+    return { out, changed };
   }
-  load(hub.data);
-  const save = () => { if (!ADMIN) return; hub.save(() => { // on ne garde que les attributions valides
-    const ids = new Set(data.rooms.map(r => r.id)), out = {};
-    Object.keys(data.assign).forEach(g => { if (ids.has(data.assign[g])) out[g] = data.assign[g]; });
-    data.assign = out; return data; }); };
+  function load(d) { data = migrate(d).out; }
+  { const m = migrate(hub.data); data = m.out; if (m.changed && ADMIN) setTimeout(() => save(), 0); }
+
+  function clean() {   // ne garde que des affectations cohérentes (chambre et lit existants)
+    const rooms = new Map(data.rooms.map(r => [r.id, r]));
+    const assign = {}, seat = {};
+    Object.keys(data.assign).forEach(g => {
+      const r = rooms.get(data.assign[g]); if (!r) return;
+      const k = data.seat[g]; if (!k) return;
+      const [bid, n] = k.split(':'); const b = r.beds.find(x => x.id === bid);
+      if (!b || !(+n < TYPES[b.type].places)) return;
+      assign[g] = r.id; seat[g] = k;
+    });
+    data.assign = assign; data.seat = seat;
+  }
+  const save = () => { if (!ADMIN) return; clean(); hub.save(() => data); };
 
   const gById = (id) => guests.find(g => g.id === id);
-  const occ = (rid) => guests.filter(g => data.assign[g.id] === rid).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  const capOf = (r) => r.beds.reduce((a, b) => a + TYPES[b.type].places, 0);
+  const seatsOf = (r) => r.beds.flatMap(b => Array.from({ length: TYPES[b.type].places }, (_, i) => b.id + ':' + i));
+  const whoAt = (k) => guests.find(g => data.seat[g.id] === k);
+  const occ = (rid) => guests.filter(g => data.assign[g.id] === rid && data.seat[g.id]);
   const roomOf = (gid) => data.assign[gid] && data.rooms.find(r => r.id === data.assign[gid]);
+  const roomOfSeat = (k) => data.rooms.find(r => r.beds.some(b => b.id === k.split(':')[0]));
+  const freeSeat = (r) => seatsOf(r).find(k => !whoAt(k));
 
   async function loadGuests() {
     try {
@@ -117,79 +176,107 @@
     } catch (e) { toast('Liste des invités indisponible : ' + e.message); }
   }
 
-  // ---------- déplacement ----------
-  function move(gid, rid) {
+  // ---------- déplacements ----------
+  function placeAt(gid, key) {            // sur une place précise (échange si l'autre est déjà posé dans un lit)
     if (!ADMIN) return;
-    if (rid) {
-      const r = data.rooms.find(x => x.id === rid); if (!r) return;
-      if (data.assign[gid] === rid) return;
-      if (occ(rid).length >= r.cap) { toast('« ' + r.name + ' » est complète (' + r.cap + ' places).'); return; }
-      data.assign[gid] = rid;
-    } else delete data.assign[gid];
+    const r = roomOfSeat(key); if (!r) return;
+    const other = whoAt(key);
+    if (other && other.id === gid) return;
+    if (other) {
+      const from = data.seat[gid];
+      if (!from) { toast('Cette place est déjà prise par ' + other.name + '.'); return; }
+      data.seat[other.id] = from; data.assign[other.id] = data.assign[gid];
+    }
+    data.seat[gid] = key; data.assign[gid] = r.id;
     save(); render();
   }
+  function placeInRoom(gid, rid) {        // « dans cette chambre » : première place libre
+    if (!ADMIN) return;
+    const r = data.rooms.find(x => x.id === rid); if (!r) return;
+    if (data.assign[gid] === rid && data.seat[gid]) return;
+    const k = freeSeat(r);
+    if (!k) { toast('« ' + r.name + ' » est complète (' + capOf(r) + ' place' + (capOf(r) > 1 ? 's' : '') + ').'); return; }
+    placeAt(gid, k);
+  }
+  function unplace(gid) { if (!ADMIN) return; delete data.assign[gid]; delete data.seat[gid]; save(); render(); }
+
   function wireDrag(el, gid) {
     el.draggable = true;
-    el.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', gid); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+    el.addEventListener('dragstart', (e) => { e.stopPropagation(); e.dataTransfer.setData('text/plain', gid); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
     el.addEventListener('dragend', () => el.classList.remove('dragging'));
   }
-  function wireDrop(el, rid) {
-    el.addEventListener('dragover', (e) => { if (!ADMIN) return; e.preventDefault(); el.classList.add('over'); });
+  function wireDrop(el, fn, stop) {
+    el.addEventListener('dragover', (e) => { if (!ADMIN) return; e.preventDefault(); if (stop) e.stopPropagation(); el.classList.add('over'); });
     el.addEventListener('dragleave', () => el.classList.remove('over'));
-    el.addEventListener('drop', (e) => { e.preventDefault(); el.classList.remove('over'); const gid = e.dataTransfer.getData('text/plain'); if (gid && gById(gid)) move(gid, rid); });
+    el.addEventListener('drop', (e) => { e.preventDefault(); if (stop) e.stopPropagation(); el.classList.remove('over'); const gid = e.dataTransfer.getData('text/plain'); if (gid && gById(gid)) fn(gid); });
   }
 
   // ---------- rendu ----------
-  function guestRow(g, inRoom) {
+  function guestRow(g) {
     const d = document.createElement('div'); d.className = 'g' + (ADMIN ? '' : ' ro');
     const r = roomOf(g.id);
     d.innerHTML = '<span class="nm" title="' + esc(g.name) + '">' + esc(g.name) + '</span>';
     if (ADMIN) {
       wireDrag(d, g.id);
       const sel = document.createElement('select'); sel.title = 'Choisir une chambre (sans glisser)';
-      sel.innerHTML = '<option value="">' + (inRoom ? 'Retirer' : 'Chambre…') + '</option>' +
-        data.rooms.map(x => '<option value="' + x.id + '"' + (r && r.id === x.id ? ' selected' : '') + '>' + esc(x.name) + (occ(x.id).length >= x.cap && !(r && r.id === x.id) ? ' (pleine)' : '') + '</option>').join('');
-      if (inRoom) sel.value = '';
-      sel.onchange = () => move(g.id, sel.value || null);
+      sel.innerHTML = '<option value="">' + (r ? 'Retirer' : 'Chambre…') + '</option>' +
+        data.rooms.map(x => { const free = capOf(x) - occ(x.id).length; return '<option value="' + x.id + '"' + (r && r.id === x.id ? ' selected' : '') + '>' + esc(x.name) + (free <= 0 && !(r && r.id === x.id) ? ' (pleine)' : '') + '</option>'; }).join('');
+      if (r) sel.value = '';
+      sel.onchange = () => sel.value ? placeInRoom(g.id, sel.value) : unplace(g.id);
       d.append(sel);
-    } else if (!inRoom && r) { const s = document.createElement('span'); s.style.cssText = 'color:var(--mut);font-size:12px'; s.textContent = r.name; d.append(s); }
+    } else if (r) { const s = document.createElement('span'); s.style.cssText = 'color:var(--mut);font-size:12px'; s.textContent = r.name; d.append(s); }
     return d;
   }
+  function bedEl(b) {
+    const T = TYPES[b.type];
+    const wrap = document.createElement('div'); wrap.className = 'bedwrap';
+    wrap.innerHTML = '<div class="bedlabel">' + T.label + '</div>';
+    const bed = document.createElement('div'); bed.className = 'bed ' + b.type;
+    for (let i = 0; i < T.places; i++) {
+      const k = b.id + ':' + i, g = whoAt(k);
+      const sl = document.createElement('div'); sl.className = 'slot' + (g ? ' taken' : '');
+      if (b.type === 'bunk') sl.insertAdjacentHTML('afterbegin', '<span class="lbl">' + (i === 0 ? 'haut' : 'bas') + '</span>');
+      if (g) {
+        const p = document.createElement('div'); p.className = 'p' + (ADMIN ? '' : ' ro');
+        p.innerHTML = '<span class="nm" title="' + esc(g.name) + '">' + esc(g.name) + '</span>' + (ADMIN ? '<button type="button" title="Retirer">✕</button>' : '');
+        if (ADMIN) { wireDrag(p, g.id); p.querySelector('button').onclick = () => unplace(g.id); }
+        sl.append(p);
+      } else sl.append(document.createTextNode(ADMIN ? 'libre' : '—'));
+      if (ADMIN) wireDrop(sl, (gid) => placeAt(gid, k), true);
+      bed.append(sl);
+    }
+    wrap.append(bed); return wrap;
+  }
   function render() {
-    const validIds = new Set(guests.map(g => g.id));
-    const placed = guests.filter(g => roomOf(g.id)).length;
-    const places = data.rooms.reduce((a, r) => a + (+r.cap || 0), 0);
-    const beds = data.rooms.reduce((a, r) => [a[0] + (+r.single || 0), a[1] + (+r.double || 0)], [0, 0]);
+    const placed = guests.filter(g => roomOf(g.id) && data.seat[g.id]).length;
+    const places = data.rooms.reduce((a, r) => a + capOf(r), 0);
+    const nb = data.rooms.reduce((a, r) => a + r.beds.length, 0);
     $('stats').innerHTML =
       '<div class="stat"><b>' + placed + '/' + guests.length + '</b> invités placés</div>' +
-      '<div class="stat"><b>' + data.rooms.length + '</b> chambres · <b>' + places + '</b> places</div>' +
-      '<div class="stat"><b>' + beds[0] + '</b> lits simples · <b>' + beds[1] + '</b> doubles</div>';
-    // liste de gauche
+      '<div class="stat"><b>' + data.rooms.length + '</b> chambres · <b>' + nb + '</b> couchages · <b>' + places + '</b> places</div>';
     const q = $('q').value.trim().toLowerCase(), f = $('filter').value;
     const list = guests.filter(g => g.name.toLowerCase().includes(q) && (f === 'all' || (f === 'free') === !roomOf(g.id)))
                        .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     $('gcount').textContent = '(' + (guests.length - placed) + ' sans chambre)';
-    const gl = $('glist'); gl.replaceChildren(...list.map(g => guestRow(g, false)));
+    const gl = $('glist'); gl.replaceChildren(...list.map(guestRow));
     if (!list.length) gl.innerHTML = '<div class="empty">' + (!guests.length ? 'Aucun invité : ajoutez-en dans le site Invités.' : f === 'free' && !q ? 'Tout le monde a une chambre 🎉' : 'Aucun résultat.') + '</div>';
-    // chambres
     const box = $('rooms'); box.replaceChildren();
     $('noRooms').hidden = data.rooms.length > 0;
     data.rooms.forEach(r => {
-      const list = occ(r.id), n = list.length, cap = +r.cap || 0, full = n >= cap && cap > 0;
+      const n = occ(r.id).length, cap = capOf(r), full = cap > 0 && n >= cap;
       const el = document.createElement('div'); el.className = 'room' + (full ? ' full' : '');
-      const bedCap = (+r.single || 0) + 2 * (+r.double || 0);
+      const cnt = TYPE_ORDER.map(t => [t, r.beds.filter(b => b.type === t).length]).filter(x => x[1]);
       el.innerHTML =
         '<div class="rh"><span class="t">' + esc(r.name) + '</span>' +
         (ADMIN ? '<button class="btn ghost sm" data-e title="Modifier">✏️</button><button class="btn danger sm" data-d title="Supprimer">🗑️</button>' : '') + '</div>' +
-        '<div class="meta"><span class="cap ' + (full ? 'full' : '') + '">' + n + '/' + cap + ' places</span><span>🛏️ ' + (+r.single || 0) + ' simple' + ((+r.single || 0) > 1 ? 's' : '') + '</span><span>🛌 ' + (+r.double || 0) + ' double' + ((+r.double || 0) > 1 ? 's' : '') + '</span></div>' +
-        '<div class="bar"><i style="width:' + (cap ? Math.min(100, n / cap * 100) : 0) + '%"></i></div>' +
-        (cap > bedCap ? '<div class="warn">⚠️ ' + cap + ' places pour ' + bedCap + ' couchages (simple = 1, double = 2).</div>' : '');
-      const oc = document.createElement('div'); oc.className = 'occ';
-      list.forEach(g => oc.append(guestRow(g, true)));
-      if (!list.length) oc.innerHTML = '<div class="hint">' + (ADMIN ? 'Glissez un invité ici' : 'Vide') + '</div>';
-      el.append(oc);
+        '<div class="meta"><span class="cap ' + (full ? 'full' : '') + '">' + n + '/' + cap + ' place' + (cap > 1 ? 's' : '') + '</span>' +
+        cnt.map(([t, c]) => '<span>' + c + ' ' + (c > 1 ? TYPES[t].plural : TYPES[t].one) + '</span>').join('') + '</div>';
+      const fl = document.createElement('div'); fl.className = 'floor';
+      r.beds.forEach(b => fl.append(bedEl(b)));
+      if (!r.beds.length) fl.innerHTML = '<div class="nobeds">Aucun couchage : modifiez la chambre pour en ajouter.</div>';
+      el.append(fl);
       if (ADMIN) {
-        wireDrop(el, r.id);
+        wireDrop(el, (gid) => placeInRoom(gid, r.id), false);
         el.querySelector('[data-e]').onclick = () => roomDialog(r);
         el.querySelector('[data-d]').onclick = () => {
           if (confirm('Supprimer « ' + r.name + ' » ?' + (n ? '\n' + n + ' invité(s) redeviendront « sans chambre ».' : ''))) {
@@ -200,29 +287,41 @@
       box.append(el);
     });
   }
-  if (ADMIN) wireDrop($('glist'), null);
+  if (ADMIN) wireDrop($('glist'), (gid) => unplace(gid), false);
 
   // ---------- chambre : ajout / modification ----------
   function roomDialog(r) {
-    const isNew = !r; r = r || { id: uid(), name: 'Chambre ' + (data.rooms.length + 1), cap: 2, single: 0, double: 1 };
+    const isNew = !r;
+    const cur = {}; TYPE_ORDER.forEach(t => cur[t] = r ? r.beds.filter(b => b.type === t).length : (t === 'double' ? 1 : 0));
     const o = document.createElement('div'); o.className = 'ovl';
     o.innerHTML = '<form class="dlg"><strong>' + (isNew ? 'Nouvelle chambre' : 'Modifier la chambre') + '</strong>' +
       '<label>Nom<input type="text" id="fn" maxlength="60" required></label>' +
-      '<div class="r3"><label>Places<input type="number" id="fc" min="1" max="30" required></label>' +
-      '<label>Lits simples<input type="number" id="fs" min="0" max="30"></label><label>Lits doubles<input type="number" id="fd" min="0" max="30"></label></div>' +
-      '<div class="warn" id="fw" hidden></div><div class="act"><button type="button" class="btn ghost" id="fx">Annuler</button><button class="btn">Enregistrer</button></div></form>';
+      TYPE_ORDER.map(t => '<div class="bt"><div>' + TYPES[t].label + '<br><small>' + TYPES[t].hint + '</small></div><div class="step"><button type="button" data-m="' + t + '">−</button><b id="c_' + t + '">0</b><button type="button" data-p="' + t + '">+</button></div></div>').join('') +
+      '<div id="ft" style="font-weight:700"></div>' +
+      '<div class="act"><button type="button" class="btn ghost" id="fx">Annuler</button><button class="btn">Enregistrer</button></div></form>';
     document.body.append(o);
     const $$ = (id) => o.querySelector('#' + id);
-    $$('fn').value = r.name; $$('fc').value = r.cap; $$('fs').value = r.single || 0; $$('fd').value = r.double || 0;
-    const check = () => { const c = +$$('fc').value || 0, b = (+$$('fs').value || 0) + 2 * (+$$('fd').value || 0); $$('fw').hidden = c <= b; $$('fw').textContent = '⚠️ ' + c + ' places pour ' + b + ' couchages.'; };
-    ['fc', 'fs', 'fd'].forEach(i => $$(i).addEventListener('input', check)); check();
+    const paint = () => { let p = 0; TYPE_ORDER.forEach(t => { $$('c_' + t).textContent = cur[t]; p += cur[t] * TYPES[t].places; }); $$('ft').textContent = '= ' + p + ' place' + (p > 1 ? 's' : ''); return p; };
+    o.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { cur[b.dataset.m] = Math.max(0, cur[b.dataset.m] - 1); paint(); });
+    o.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { cur[b.dataset.p] = Math.min(10, cur[b.dataset.p] + 1); paint(); });
+    $$('fn').value = r ? r.name : 'Chambre ' + (data.rooms.length + 1); paint();
     $$('fx').onclick = () => o.remove();
     o.querySelector('form').onsubmit = (e) => {
       e.preventDefault();
-      const nr = { id: r.id, name: $$('fn').value.trim() || r.name, cap: Math.max(1, Math.min(30, parseInt($$('fc').value, 10) || 1)),
-                   single: Math.max(0, parseInt($$('fs').value, 10) || 0), double: Math.max(0, parseInt($$('fd').value, 10) || 0) };
-      if (!isNew && occ(r.id).length > nr.cap) { toast('Il y a déjà ' + occ(r.id).length + ' invités dans cette chambre : retirez-en d\'abord.'); return; }
-      if (isNew) data.rooms.push(nr); else data.rooms[data.rooms.findIndex(x => x.id === r.id)] = nr;
+      if (paint() < 1) { toast('Ajoutez au moins un couchage.'); return; }
+      const beds = r ? r.beds.slice() : [];
+      for (const t of TYPE_ORDER) {
+        const mine = beds.filter(b => b.type === t);
+        for (let i = mine.length; i < cur[t]; i++) beds.push({ id: uid(), type: t });
+        if (mine.length > cur[t]) {          // on retire d'abord des lits vides, jamais un lit occupé
+          const empties = mine.filter(b => Array.from({ length: TYPES[t].places }, (_, i) => whoAt(b.id + ':' + i)).every(x => !x)).reverse();
+          const need = mine.length - cur[t];
+          if (empties.length < need) { toast('Des invités dorment dans ces lits : retirez-les d\'abord.'); return; }
+          empties.slice(0, need).forEach(b => beds.splice(beds.indexOf(b), 1));
+        }
+      }
+      const name = $$('fn').value.trim() || 'Chambre';
+      if (isNew) data.rooms.push({ id: uid(), name, beds }); else { r.name = name; r.beds = beds; }
       o.remove(); save(); render();
     };
     $$('fn').focus(); $$('fn').select();
