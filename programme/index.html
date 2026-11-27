@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Programme</title>
+<style>
+  :root { --ink:#1f2a3c; --mut:#6b7587; --acc:#3d6fb6; --acc2:#2c5391; --bg:#f3f5f9; --card:#fff; --line:#dde3ee; --bad:#b3261e; }
+  * { box-sizing:border-box; } [hidden] { display:none !important; }
+  body { margin:0; font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  body.booting main { visibility:hidden; }
+  main { max-width:1000px; margin:0 auto; padding:14px; }
+  .head { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .head h1 { font-size:22px; margin:0; flex:1; }
+  .btn { background:var(--acc); color:#fff; border:0; border-radius:9px; padding:8px 14px; font:600 14px inherit; font-family:inherit; cursor:pointer; text-decoration:none; display:inline-block; }
+  .btn:hover { background:var(--acc2); } .btn.ghost { background:#fff; color:var(--acc2); border:1px solid var(--line); } .btn.danger { background:#fff; color:var(--bad); border:1px solid #efc4c0; } .btn.sm { padding:4px 9px; font-size:13px; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+  .seg button { border:0; background:#fff; padding:8px 12px; font:inherit; font-size:14px; cursor:pointer; color:var(--mut); } .seg button.on { background:var(--acc); color:#fff; }
+  .crumbs { margin:0 0 10px; font-size:14px; color:var(--mut); } .crumbs a { color:var(--acc2); cursor:pointer; text-decoration:none; font-weight:600; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; cursor:pointer; display:grid; gap:6px; align-content:start; transition:box-shadow .15s,transform .15s; }
+  .tile:hover { box-shadow:0 6px 18px rgba(40,60,100,.14); transform:translateY(-1px); }
+  .tile .d { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--acc2); font-weight:700; }
+  .tile h3 { margin:0; font-size:18px; } .tile .meta { color:var(--mut); font-size:13px; }
+  .tile ul { margin:4px 0 0; padding:0; list-style:none; display:grid; gap:3px; font-size:14px; } .tile li { display:flex; gap:8px; } .tile li b { min-width:46px; color:var(--acc2); font-variant-numeric:tabular-nums; } .tile li.more { color:var(--mut); }
+  .tile .go { display:flex; justify-content:space-between; align-items:center; margin-top:6px; color:var(--mut); font-size:13px; }
+  .dayhead { background:linear-gradient(135deg,#2b3550,#4a5b86); color:#fff; border-radius:16px; padding:16px 18px; margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .dayhead h2 { margin:0; font-size:22px; } .dayhead .d { opacity:.85; text-transform:capitalize; } .dayhead .grow { flex:1; min-width:180px; } .dayhead p { margin:4px 0 0; opacity:.9; }
+  .dayhead .btn.ghost { background:rgba(255,255,255,.16); color:#fff; border-color:rgba(255,255,255,.45); } .dayhead .btn.danger { background:rgba(255,255,255,.16); color:#ffd7d3; border-color:rgba(255,255,255,.35); }
+  .allday { margin:18px 2px 8px; font-size:17px; font-weight:700; } .allday small { color:var(--mut); font-weight:400; text-transform:capitalize; }
+  .tl { display:grid; gap:8px; margin-bottom:6px; }
+  .it { display:grid; grid-template-columns:64px 1fr; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; cursor:pointer; }
+  .it .tm { font-weight:700; color:var(--acc2); font-variant-numeric:tabular-nums; line-height:1.25; } .it .tm small { display:block; color:var(--mut); font-weight:400; }
+  .it .tt { font-weight:700; font-size:16px; display:flex; gap:6px; align-items:flex-start; } .it .tt span { flex:1; overflow-wrap:anywhere; }
+  .it .pl { color:var(--mut); font-size:13px; } .it .sm { margin-top:2px; }
+  .it .more { margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); display:grid; gap:6px; } .it .more p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; } .it .more a { color:var(--acc2); }
+  .it .chev { color:var(--mut); font-size:12px; margin-top:4px; }
+  .empty { color:var(--mut); text-align:center; padding:26px 10px; background:var(--card); border:1px dashed var(--line); border-radius:14px; }
+  .ovl { position:fixed; inset:0; background:rgba(20,30,50,.5); display:grid; place-items:center; padding:16px; z-index:120; overflow:auto; }
+  .dlg { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:460px; display:grid; gap:10px; }
+  .dlg label { display:grid; gap:3px; font-size:13px; color:var(--mut); } .dlg .act { display:flex; gap:8px; justify-content:flex-end; } .dlg .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  input[type=text], input[type=date], input[type=time], select, textarea { padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; width:100%; }
+  textarea { min-height:96px; resize:vertical; }
+  .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
+  body.ro .adm { display:none !important; }
+  @media (max-width:520px) { .it { grid-template-columns:54px 1fr; } }
+</style>
+</head>
+<body class="booting">
+<main>
+  <div class="head">
+    <h1>🗓️ Programme</h1>
+    <span class="seg" id="viewBar"><button type="button" data-v="tiles" class="on">▦ Journées</button><button type="button" data-v="all">☰ Tout afficher</button></span>
+    <button class="btn ghost" id="printBtn" type="button">🖨️ Imprimer</button>
+    <button class="btn ghost adm" id="addDay" type="button">＋ Journée</button>
+    <button class="btn adm" id="addItem" type="button">＋ Moment</button>
+  </div>
+  <div id="crumbs" class="crumbs" hidden></div>
+  <div id="view"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/shared/config.js"></script>
+<script src="/shared/hub.js"></script>
+<script>
+// Feuille d'impression propre : ouvre une fenêtre avec le contenu fourni, puis lance l'impression.
+window.PrintSheet = {
+  open(opt) {
+    const old = document.getElementById('printFrame'); if (old) old.remove();
+    const fr = document.createElement('iframe'); fr.id = 'printFrame';
+    fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; document.body.append(fr);
+    const w = fr.contentWindow;
+    const css = 'body{font:14px/1.4 system-ui,sans-serif;margin:24px;color:#222} h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:18px 0 6px} .sub{margin:0 0 14px;color:#555}' +
+      'table{border-collapse:collapse;width:100%} th,td{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top} th{background:#eee}' +
+      'td.c,th.c{text-align:center;width:28px} .gh td{background:#eef2f9;font-weight:700} tr{break-inside:avoid} small{color:#555}' +
+      '.rooms{display:grid;grid-template-columns:1fr 1fr;gap:12px} .room{border:1px solid #999;border-radius:8px;padding:10px 12px;break-inside:avoid}' +
+      '.room h3{margin:0 0 2px;font-size:15px} .room .meta{color:#555;font-size:12px;margin-bottom:6px} .room ol,.room ul{margin:0;padding-left:20px} .room li{padding:2px 0}' +
+      '.room .free{color:#999;font-style:italic} .room .bed{margin:4px 0 0;font-size:12px;color:#555;font-weight:600} .tot{margin-top:14px;font-weight:700}' +
+      '@page{margin:14mm}' + (opt.css || '');
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    w.document.write('<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>' + esc(opt.title) + '</title><style>' + css + '</style></head><body><h1>' + esc(opt.title) + '</h1>' +
+      (opt.subtitle ? '<p class="sub">' + esc(opt.subtitle) + '</p>' : '') + opt.body + '</body></html>');
+    w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (e) { window.print(); } }, 300);
+    return true;
+  }
+};
+
+(async function () {
+  const SLUG = 'programme';
+  const hub = await Hub.connect(SLUG);
+  hub.mountBar();
+  const ADMIN = hub.isAdmin;
+  document.body.classList.toggle('ro', !ADMIN);
+  document.body.classList.remove('booting');
+  const $ = (id) => document.getElementById(id), esc = Hub.esc;
+  const toast = (m) => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500); };
+  const uid = () => Math.random().toString(36).slice(2, 8);
+  const S = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const norm = (d) => ({ days: (Array.isArray(d && d.days) ? d.days : []).filter(x => x && x.id).map(x => ({ id: x.id, title: S(x.title, 80), date: S(x.date, 10), note: S(x.note, 300),
+    items: (Array.isArray(x.items) ? x.items : []).filter(i => i && i.id).map(i => ({ id: i.id, time: S(i.time, 5), end: S(i.end, 5), title: S(i.title, 120), place: S(i.place, 120), address: S(i.address, 200), summary: S(i.summary, 240), details: S(i.details, 3000) })) })) });
+  let data = norm(hub.data), dialogOpen = false;
+  const save = () => { if (ADMIN) hub.save(() => data); };
+  const pref = (() => { try { return localStorage.getItem('programme_view'); } catch (e) { return null; } })();
+  let view = pref === 'all' ? 'all' : 'tiles';       // 'tiles' | 'all' | id d'une journée
+  const open = new Set();                              // moments dont le détail est déplié
+
+  const pd = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  const longDate = (s) => { const d = pd(s); return d ? d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''; };
+  const hm = (t) => t ? t.replace(':', 'h') : '';
+  const days = () => data.days.slice().sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || a.title.localeCompare(b.title, 'fr'));
+  const items = (day) => day.items.slice().sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+  const mapsUrl = (i) => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([i.place, i.address].filter(Boolean).join(', '));
+  const linkify = (t) => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+
+  function tile(d) {
+    const its = items(d), timed = its.filter(i => i.time);
+    const range = timed.length ? hm(timed[0].time) + ' → ' + hm((timed[timed.length - 1].end || timed[timed.length - 1].time)) : '';
+    return '<div class="tile" data-day="' + esc(d.id) + '"><div class="d">' + esc(longDate(d.date) || 'Date à définir') + '</div><h3>' + esc(d.title || 'Journée') + '</h3>' +
+      '<div class="meta">' + its.length + ' moment' + (its.length > 1 ? 's' : '') + (range ? ' · ' + esc(range) : '') + '</div>' +
+      (its.length ? '<ul>' + its.slice(0, 4).map(i => '<li><b>' + esc(hm(i.time) || '·') + '</b><span>' + esc(i.title) + '</span></li>').join('') + (its.length > 4 ? '<li class="more"><b></b><span>+ ' + (its.length - 4) + ' autre' + (its.length > 5 ? 's' : '') + '</span></li>' : '') + '</ul>' : '<div class="meta">Rien de prévu pour l\'instant.</div>') +
+      '<div class="go"><span>Voir le détail →</span>' + (ADMIN ? '<button class="btn ghost sm adm" data-add="' + esc(d.id) + '" type="button">＋ Moment</button>' : '') + '</div></div>';
+  }
+  function itemHtml(i) {
+    const o = open.has(i.id), more = i.details || i.address;
+    return '<div class="it" data-it="' + esc(i.id) + '"><div class="tm">' + (i.time ? esc(hm(i.time)) : '·') + (i.end ? '<small>→ ' + esc(hm(i.end)) + '</small>' : '') + '</div><div>' +
+      '<div class="tt"><span>' + esc(i.title || 'Sans titre') + '</span>' + (ADMIN ? '<span class="adm" style="flex:none"><button class="btn ghost sm" data-e="' + esc(i.id) + '" title="Modifier">✏️</button> <button class="btn danger sm" data-d="' + esc(i.id) + '" title="Supprimer">🗑️</button></span>' : '') + '</div>' +
+      (i.place ? '<div class="pl">📍 ' + esc(i.place) + '</div>' : '') + (i.summary ? '<div class="sm">' + esc(i.summary) + '</div>' : '') +
+      (o && more ? '<div class="more">' + (i.details ? '<p>' + linkify(i.details) + '</p>' : '') + (i.address ? '<div>📍 ' + esc(i.address) + ' · <a target="_blank" rel="noopener" href="' + esc(mapsUrl(i)) + '">Itinéraire</a></div>' : '') + '</div>' : '') +
+      (more ? '<div class="chev">' + (o ? '▲ Moins de détails' : '▼ Plus de détails') + '</div>' : '') + '</div></div>';
+  }
+  function render() {
+    const ds = days(), one = data.days.find(d => d.id === view);
+    if (view !== 'tiles' && view !== 'all' && !one) view = 'tiles';
+    $('viewBar').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === (view === 'all' ? 'all' : 'tiles')));
+    $('crumbs').hidden = view === 'tiles' || view === 'all';
+    const v = $('view');
+    if (!ds.length) { v.innerHTML = '<div class="empty">' + (ADMIN ? 'Aucune journée. Cliquez sur « ＋ Journée » (par exemple « Samedi — le mariage »).' : 'Le programme arrive bientôt.') + '</div>'; return; }
+    if (view === 'tiles') v.innerHTML = '<div class="tiles">' + ds.map(tile).join('') + '</div>';
+    else if (view === 'all') v.innerHTML = ds.map(d => '<div class="allday">' + esc(d.title || 'Journée') + ' <small>' + esc(longDate(d.date)) + '</small></div><div class="tl">' + (items(d).map(itemHtml).join('') || '<div class="empty">Rien de prévu.</div>') + '</div>').join('');
+    else {
+      $('crumbs').innerHTML = '<a data-back>← Toutes les journées</a> / ' + esc(one.title || 'Journée');
+      v.innerHTML = '<div class="dayhead"><div class="grow"><h2>' + esc(one.title || 'Journée') + '</h2><div class="d">' + esc(longDate(one.date)) + '</div>' + (one.note ? '<p>' + esc(one.note) + '</p>' : '') + '</div>' +
+        (ADMIN ? '<span class="adm"><button class="btn ghost sm" id="editDay" type="button">✏️ Modifier</button> <button class="btn danger sm" id="delDay" type="button">🗑️</button></span>' : '') + '</div>' +
+        '<div class="tl">' + (items(one).map(itemHtml).join('') || '<div class="empty">Rien de prévu ce jour-là.' + (ADMIN ? ' Cliquez sur « ＋ Moment ».' : '') + '</div>') + '</div>';
+      $('editDay') && ($('editDay').onclick = () => dayDialog(one));
+      $('delDay') && ($('delDay').onclick = () => { if (confirm('Supprimer « ' + (one.title || 'cette journée') + ' » et ses ' + one.items.length + ' moment(s) ?')) { data.days = data.days.filter(x => x.id !== one.id); view = 'tiles'; save(); render(); } });
+    }
+    v.querySelectorAll('[data-day]').forEach(t => t.onclick = (e) => { if (e.target.closest('[data-add]')) return; view = t.dataset.day; render(); window.scrollTo(0, 0); });
+    v.querySelectorAll('[data-add]').forEach(b => b.onclick = (e) => { e.stopPropagation(); itemDialog(null, b.dataset.add); });
+    v.querySelectorAll('[data-it]').forEach(c => c.onclick = (e) => { if (e.target.closest('button,a')) return; const id = c.dataset.it; open.has(id) ? open.delete(id) : open.add(id); render(); });
+    v.querySelectorAll('[data-e]').forEach(b => b.onclick = () => itemDialog(b.dataset.e));
+    v.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { for (const d of data.days) { const k = d.items.findIndex(i => i.id === b.dataset.d); if (k >= 0) { if (confirm('Supprimer « ' + (d.items[k].title || 'ce moment') + ' » ?')) { d.items.splice(k, 1); save(); render(); } return; } } });
+    $('crumbs').querySelectorAll('[data-back]').forEach(a => a.onclick = () => { view = 'tiles'; render(); });
+  }
+
+  function dialog(html) {
+    const o = document.createElement('div'); o.className = 'ovl'; o.innerHTML = '<form class="dlg">' + html + '</form>'; document.body.append(o);
+    dialogOpen = true; o.close = () => { o.remove(); dialogOpen = false; }; o.querySelector('[data-x]').onclick = o.close; return o;
+  }
+  function dayDialog(d) {
+    const o = dialog('<strong>' + (d ? 'Modifier la journée' : 'Nouvelle journée') + '</strong><label>Titre<input type="text" id="dt" maxlength="80" placeholder="Samedi — le mariage"></label>' +
+      '<label>Date<input type="date" id="dd"></label><label>Petite note (facultatif)<input type="text" id="dn" maxlength="300" placeholder="Tout se passe au domaine"></label>' +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Enregistrer</button></div>');
+    const g = (i) => o.querySelector('#' + i);
+    if (d) { g('dt').value = d.title; g('dd').value = d.date; g('dn').value = d.note; }
+    o.querySelector('form').onsubmit = (e) => { e.preventDefault();
+      const title = g('dt').value.trim(); if (!title) return;
+      if (d) { d.title = title; d.date = g('dd').value; d.note = g('dn').value.trim(); } else { const n = { id: uid(), title, date: g('dd').value, note: g('dn').value.trim(), items: [] }; data.days.push(n); view = n.id; }
+      o.close(); save(); render(); };
+    g('dt').focus();
+  }
+  function itemDialog(id, dayId) {
+    let it = null, cur = null;
+    if (id) for (const d of data.days) { const f = d.items.find(i => i.id === id); if (f) { it = f; cur = d; } }
+    if (id && !it) return;
+    const dflt = dayId || (cur && cur.id) || (data.days.find(d => d.id === view) || days()[0] || {}).id;
+    if (!dflt) { toast('Créez d\'abord une journée.'); return; }
+    const o = dialog('<strong>' + (it ? 'Modifier le moment' : 'Nouveau moment') + '</strong><label>Journée<select id="mday">' + days().map(d => '<option value="' + esc(d.id) + '">' + esc(d.title) + (d.date ? ' — ' + esc(longDate(d.date)) : '') + '</option>').join('') + '</select></label>' +
+      '<div class="two"><label>Début<input type="time" id="mt"></label><label>Fin (facultatif)<input type="time" id="me"></label></div>' +
+      '<label>Titre<input type="text" id="mti" maxlength="120" placeholder="Cérémonie laïque"></label><label>Lieu (facultatif)<input type="text" id="mp" maxlength="120" placeholder="Jardin des Roses"></label>' +
+      '<label>Résumé court (affiché dans la liste)<input type="text" id="ms" maxlength="240"></label>' +
+      '<label>Détails (affichés au clic ; les liens https:// sont cliquables)<textarea id="md" maxlength="3000"></textarea></label><label>Adresse, pour l\'itinéraire (facultatif)<input type="text" id="ma" maxlength="200"></label>' +
+      '<div class="act"><button type="button" class="btn ghost" data-x>Annuler</button><button class="btn">Enregistrer</button></div>');
+    const g = (i) => o.querySelector('#' + i);
+    g('mday').value = dflt;
+    if (it) { g('mt').value = it.time; g('me').value = it.end; g('mti').value = it.title; g('mp').value = it.place; g('ms').value = it.summary; g('md').value = it.details; g('ma').value = it.address; }
+    o.querySelector('form').onsubmit = (e) => { e.preventDefault();
+      const rec = { id: it ? it.id : uid(), time: g('mt').value, end: g('me').value, title: g('mti').value.trim(), place: g('mp').value.trim(), address: g('ma').value.trim(), summary: g('ms').value.trim(), details: g('md').value.trim() };
+      if (!rec.title) return;
+      if (cur) cur.items = cur.items.filter(i => i.id !== rec.id);
+      const target = data.days.find(d => d.id === g('mday').value); target.items.push(rec);
+      if (view !== 'tiles' && view !== 'all' && view !== target.id) toast('Moment placé dans « ' + target.title + ' ».');
+      o.close(); save(); render(); };
+    g('mti').focus();
+  }
+
+  $('addDay').onclick = () => dayDialog(null);
+  $('addItem').onclick = () => itemDialog(null);
+  $('viewBar').querySelectorAll('button').forEach(b => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('programme_view', view); } catch (e) {} render(); });
+  $('printBtn').onclick = () => {
+    const ds = days(); if (!ds.length) { toast('Rien à imprimer.'); return; }
+    const body = ds.map(d => '<h2>' + esc(d.title) + (d.date ? ' — ' + esc(longDate(d.date)) : '') + '</h2>' + (d.note ? '<p class="sub">' + esc(d.note) + '</p>' : '') +
+      '<table><thead><tr><th style="width:90px">Heure</th><th>Moment</th><th>Lieu</th></tr></thead><tbody>' +
+      (items(d).map(i => '<tr><td>' + esc(hm(i.time) + (i.end ? ' → ' + hm(i.end) : '')) + '</td><td><b>' + esc(i.title) + '</b>' + (i.summary ? '<br><small>' + esc(i.summary) + '</small>' : '') + (i.details ? '<br><small>' + esc(i.details).replace(/\n/g, '<br>') + '</small>' : '') + '</td><td>' + esc(i.place) + (i.address ? '<br><small>' + esc(i.address) + '</small>' : '') + '</td></tr>').join('') || '<tr><td colspan="3">—</td></tr>') + '</tbody></table>').join('');
+    if (!PrintSheet.open({ title: 'Programme du mariage', body })) toast('Impression impossible.');
+  };
+
+  render();
+  hub.poll((d) => { if (ADMIN && dialogOpen) return false; data = norm(d); render(); });
+})();
+</script>
+</body>
+</html>
