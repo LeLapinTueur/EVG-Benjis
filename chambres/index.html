@@ -65,16 +65,27 @@
   .bt { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
   .bt small { color:var(--mut); } .step { display:flex; align-items:center; gap:8px; } .step button { width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:18px; cursor:pointer; } .step b { min-width:20px; text-align:center; }
   .toast { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#1f2a3c; color:#fff; padding:10px 16px; border-radius:10px; z-index:150; display:none; max-width:90vw; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+  .seg button { border:0; background:#fff; padding:8px 12px; font:inherit; font-size:14px; cursor:pointer; color:var(--mut); }
+  .seg button.on { background:var(--acc); color:#fff; }
+  #recap table { border-collapse:collapse; width:100%; font-size:14px; } #recap th, #recap td { text-align:left; padding:6px 10px; border-bottom:1px solid #eef1f6; }
+  #recap th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--mut); } #recap td.n, #recap th.n { text-align:right; }
+  #recap .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; } #recap h3 { margin:0 0 6px; font-size:14px; }
+  #recap .big { font-size:15px; margin-bottom:10px; } #recap .big b { font-size:20px; } #recap .warn { color:var(--bad); font-weight:600; } #recap .okk { color:var(--ok); font-weight:600; }
+  #recap ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; } #recap li { display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid #eef1f6; padding:3px 0; } #recap li span:last-child { color:var(--mut); text-align:right; }
   body.ro .adm { display:none !important; }
 </style>
 </head>
 <body class="booting">
 <main>
   <div class="head">
-    <h1>🛏️ Attribution des chambres</h1>
+    <h1>🛏️ Chambres</h1>
     <div class="stats" id="stats"></div>
+    <span class="seg" id="roomFilter"><button type="button" data-f="all" class="on">Toutes les chambres</button><button type="button" data-f="free" id="freeBtn">Places libres</button></span>
+    <button class="btn ghost" id="recapBtn" type="button">📊 Récapitulatif</button>
     <button class="btn adm" id="addRoom" type="button">＋ Ajouter une chambre</button>
   </div>
+  <section class="panel" id="recap" hidden style="margin-bottom:14px"></section>
   <div class="layout">
     <aside class="panel side">
       <h2>Invités <span id="gcount" style="color:var(--mut);font-weight:400"></span></h2>
@@ -87,6 +98,7 @@
     </aside>
     <section>
       <div class="rooms" id="rooms"></div>
+      <div class="empty" id="noFree" hidden>Toutes les chambres sont complètes 🎉</div>
       <div class="empty" id="noRooms" hidden>Aucune chambre pour l'instant.<span class="adm"> Cliquez sur « Ajouter une chambre ».</span></div>
     </section>
   </div>
@@ -299,7 +311,13 @@
     if (!list.length) gl.innerHTML = '<div class="empty">' + (!guests.length ? 'Aucun invité : ajoutez-en dans le site Invités.' : f === 'free' && !q ? 'Tout le monde a une chambre 🎉' : 'Aucun résultat.') + '</div>';
     const box = $('rooms'); box.replaceChildren();
     $('noRooms').hidden = data.rooms.length > 0;
-    data.rooms.forEach(r => {
+    const nFree = data.rooms.filter(r => freeIn(r) > 0).length;
+    $('freeBtn').textContent = 'Places libres (' + nFree + ')';
+    $('roomFilter').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.f === roomFilter));
+    $('recapBtn').textContent = recapOpen ? '📊 Masquer le récapitulatif' : '📊 Récapitulatif';
+    $('noFree').hidden = !(roomFilter === 'free' && data.rooms.length && !nFree);
+    renderRecap();
+    data.rooms.filter(r => roomFilter === 'all' || freeIn(r) > 0).forEach(r => {
       const n = occ(r.id).length, cap = capOf(r), full = cap > 0 && n >= cap;
       const el = document.createElement('div'); el.className = 'room' + (full ? ' full' : '');
       const cnt = TYPE_ORDER.map(t => [t, r.beds.filter(b => b.type === t).length]).filter(x => x[1]);
@@ -324,6 +342,41 @@
       box.append(el);
     });
   }
+
+  // ---------- places libres : filtre + récapitulatif ----------
+  let roomFilter = 'all', recapOpen = false;
+  const freeIn = (r) => seatsOf(r).filter(k => !whoAt(k)).length;
+  function renderRecap() {
+    const box = $('recap'); box.hidden = !recapOpen; if (!recapOpen) return;
+    const rows = TYPE_ORDER.map(t => {
+      const beds = data.rooms.flatMap(r => r.beds.filter(b => b.type === t));
+      const seatsFree = beds.map(b => Array.from({ length: TYPES[t].places }, (_, i) => !whoAt(b.id + ':' + i)).filter(Boolean).length);
+      return { t, total: beds.length, whole: seatsFree.filter(n => n === TYPES[t].places).length, partial: seatsFree.filter(n => n > 0 && n < TYPES[t].places).length, places: seatsFree.reduce((a, b) => a + b, 0) };
+    }).filter(x => x.total);
+    const free = data.rooms.reduce((a, r) => a + freeIn(r), 0), total = data.rooms.reduce((a, r) => a + capOf(r), 0);
+    const unplaced = guests.filter(g => !(roomOf(g.id) && data.seat[g.id])).length;
+    const plural = (n, a, b) => n + ' ' + (n > 1 ? b : a);
+    const verdict = unplaced > free ? '<span class="warn">⚠️ Il manque ' + plural(unplaced - free, 'place', 'places') + ' pour loger tout le monde.</span>' :
+      '<span class="okk">✓ Assez de places pour les ' + unplaced + ' invité(s) sans chambre.</span>';
+    box.innerHTML = '<div class="big"><b>' + free + '</b> place' + (free > 1 ? 's' : '') + ' libre' + (free > 1 ? 's' : '') + ' sur ' + total + ' · ' + plural(unplaced, 'invité sans chambre', 'invités sans chambre') + '<br>' + verdict + '</div>' +
+      '<div class="grid"><div><h3>Par type de couchage</h3><table><tr><th>Type</th><th class="n">Total</th><th class="n">Entièrement libres</th><th class="n">Places libres</th></tr>' +
+      rows.map(x => '<tr><td>' + TYPES[x.t].label + '</td><td class="n">' + x.total + '</td><td class="n">' + x.whole + (x.partial ? ' <small style="color:var(--mut)">(+' + x.partial + ' à moitié)</small>' : '') + '</td><td class="n"><b>' + x.places + '</b></td></tr>').join('') +
+      (rows.length ? '' : '<tr><td colspan="4" class="empty">Aucun couchage.</td></tr>') + '</table></div>' +
+      '<div><h3>Chambres avec de la place</h3><ul>' + (data.rooms.filter(r => freeIn(r) > 0).map(r => {
+        const det = TYPE_ORDER.map(t => {
+          const per = r.beds.filter(x => x.type === t).map(x => Array.from({ length: TYPES[t].places }, (_, i) => !whoAt(x.id + ':' + i)).filter(Boolean).length);
+          const whole = per.filter(n => n === TYPES[t].places).length, part = per.filter(n => n > 0 && n < TYPES[t].places).length;
+          if (t === 'bunk') { const n = per.reduce((a, b) => a + b, 0); return n ? n + ' couchette' + (n > 1 ? 's' : '') : ''; }
+          const w = whole ? whole + ' ' + (whole > 1 ? TYPES[t].plural : TYPES[t].one) : '';
+          const h = part ? part + ' ' + TYPES[t].one + (part > 1 ? 's' : '') + ' à moitié' : '';
+          return [w, h].filter(Boolean).join(' + ');
+        }).filter(Boolean).join(', ');
+        return '<li><span>' + esc(r.name) + '</span><span><b>' + freeIn(r) + '</b> libre' + (freeIn(r) > 1 ? 's' : '') + ' <small>(' + det + ')</small></span></li>';
+      }).join('') || '<li><span>Toutes les chambres sont complètes 🎉</span></li>') + '</ul></div></div>';
+  }
+  $('roomFilter').querySelectorAll('button').forEach(b => b.onclick = () => { roomFilter = b.dataset.f; render(); });
+  $('recapBtn').onclick = () => { recapOpen = !recapOpen; $('recapBtn').classList.toggle('danger', false); render(); };
+
   if (ADMIN) wireDrop($('glist'), (gid) => unplace(gid), false);
 
   // ---------- chambre : ajout / modification ----------
