@@ -101,8 +101,29 @@ form button{flex:none}
 select{font:inherit;font-size:.9rem;border:1px solid var(--forest);background:var(--white);color:var(--forest);padding:7px 12px;border-radius:999px;cursor:pointer}
 
 /* Onglets secondaires */
-.dash-view,.menus-view,.dj-view{padding:16px clamp(16px,4vw,48px) 48px}
-.dash-view.hidden,.menus-view.hidden,.dj-view.hidden{display:none}
+.dash-view,.menus-view,.dj-view,.recap-view{padding:16px clamp(16px,4vw,48px) 48px}
+.dash-view.hidden,.menus-view.hidden,.dj-view.hidden,.recap-view.hidden{display:none}
+.recap-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.recap-top h2{margin:0}.recap-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.recap-names{display:inline-flex;gap:6px;align-items:center;font-size:.9rem;color:var(--forest-2)}
+.recap-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.rc{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.rc .n{font-size:2.2rem;line-height:1;font-weight:700;color:var(--forest-2)}.rc .l{font-size:.92rem;color:var(--forest)}
+.rc .p{font-size:.78rem;color:#6d7a73}.rc .b{height:6px;background:var(--blush-2);border-radius:99px;overflow:hidden;margin-top:6px}.rc .b i{display:block;height:100%;background:var(--forest-2)}
+.rc.total{background:var(--forest);border-color:var(--forest)}.rc.total .n,.rc.total .l,.rc.total .p{color:#fff}
+.rc.warn{background:#fbe9e6;border-color:#efc4bc}.rc.warn .n,.rc.warn .l{color:#933224}
+.recap-h{margin:0 0 10px}
+.recap-wrap{overflow:auto;background:var(--white);border:1px solid var(--line);border-radius:16px}
+.recap-table{border-collapse:collapse;width:100%;min-width:520px;font-size:.92rem}
+.recap-table th,.recap-table td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:center;vertical-align:top}
+.recap-table th:first-child,.recap-table td:first-child{text-align:left;font-weight:600;position:sticky;left:0;background:inherit}
+.recap-table thead th{background:var(--panel);font-size:.8rem;color:var(--forest-2);position:sticky;top:0}
+.recap-table td{background:var(--white)}.recap-table td.z{color:#b6beba}
+.recap-table td .c{font-weight:700;font-size:1.05rem;color:var(--forest-2)}
+.recap-table td .nm{display:block;font-size:.74rem;color:#6d7a73;font-weight:400;line-height:1.35;margin-top:3px}
+.recap-table td.warn,.recap-table th.warn{background:#fbe9e6;color:#933224}.recap-table td.warn .c{color:#933224}
+.recap-table tr.sum td{font-weight:700;background:var(--panel)}.recap-table tr.sum td .c{font-size:1.1rem}
+.recap-table .tot{border-left:2px solid var(--line)}
 .dash-panel,.menus-panel,.dj-panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px}
 
 /* Tableau de bord avancement */
@@ -209,6 +230,7 @@ body.readonly input:disabled,body.readonly select:disabled,body.readonly textare
   <button type="button" class="tab-btn active" data-tab="dashboard" id="tabDashBtn">Avancement</button>
   <button type="button" class="tab-btn" data-tab="room" id="tabRoomBtn">Plan de salle</button>
   <button type="button" class="tab-btn" data-tab="menus" id="tabMenusBtn">Traiteur, Invités &amp; Menus</button>
+  <button type="button" class="tab-btn" data-tab="recap" id="tabRecapBtn">Récap menus</button>
   <button type="button" class="tab-btn" data-tab="dj" id="tabDjBtn">DJ &amp; Animation</button>
 </nav>
 
@@ -343,6 +365,19 @@ body.readonly input:disabled,body.readonly select:disabled,body.readonly textare
   </div>
 </section>
 
+<section class="recap-view hidden" id="recapView" aria-label="Récapitulatif des menus">
+  <div class="recap-top">
+    <h2>🍽️ Récap des menus</h2>
+    <div class="recap-actions">
+      <label class="recap-names"><input type="checkbox" id="recapNames"> Afficher les noms</label>
+      <button type="button" class="btn" id="recapPrint">🖨️ Imprimer</button>
+      <button type="button" class="btn" id="recapCsv">⬇️ Exporter (CSV)</button>
+    </div>
+  </div>
+  <div id="recapTotals" class="recap-cards"></div>
+  <h3 class="recap-h">Menus à déposer sur chaque table</h3>
+  <div class="recap-wrap"><table class="recap-table" id="recapTable"></table></div>
+</section>
 <section class="dj-view hidden" id="djView" aria-label="Informations sur le DJ">
   <div class="dj-panel">
     <div class="menus-top">
@@ -583,6 +618,8 @@ function setTab(tab) {
   $('roomView').classList.toggle('hidden', tab !== 'room');
   $('menusView').classList.toggle('hidden', tab !== 'menus');
   $('djView').classList.toggle('hidden', tab !== 'dj');
+  $('recapView').classList.toggle('hidden', tab !== 'recap');
+  $('tabRecapBtn').classList.toggle('active', tab === 'recap');
   $('tabDashBtn').classList.toggle('active', tab === 'dashboard');
   $('tabRoomBtn').classList.toggle('active', tab === 'room');
   $('tabMenusBtn').classList.toggle('active', tab === 'menus');
@@ -590,6 +627,7 @@ function setTab(tab) {
   hideGuestTip();
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'menus') renderMenusView();
+  if (tab === 'recap') renderRecap();
   if (tab === 'dj') renderDjView();
 }
 
@@ -885,6 +923,7 @@ function render() {
   renderRoom();
   if (activeTab === 'dashboard') renderDashboard();
   if (activeTab === 'menus') renderMenusView();
+  if (activeTab === 'recap') renderRecap();
   if (activeTab === 'dj') renderDjView();
 }
 
@@ -1000,6 +1039,74 @@ function renderMenusView() {
     tbody.appendChild(tr);
   });
 }
+
+
+// ---------- Récap des menus ----------
+function recapData() {
+  const guests = Array.isArray(state.guests) ? state.guests : [];
+  const tables = Array.isArray(state.tables) ? state.tables : [];
+  const menus = state.menuOptions.filter(m => m !== 'Non défini');
+  const cols = menus.concat(['Non défini']);                       // « Non défini » toujours en dernier : c'est ce qu'il reste à choisir
+  const menuOf = g => (cols.includes(g.menu) ? g.menu : 'Non défini');
+  const total = {}; cols.forEach(m => total[m] = 0);
+  guests.forEach(g => { total[menuOf(g)]++; });
+  const rowOf = (label, list) => {
+    const by = {}; cols.forEach(m => by[m] = []);
+    list.forEach(g => by[menuOf(g)].push(g.name));
+    Object.values(by).forEach(a => a.sort((x, y) => x.localeCompare(y, 'fr')));
+    return { label, n: list.length, by };
+  };
+  const rows = tables.map(t => rowOf(t.name, guests.filter(g => g.table === t.id)));
+  const orphans = guests.filter(g => !g.table || !tables.some(t => t.id === g.table));
+  if (orphans.length) rows.push(Object.assign(rowOf('Sans table', orphans), { orphan: true }));
+  return { cols, total, rows, count: guests.length };
+}
+function renderRecap() {
+  const d = recapData();
+  const pct = n => d.count ? Math.round(n / d.count * 100) : 0;
+  const cards = [`<div class="rc total"><span class="n">${d.count}</span><span class="l">convives au total</span><span class="p">${d.count - d.total['Non défini']} menu(s) choisi(s)</span></div>`]
+    .concat(d.cols.map(m => {
+      const n = d.total[m], warn = m === 'Non défini';
+      if (warn && !n) return '';
+      return `<div class="rc ${warn ? 'warn' : ''}"><span class="n">${n}</span><span class="l">${esc(warn ? 'Menu à choisir' : m)}</span><span class="p">${pct(n)} % des invités</span><div class="b"><i style="width:${pct(n)}%"></i></div></div>`;
+    }));
+  $('recapTotals').innerHTML = cards.join('');
+  const showNames = $('recapNames').checked;
+  const head = `<thead><tr><th>Table</th><th>Invités</th>${d.cols.map(m => `<th class="${m === 'Non défini' && d.total[m] ? 'warn' : ''}">${esc(m === 'Non défini' ? 'À choisir' : m)}</th>`).join('')}</tr></thead>`;
+  const cell = (r, m) => {
+    const a = r.by[m], warn = m === 'Non défini' && a.length;
+    if (!a.length) return `<td class="z">·</td>`;
+    return `<td class="${warn ? 'warn' : ''}"><span class="c">${a.length}</span>${showNames ? `<span class="nm">${a.map(esc).join(', ')}</span>` : ''}</td>`;
+  };
+  const body = d.rows.map(r => `<tr><td>${esc(r.label)}</td><td>${r.n}</td>${d.cols.map(m => cell(r, m)).join('')}</tr>`).join('') ||
+    `<tr><td colspan="${d.cols.length + 2}" class="empty">Aucune table pour l'instant.</td></tr>`;
+  const sum = `<tr class="sum"><td>Total à prévoir</td><td>${d.count}</td>${d.cols.map(m => `<td><span class="c">${d.total[m]}</span></td>`).join('')}</tr>`;
+  $('recapTable').innerHTML = head + `<tbody>${body}${sum}</tbody>`;
+}
+$('recapNames').onchange = renderRecap;
+$('recapCsv').onclick = () => {
+  const d = recapData(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [['Table', 'Invités'].concat(d.cols).map(q).join(';')]
+    .concat(d.rows.map(r => [r.label, r.n].concat(d.cols.map(m => r.by[m].length)).map(q).join(';')))
+    .concat([['Total', d.count].concat(d.cols.map(m => d.total[m])).map(q).join(';')]);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'menus-par-table.csv'; document.body.append(a); a.click(); a.remove();
+};
+$('recapPrint').onclick = () => {          // feuille propre, à imprimer ou à donner au traiteur
+  const d = recapData(), names = $('recapNames').checked;
+  const w = window.open('', '_blank'); if (!w) { toast('Autorisez les fenêtres pop-up pour imprimer.'); return; }
+  const th = d.cols.map(m => `<th>${esc(m === 'Non défini' ? 'À choisir' : m)}</th>`).join('');
+  const tr = d.rows.map(r => `<tr><td class="l">${esc(r.label)}</td><td>${r.n}</td>${d.cols.map(m => `<td>${r.by[m].length ? `<b>${r.by[m].length}</b>${names ? `<small>${r.by[m].map(esc).join(', ')}</small>` : ''}` : '·'}</td>`).join('')}</tr>`).join('');
+  w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Menus par table</title><style>
+    body{font:14px/1.4 system-ui,sans-serif;margin:24px;color:#222} h1{font-size:20px;margin:0 0 4px} p{margin:0 0 14px;color:#555}
+    table{border-collapse:collapse;width:100%} th,td{border:1px solid #bbb;padding:7px 9px;text-align:center;vertical-align:top} th{background:#eee} td.l{text-align:left;font-weight:600}
+    td b{font-size:16px} td small{display:block;font-size:11px;color:#555;font-weight:400} tr.sum td{background:#f3f3f3;font-weight:700} @page{margin:14mm}
+  </style></head><body><h1>${esc(state.title || 'Plan de table')} — menus par table</h1>
+  <p>${d.count} convives · ${d.cols.filter(m => d.total[m]).map(m => `${d.total[m]} × ${esc(m === 'Non défini' ? 'menu à choisir' : m)}`).join(' · ')}</p>
+  <table><thead><tr><th>Table</th><th>Invités</th>${th}</tr></thead><tbody>${tr}<tr class="sum"><td class="l">Total</td><td>${d.count}</td>${d.cols.map(m => `<td>${d.total[m]}</td>`).join('')}</tr></tbody></table></body></html>`);
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 250);
+};
 
 // Gestion de l'onglet DJ
 const DJ_FIELDS = [
